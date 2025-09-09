@@ -6,6 +6,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -512,4 +515,89 @@ func BackupPostgreSQLPG() error {
 // executeCommand выполняет системную команду
 func executeCommand(cmd string) error {
 	return exec.Command("sh", "-c", cmd).Run()
+}
+
+// RestorePostgreSQLPG восстанавливает базу данных из SQL файла
+func RestorePostgreSQLPG() error {
+	log.Printf("RESTORE_POSTGRESQL: ========================================")
+	log.Printf("RESTORE_POSTGRESQL: НАЧАЛО ВОССТАНОВЛЕНИЯ БД ИЗ БЭКАПА")
+	log.Printf("RESTORE_POSTGRESQL: ========================================")
+
+	// Сначала пробуем восстановить из latest
+	latestBackupFile := "./backups/latest/vpn_bot_backup.sql"
+	if _, err := os.Stat(latestBackupFile); err == nil {
+		log.Printf("RESTORE_POSTGRESQL: ✅ Найден latest бэкап, восстанавливаем из %s", latestBackupFile)
+		return restoreFromSQLFile(latestBackupFile)
+	}
+
+	// Если latest нет, ищем последний бэкап в backupdb
+	log.Printf("RESTORE_POSTGRESQL: ❌ Latest бэкап не найден, ищем в backupdb...")
+	backupDir := "./backups/backupdb"
+	entries, err := os.ReadDir(backupDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("RESTORE_POSTGRESQL: ❌ Директория бэкапов не найдена, пропускаем восстановление")
+			log.Printf("RESTORE_POSTGRESQL: ========================================")
+			log.Printf("RESTORE_POSTGRESQL: ВОССТАНОВЛЕНИЕ ПРОПУЩЕНО - БЭКАПОВ НЕТ")
+			log.Printf("RESTORE_POSTGRESQL: ========================================")
+			return nil
+		}
+		return fmt.Errorf("ошибка чтения директории бэкапов: %v", err)
+	}
+
+	// Фильтруем директории бэкапов и сортируем по имени (последний по времени)
+	var backupDirs []string
+	for _, entry := range entries {
+		if entry.IsDir() && strings.HasPrefix(entry.Name(), "backup_") {
+			backupDirs = append(backupDirs, entry.Name())
+		}
+	}
+
+	if len(backupDirs) == 0 {
+		log.Printf("RESTORE_POSTGRESQL: ❌ Бэкапы не найдены, пропускаем восстановление")
+		log.Printf("RESTORE_POSTGRESQL: ========================================")
+		log.Printf("RESTORE_POSTGRESQL: ВОССТАНОВЛЕНИЕ ПРОПУЩЕНО - БЭКАПОВ НЕТ")
+		log.Printf("RESTORE_POSTGRESQL: ========================================")
+		return nil
+	}
+
+	sort.Strings(backupDirs)
+	latestBackup := backupDirs[len(backupDirs)-1]
+	backupPath := filepath.Join(backupDir, latestBackup, "vpn_bot_backup.sql")
+
+	log.Printf("RESTORE_POSTGRESQL: ✅ Найден последний бэкап: %s", backupPath)
+	return restoreFromSQLFile(backupPath)
+}
+
+// restoreFromSQLFile восстанавливает данные из SQL файла
+func restoreFromSQLFile(sqlFilePath string) error {
+	log.Printf("RESTORE_FROM_SQL_FILE: Начало восстановления из %s", sqlFilePath)
+
+	// Проверяем, существует ли файл
+	if _, err := os.Stat(sqlFilePath); os.IsNotExist(err) {
+		return fmt.Errorf("файл бэкапа не найден: %s", sqlFilePath)
+	}
+
+	// Получаем настройки подключения
+	host := getEnvOrDefault("PG_HOST", PG_HOST)
+	port := getEnvOrDefault("PG_PORT", "5432")
+	user := getEnvOrDefault("PG_USER", PG_USER)
+	password := getEnvOrDefault("PG_PASSWORD", PG_PASSWORD)
+	dbname := getEnvOrDefault("PG_DBNAME", PG_DBNAME)
+
+	// Команда psql для восстановления
+	cmd := fmt.Sprintf("PGPASSWORD='%s' psql -h %s -p %s -U %s -d %s -f %s",
+		password, host, port, user, dbname, sqlFilePath)
+
+	log.Printf("RESTORE_FROM_SQL_FILE: Выполняем команду восстановления...")
+	err := executeCommand(cmd)
+	if err != nil {
+		return fmt.Errorf("ошибка восстановления PostgreSQL: %v", err)
+	}
+
+	log.Printf("RESTORE_FROM_SQL_FILE: ✅ Данные успешно восстановлены из %s", sqlFilePath)
+	log.Printf("RESTORE_FROM_SQL_FILE: ========================================")
+	log.Printf("RESTORE_FROM_SQL_FILE: ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО")
+	log.Printf("RESTORE_FROM_SQL_FILE: ========================================")
+	return nil
 }

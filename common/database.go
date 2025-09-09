@@ -91,56 +91,10 @@ func BackupMongoDB() error {
 	return BackupPostgreSQLPG()
 }
 
-// RestoreMongoDB восстанавливает базу данных из бэкапа
+// RestoreMongoDB восстанавливает базу данных из бэкапа (теперь PostgreSQL)
 func RestoreMongoDB() error {
-	log.Printf("RESTORE_MONGODB: ========================================")
-	log.Printf("RESTORE_MONGODB: НАЧАЛО ВОССТАНОВЛЕНИЯ БД ИЗ БЭКАПА")
-	log.Printf("RESTORE_MONGODB: ========================================")
-
-	// Сначала пробуем восстановить из latest
-	latestBackupDir := "./backups/latest"
-	if _, err := os.Stat(latestBackupDir); err == nil {
-		log.Printf("RESTORE_MONGODB: ✅ Найден latest бэкап, восстанавливаем из %s", latestBackupDir)
-		return restoreFromBackup(latestBackupDir)
-	}
-
-	// Если latest нет, ищем последний бэкап в backupdb
-	log.Printf("RESTORE_MONGODB: ❌ Latest бэкап не найден, ищем в backupdb...")
-	backupDir := "./backups/backupdb"
-	entries, err := os.ReadDir(backupDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("RESTORE_MONGODB: ❌ Директория бэкапов не найдена, пропускаем восстановление")
-			log.Printf("RESTORE_MONGODB: ========================================")
-			log.Printf("RESTORE_MONGODB: ВОССТАНОВЛЕНИЕ ПРОПУЩЕНО - БЭКАПОВ НЕТ")
-			log.Printf("RESTORE_MONGODB: ========================================")
-			return nil
-		}
-		return fmt.Errorf("ошибка чтения директории бэкапов: %v", err)
-	}
-
-	// Фильтруем директории бэкапов и сортируем по имени (последний по времени)
-	var backupDirs []string
-	for _, entry := range entries {
-		if entry.IsDir() && strings.HasPrefix(entry.Name(), "backup_") {
-			backupDirs = append(backupDirs, entry.Name())
-		}
-	}
-
-	if len(backupDirs) == 0 {
-		log.Printf("RESTORE_MONGODB: ❌ Бэкапы не найдены, пропускаем восстановление")
-		log.Printf("RESTORE_MONGODB: ========================================")
-		log.Printf("RESTORE_MONGODB: ВОССТАНОВЛЕНИЕ ПРОПУЩЕНО - БЭКАПОВ НЕТ")
-		log.Printf("RESTORE_MONGODB: ========================================")
-		return nil
-	}
-
-	sort.Strings(backupDirs)
-	latestBackup := backupDirs[len(backupDirs)-1]
-	backupPath := filepath.Join(backupDir, latestBackup)
-
-	log.Printf("RESTORE_MONGODB: ✅ Найден последний бэкап: %s", backupPath)
-	return restoreFromBackup(backupPath)
+	// Переадресация к PostgreSQL
+	return RestorePostgreSQLPG()
 }
 
 // ProcessPayment обрабатывает платеж
