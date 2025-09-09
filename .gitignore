@@ -19,18 +19,9 @@
 # Исполняемые файлы
 /bot
 /main
-/app
-/server
-/client
 
 # Конфигурационные файлы
 config.go
-config.json
-config.yaml
-config.yml
-.env
-.env.local
-.env.production
 
 # Временные файлы
 *.tmp
@@ -53,6 +44,4 @@ Thumbs.db
 desktop.ini
 
 # Go специфичные файлы
-*.test
-*.prof
 vendor/
