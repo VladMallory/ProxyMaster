@@ -1,0 +1,349 @@
+package main
+
+import (
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"math/rand"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
+
+// Login выполняет авторизацию в панели 3x-ui
+func Login() (string, error) {
+	log.Printf("LOGIN: Начало авторизации в панели, URL=%s, Username=%s", PANEL_URL, PANEL_USER)
+	loginData := LoginRequest{
+		Username: PANEL_USER,
+		Password: PANEL_PASS,
+	}
+
+	jsonData, err := json.Marshal(loginData)
+	if err != nil {
+		log.Printf("LOGIN: Ошибка сериализации данных авторизации: %v", err)
+		return "", fmt.Errorf("ошибка сериализации данных авторизации: %v", err)
+	}
+	log.Printf("LOGIN: Данные авторизации: %s", string(jsonData))
+
+	req, err := http.NewRequest("POST", PANEL_URL+"login", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("LOGIN: Ошибка создания запроса: %v", err)
+		return "", fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	log.Printf("LOGIN: Запрос создан, заголовки: %+v", req.Header)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("LOGIN: Ошибка выполнения запроса: %v", err)
+		return "", fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("LOGIN: Ошибка чтения ответа: %v", err)
+		return "", fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+	log.Printf("LOGIN: Ответ сервера: status=%d, body=%s", resp.StatusCode, string(body))
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("LOGIN: Некорректный статус ответа: %d", resp.StatusCode)
+		return "", fmt.Errorf("некорректный статус ответа: %d, body=%s", resp.StatusCode, string(body))
+	}
+
+	if len(body) == 0 {
+		log.Printf("LOGIN: Пустой ответ от сервера")
+		return "", fmt.Errorf("пустой ответ от сервера")
+	}
+
+	var loginResp LoginResponse
+	if err := json.Unmarshal(body, &loginResp); err != nil {
+		log.Printf("LOGIN: Ошибка десериализации ответа: %v, body=%s", err, string(body))
+		return "", fmt.Errorf("ошибка десериализации ответа: %v, body=%s", err, string(body))
+	}
+
+	if !loginResp.Success {
+		log.Printf("LOGIN: Авторизация не удалась: msg=%s", loginResp.Msg)
+		return "", fmt.Errorf("авторизация не удалась: %s", loginResp.Msg)
+	}
+
+	// Извлекаем куку
+	for _, cookie := range resp.Header.Values("Set-Cookie") {
+		log.Printf("LOGIN: Найдена кука: %s", cookie)
+		if strings.Contains(cookie, "3x-ui=") {
+			sessionCookie := strings.Split(cookie, ";")[0]
+			log.Printf("LOGIN: Успешная авторизация, кука: %s", sessionCookie)
+			return sessionCookie, nil
+		}
+	}
+
+	log.Printf("LOGIN: Куки сессии не найдены в заголовках: %+v", resp.Header)
+	return "", fmt.Errorf("кука сессии не найдена")
+}
+
+// GetInbound получает полный inbound object
+func GetInbound(sessionCookie string) (*Inbound, error) {
+	log.Printf("GET_INBOUND: Получение inbound, ID=%d", INBOUND_ID)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", PANEL_URL, INBOUND_ID), nil)
+	if err != nil {
+		log.Printf("GET_INBOUND: Ошибка создания запроса: %v", err)
+		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+	req.Header.Set("Cookie", sessionCookie)
+	log.Printf("GET_INBOUND: Запрос создан, Cookie=%s", sessionCookie)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("GET_INBOUND: Ошибка выполнения запроса: %v", err)
+		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("GET_INBOUND: Ошибка чтения ответа: %v", err)
+		return nil, fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+	log.Printf("GET_INBOUND: Ответ сервера: status=%d, body=%s", resp.StatusCode, string(body))
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("GET_INBOUND: Некорректный статус ответа: %d", resp.StatusCode)
+		return nil, fmt.Errorf("плохой статус: %d, body=%s", resp.StatusCode, string(body))
+	}
+
+	var inboundInfo InboundInfo
+	if err := json.Unmarshal(body, &inboundInfo); err != nil {
+		log.Printf("GET_INBOUND: Ошибка десериализации ответа: %v, body=%s", err, string(body))
+		return nil, fmt.Errorf("не удалось получить информацию об inbound: %v, body=%s", err, string(body))
+	}
+
+	if !inboundInfo.Success {
+		log.Printf("GET_INBOUND: Запрос не успешен: msg=%s", inboundInfo.Msg)
+		return nil, fmt.Errorf("запрос не успешен: %s, body=%s", inboundInfo.Msg, string(body))
+	}
+
+	log.Printf("GET_INBOUND: Успешно получен inbound: ID=%d", inboundInfo.Obj.ID)
+	return &inboundInfo.Obj, nil
+}
+
+// GetInboundClients извлекает клиентов из inbound
+func GetInboundClients(sessionCookie string) ([]Client, error) {
+	log.Printf("GET_INBOUND_CLIENTS: Получение клиентов для inbound ID=%d", INBOUND_ID)
+	inbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("GET_INBOUND_CLIENTS: Ошибка получения inbound: %v", err)
+		return nil, err
+	}
+
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("GET_INBOUND_CLIENTS: Ошибка десериализации settings: %v", err)
+		return nil, fmt.Errorf("ошибка десериализации settings: %v", err)
+	}
+
+	log.Printf("GET_INBOUND_CLIENTS: Успешно получено %d клиентов", len(settings.Clients))
+	return settings.Clients, nil
+}
+
+// FindClientByTelegramID находит клиента по префиксу TelegramID
+func FindClientByTelegramID(clients []Client, telegramID int64) *Client {
+	log.Printf("FIND_CLIENT_BY_TELEGRAM_ID: Поиск клиента для TelegramID=%d", telegramID)
+	for _, client := range clients {
+		if strings.HasPrefix(client.Email, fmt.Sprintf("%d_", telegramID)) {
+			log.Printf("FIND_CLIENT_BY_TELEGRAM_ID: Найден клиент: Email=%s, SubID=%s", client.Email, client.SubID)
+			return &client
+		}
+	}
+	log.Printf("FIND_CLIENT_BY_TELEGRAM_ID: Клиент не найден для TelegramID=%d", telegramID)
+	return nil
+}
+
+// AddClient добавляет или обновляет клиента в панели
+// В функции AddClient в panel.go, заменить весь блок расчёта времени:
+
+func AddClient(sessionCookie string, user *User, days int) error {
+	log.Printf("ADD_CLIENT: Начало добавления/обновления клиента для TelegramID=%d, days=%d", user.TelegramID, days)
+	inbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("ADD_CLIENT: Ошибка получения inbound: %v", err)
+		return fmt.Errorf("ошибка получения inbound: %v", err)
+	}
+
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("ADD_CLIENT: Ошибка десериализации settings: %v", err)
+		return fmt.Errorf("ошибка десериализации settings: %v", err)
+	}
+
+	clientUUID := uuid.New().String()
+
+	// ИСПРАВЛЕНИЕ: Правильный расчёт времени истечения
+	var expiryTime int64
+	now := time.Now()
+
+	// Ищем существующего клиента
+	existingClient := FindClientByTelegramID(settings.Clients, user.TelegramID)
+
+	if existingClient != nil && existingClient.ExpiryTime > now.UnixMilli() {
+		// Если у клиента есть активная подписка, добавляем дни к существующему времени
+		expiryTime = existingClient.ExpiryTime + int64(days)*24*60*60*1000
+		log.Printf("ADD_CLIENT: Продление активной подписки: TelegramID=%d, старое время=%d, новое время=%d",
+			user.TelegramID, existingClient.ExpiryTime, expiryTime)
+	} else {
+		// Если подписка истекла или клиента нет, считаем от текущего времени
+		expiryTime = now.Add(time.Duration(days) * 24 * time.Hour).UnixMilli()
+		log.Printf("ADD_CLIENT: Создание новой подписки или продление истёкшей: TelegramID=%d, время=%d",
+			user.TelegramID, expiryTime)
+	}
+
+	// Формируем email с датой окончания подписки в формате YYYY-DD-MM
+	expiryDate := time.UnixMilli(expiryTime).Format("2006-02-01")
+	email := fmt.Sprintf("%d_до_%s", user.TelegramID, expiryDate)
+
+	log.Printf("ADD_CLIENT: Подготовка клиента: TelegramID=%d, ClientUUID=%s, Email=%s, ExpiryTime=%d",
+		user.TelegramID, clientUUID, email, expiryTime)
+
+	// Проверяем, существует ли клиент
+	if existingClient != nil {
+		log.Printf("ADD_CLIENT: Клиент с префиксом %d_ уже существует, обновляем его", user.TelegramID)
+
+		for i, client := range settings.Clients {
+			if strings.HasPrefix(client.Email, fmt.Sprintf("%d_", user.TelegramID)) {
+				settings.Clients[i].ExpiryTime = expiryTime
+				settings.Clients[i].Enable = true
+				settings.Clients[i].Email = email // Обновляем email с новой датой окончания
+				settings.Clients[i].TotalGB = 0 // Убираем лимит трафика (0 = безлимит)
+				settings.Clients[i].Reset = 0 // Убираем автопродление
+				user.ClientID = client.ID
+				user.ExpiryTime = expiryTime
+				user.HasActiveConfig = true
+				log.Printf("ADD_CLIENT: Существующий клиент обновлён: TelegramID=%d, Email=%s, ExpiryTime=%d, TotalGB=0 (безлимит), Reset=0 (без автопродления)",
+					user.TelegramID, email, expiryTime)
+				break
+			}
+		}
+	} else {
+		// Создаём нового клиента
+		log.Printf("ADD_CLIENT: Создание нового клиента для TelegramID=%d", user.TelegramID)
+		subID := generateSubID()
+
+		newClient := Client{
+			ID:         clientUUID,
+			Flow:       "xtls-rprx-vision",
+			Email:      email,
+			LimitIP:    0,
+			TotalGB:    0, // Убираем лимит трафика (0 = безлимит)
+			ExpiryTime: expiryTime,
+			Enable:     true,
+			TgID:       0,
+			SubID:      subID,
+			Reset:      0, // Убираем автопродление
+		}
+
+		// Добавляем нового клиента
+		settings.Clients = append(settings.Clients, newClient)
+
+		// Обновляем данные пользователя
+		user.HasActiveConfig = true
+		user.ClientID = clientUUID
+		user.Email = email
+		user.SubID = subID
+		user.ConfigCreatedAt = time.Now()
+		user.ExpiryTime = expiryTime
+
+		log.Printf("ADD_CLIENT: Новый клиент создан: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
+			user.TelegramID, email, subID, expiryTime)
+	}
+
+	// Сериализуем обновлённые settings
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		log.Printf("ADD_CLIENT: Ошибка сериализации settings: %v", err)
+		return fmt.Errorf("ошибка сериализации settings: %v", err)
+	}
+	inbound.Settings = string(settingsJSON)
+
+	// Обновляем inbound
+	log.Printf("ADD_CLIENT: Обновление inbound для TelegramID=%d", user.TelegramID)
+	err = updateInbound(sessionCookie, *inbound)
+	if err != nil {
+		log.Printf("ADD_CLIENT: Ошибка обновления inbound: %v", err)
+		return fmt.Errorf("ошибка обновления inbound: %v", err)
+	}
+
+	user.ConfigsCount++
+	log.Printf("ADD_CLIENT: Успешно завершено, ConfigsCount=%d", user.ConfigsCount)
+	return nil
+}
+
+// updateInbound обновляет inbound полностью
+func updateInbound(sessionCookie string, inbound Inbound) error {
+	log.Printf("UPDATE_INBOUND: Начало обновления inbound ID=%d", inbound.ID)
+	jsonData, err := json.Marshal(inbound)
+	if err != nil {
+		log.Printf("UPDATE_INBOUND: Ошибка сериализации inbound: %v", err)
+		return fmt.Errorf("ошибка сериализации inbound: %v", err)
+	}
+	log.Printf("UPDATE_INBOUND: Данные для обновления: %s", string(jsonData))
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%spanel/api/inbounds/update/%d", PANEL_URL, INBOUND_ID), bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("UPDATE_INBOUND: Ошибка создания запроса: %v", err)
+		return fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Cookie", sessionCookie)
+	log.Printf("UPDATE_INBOUND: Запрос создан, Cookie=%s", sessionCookie)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("UPDATE_INBOUND: Ошибка выполнения запроса: %v", err)
+		return fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("UPDATE_INBOUND: Ошибка чтения ответа: %v", err)
+		return fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+	log.Printf("UPDATE_INBOUND: Ответ сервера: status=%d, body=%s", resp.StatusCode, string(body))
+
+	var updateResp APIResponse
+	if err := json.Unmarshal(body, &updateResp); err != nil {
+		log.Printf("UPDATE_INBOUND: Ошибка десериализации ответа: %v, body=%s", err, string(body))
+		return fmt.Errorf("ошибка десериализации ответа: %v, body=%s", err, string(body))
+	}
+
+	if !updateResp.Success {
+		log.Printf("UPDATE_INBOUND: Обновление не успешно: msg=%s", updateResp.Msg)
+		return fmt.Errorf("обновление inbound не удалось: %s", updateResp.Msg)
+	}
+
+	log.Printf("UPDATE_INBOUND: Inbound успешно обновлён: ID=%d", inbound.ID)
+	return nil
+}
+
+// generateSubID генерирует случайный subId
+func generateSubID() string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, 16)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	log.Printf("GENERATE_SUB_ID: Сгенерирован SubID: %s", string(b))
+	return string(b)
+}

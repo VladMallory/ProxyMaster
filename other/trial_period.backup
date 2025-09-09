@@ -1,0 +1,171 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+// TrialPeriodManager управляет пробными периодами пользователей
+type TrialPeriodManager struct{}
+
+// NewTrialPeriodManager создает новый менеджер пробных периодов
+func NewTrialPeriodManager() *TrialPeriodManager {
+	return &TrialPeriodManager{}
+}
+
+// CanUseTrial проверяет, может ли пользователь использовать пробный период
+func (tpm *TrialPeriodManager) CanUseTrial(user *User) bool {
+	if user == nil {
+		return false
+	}
+	return !user.HasUsedTrial
+}
+
+// CreateTrialConfig создает пробный конфиг для пользователя
+func (tpm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User, chatID int64) error {
+	log.Printf("TRIAL_PERIOD: Создание пробного конфига для пользователя TelegramID=%d", user.TelegramID)
+
+	// Проверяем, может ли пользователь использовать пробный период
+	if !tpm.CanUseTrial(user) {
+		log.Printf("TRIAL_PERIOD: Пользователь TelegramID=%d уже использовал пробный период", user.TelegramID)
+		return fmt.Errorf("пробный период уже был использован")
+	}
+
+	// Рассчитываем время истечения пробного периода
+	trialExpiryTime := time.Now().AddDate(0, 0, TRIAL_PERIOD_DAYS).UnixMilli()
+
+	// Создаем конфиг через панель 3x-ui
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("TRIAL_PERIOD: Ошибка авторизации в панели для TelegramID=%d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+	}
+
+	err = AddClient(sessionCookie, user, TRIAL_PERIOD_DAYS)
+	if err != nil {
+		log.Printf("TRIAL_PERIOD: Ошибка создания конфига для TelegramID=%d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка создания конфига: %v", err)
+	}
+
+	// Обновляем данные пользователя (AddClient уже обновил основные поля)
+	user.HasUsedTrial = true
+	user.ConfigsCount++
+
+	// Сохраняем изменения в базе данных
+	if err := UpdateUser(user); err != nil {
+		log.Printf("TRIAL_PERIOD: Ошибка обновления пользователя TelegramID=%d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка сохранения данных: %v", err)
+	}
+
+	log.Printf("TRIAL_PERIOD: Пробный конфиг успешно создан для TelegramID=%d, SubID=%s", user.TelegramID, user.SubID)
+
+	// Отправляем сообщение пользователю
+	tpm.sendTrialSuccessMessage(bot, chatID, user, trialExpiryTime)
+
+	return nil
+}
+
+// sendTrialSuccessMessage отправляет сообщение об успешном создании пробного конфига
+func (tpm *TrialPeriodManager) sendTrialSuccessMessage(bot *tgbotapi.BotAPI, chatID int64, user *User, expiryTime int64) {
+	expiryDate := time.UnixMilli(expiryTime).Format("02.01.2006")
+	
+	text := fmt.Sprintf("🎉 Поздравляем! Вам предоставлен пробный период на %d дней!\n\n"+
+		"📱 Ваш VPN конфиг активен до: %s\n\n"+
+		"🔗 Для подключения используйте кнопку ниже:\n"+
+		"• Happ VPN (рекомендуется)\n"+
+		"• Или любой другой VLESS клиент\n\n"+
+		"💡 После окончания пробного периода вы можете продлить подписку через меню пополнения.",
+		TRIAL_PERIOD_DAYS, expiryDate)
+
+	// Создаем клавиатуру с кнопкой подключения
+	subscriptionURL := CONFIG_BASE_URL + user.SubID
+	redirectURL := GetRedirectURL() + subscriptionURL
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить (Happ)", redirectURL),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🏠 Главное меню", "main"),
+		),
+	)
+
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ReplyMarkup = keyboard
+
+	if _, err := bot.Send(msg); err != nil {
+		log.Printf("TRIAL_PERIOD: Ошибка отправки сообщения о пробном периоде для TelegramID=%d: %v", user.TelegramID, err)
+	}
+}
+
+// sendTrialAlreadyUsedMessage отправляет сообщение о том, что пробный период уже использован
+func (tpm *TrialPeriodManager) sendTrialAlreadyUsedMessage(bot *tgbotapi.BotAPI, chatID int64) {
+	text := "❌ Пробный период уже был использован.\n\n" +
+		"💳 Для получения VPN доступа пополните баланс через меню пополнения."
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("💳 Пополнить баланс", "topup"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🏠 Главное меню", "main"),
+		),
+	)
+
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ReplyMarkup = keyboard
+
+	if _, err := bot.Send(msg); err != nil {
+		log.Printf("TRIAL_PERIOD: Ошибка отправки сообщения о использованном пробном периоде: %v", err)
+	}
+}
+
+// HandleTrialPeriod обрабатывает логику пробного периода при команде /start
+func (tpm *TrialPeriodManager) HandleTrialPeriod(bot *tgbotapi.BotAPI, user *User, chatID int64) {
+	log.Printf("TRIAL_PERIOD: Обработка пробного периода для пользователя TelegramID=%d", user.TelegramID)
+
+	// Если у пользователя уже есть активный конфиг, не предлагаем пробный период
+	if user.HasActiveConfig {
+		log.Printf("TRIAL_PERIOD: Пользователь TelegramID=%d уже имеет активный конфиг", user.TelegramID)
+		return
+	}
+
+	// Проверяем, может ли пользователь использовать пробный период
+	if tpm.CanUseTrial(user) {
+		log.Printf("TRIAL_PERIOD: Предложение пробного периода пользователю TelegramID=%d", user.TelegramID)
+		
+		text := fmt.Sprintf("🎁 Добро пожаловать! Вам доступен пробный период на %d дней!\n\n"+
+			"Хотите активировать пробный VPN доступ?", TRIAL_PERIOD_DAYS)
+
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("💳 Пополнить баланс", "topup"),
+			),
+		)
+
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ReplyMarkup = keyboard
+
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("TRIAL_PERIOD: Ошибка отправки предложения пробного периода для TelegramID=%d: %v", user.TelegramID, err)
+		}
+	} else {
+		log.Printf("TRIAL_PERIOD: Пользователь TelegramID=%d уже использовал пробный период", user.TelegramID)
+		tpm.sendTrialAlreadyUsedMessage(bot, chatID)
+	}
+}
+
+// GetTrialPeriodInfo возвращает информацию о пробном периоде для админа
+func (tpm *TrialPeriodManager) GetTrialPeriodInfo() string {
+	return fmt.Sprintf("📊 Информация о пробном периоде:\n\n"+
+		"⏱️ Длительность: %d дней\n"+
+		"⚙️ Настройка: TRIAL_PERIOD_DAYS = %d\n\n"+
+		"💡 Для изменения длительности отредактируйте константу TRIAL_PERIOD_DAYS в config.go",
+		TRIAL_PERIOD_DAYS, TRIAL_PERIOD_DAYS)
+}
