@@ -45,3 +45,6 @@ desktop.ini
 
 # Go специфичные файлы
 vendor/
+
+# Backup файлы
+backups/backupdb/
