@@ -48,7 +48,7 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 			)
 		}
 
-		expiryDate := time.UnixMilli(user.ExpiryTime).Format("02.01.2006 15:04")
+		expiryDate := common.FormatRussianDateTimeFromUnix(user.ExpiryTime)
 
 		// Получаем информацию о лимитах трафика
 		trafficInfo := common.GetTrafficConfigDescription()

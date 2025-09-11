@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"bot/common"
 
@@ -99,7 +98,7 @@ func ProcessPaymentCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, u
 		),
 	)
 
-	expiryDate := time.UnixMilli(user.ExpiryTime).Format("2006-01-02")
+	expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
 
 	var actionText string
 	if common.IsConfigActive(user) && user.ConfigsCount > 1 {

@@ -3,7 +3,6 @@ package menus
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"bot/common"
 
@@ -151,7 +150,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 	text += fmt.Sprintf("💰 Ваш баланс: %.2f₽\n", user.Balance)
 
 	if common.IsConfigActive(user) {
-		expiryDate := time.UnixMilli(user.ExpiryTime).Format("2006-01-02")
+		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
 		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
 		text += "🚀 Для того чтобы конфиг начал работать, выполните 2 простых шага:\n\n"
 		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
@@ -322,7 +321,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 	text += fmt.Sprintf("💰 Ваш баланс: %.2f₽\n", user.Balance)
 
 	if common.IsConfigActive(user) {
-		expiryDate := time.UnixMilli(user.ExpiryTime).Format("2006-01-02")
+		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
 		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
 		text += "🚀 Для того чтобы конфиг начал работать, выполните 2 простых шага:\n\n"
 		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
