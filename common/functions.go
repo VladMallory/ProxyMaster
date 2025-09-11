@@ -30,9 +30,30 @@ func GetDaysWord(days int) string {
 	}
 }
 
-// GetRedirectURL возвращает URL для редиректа
+// GetAppName возвращает название приложения на основе REDIRECT_IMPORT
+func GetAppName() string {
+	switch REDIRECT_IMPORT {
+	case "v2raytun":
+		return "v2raytun"
+	case "happ":
+		return "Happ"
+	default:
+		return "Happ" // по умолчанию
+	}
+}
+
+// GetRedirectURL возвращает URL для редиректа в зависимости от типа импорта
 func GetRedirectURL() string {
-	return "http://" + REDIRECT_DOMAIN + "/redirect.html?url="
+	var redirectFile string
+	switch REDIRECT_IMPORT {
+	case "v2raytun":
+		redirectFile = "redirect_v2raytun.html"
+	case "happ":
+		redirectFile = "redirect_happ.html"
+	default:
+		redirectFile = "redirect_happ.html" // по умолчанию используем happ
+	}
+	return "http://" + REDIRECT_DOMAIN + "/" + redirectFile + "?url="
 }
 
 // CalculateTrafficLimit рассчитывает лимит трафика для указанного количества дней

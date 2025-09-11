@@ -13,6 +13,7 @@ var (
 	CONFIG_BASE_URL        string
 	CONFIG_JSON_URL        string
 	REDIRECT_DOMAIN        string
+	REDIRECT_IMPORT        string // Тип импорта: "happ" или "v2raytun"
 	PRICE_PER_DAY          int
 	TRIAL_PERIOD_DAYS      int
 	TRAFFIC_LIMIT_GB       int
@@ -60,7 +61,8 @@ func init() {
 
 	// URL для редиректа (для импорта подписки в Happ)
 	REDIRECT_DOMAIN = "your-domain.com:8081"
-
+	REDIRECT_IMPORT = "happ"                         // тип импорта: "happ" или "v2raytun"
+	
 	// === НАСТРОЙКИ ТРАФИКА ===
 	TRAFFIC_RESET_ENABLED = true  // включен ли автоматический сброс трафика
 	PRICE_PER_DAY = 10            // стоимость подписки за день (в рублях)

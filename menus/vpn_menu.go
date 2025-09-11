@@ -22,7 +22,7 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить (Happ)", redirectURL)),
+				tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData("🔄 Продлить", "extend"),
 				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
@@ -41,7 +41,7 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 			"📅 Активен до: %s\n"+
 			"📊 Лимиты трафика: %s\n"+
 			"🔗 Ссылка на подписку:\n`%s`\n\n"+
-			"💡 Нажмите 'Подключить (Happ)' для автоматического импорта\n\n"+
+			"💡 Нажмите 'Подключить (%s)' для автоматического импорта\n\n"+
 			"📱 Приложения для самостоятельного импорта:\n"+
 			"• Android: v2rayng, Hiddify, v2box\n"+
 			"• iOS: v2raytun, v2Box, Streisand, Hiddify\n"+
@@ -50,7 +50,7 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 			"• Роутеры: xkeen (Keenetic), OpenWrt\n"+
 			"• ТВ: v2raytun, Happ\n\n"+
 			"Если у вас возникли вопросы, вы можете обратиться за помощью к нашей поддержке.",
-			expiryDate, trafficInfo, subscriptionURL)
+			expiryDate, trafficInfo, subscriptionURL, common.GetAppName())
 
 		log.Printf("EDIT_VPN: Текст для активного конфига для TelegramID=%d: %s", user.TelegramID, text)
 		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)

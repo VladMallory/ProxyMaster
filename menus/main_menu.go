@@ -26,7 +26,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 				tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить (Happ)", redirectURL)),
+				tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
 			),
@@ -93,7 +93,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
 		text += "🚀 Для того чтобы конфиг начал работать, выполните 2 простых шага:\n\n"
 		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
-		text += "2️⃣ После установки нажмите 'Подключить (Happ)' для настройки"
+		text += fmt.Sprintf("2️⃣ После установки нажмите 'Подключить (%s)' для настройки", common.GetAppName())
 	} else {
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
@@ -130,7 +130,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 				tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить (Happ)", redirectURL)),
+				tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
 			),
@@ -197,7 +197,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
 		text += "🚀 Для того чтобы конфиг начал работать, выполните 2 простых шага:\n\n"
 		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
-		text += "2️⃣ После установки нажмите 'Подключить (Happ)' для настройки"
+		text += fmt.Sprintf("2️⃣ После установки нажмите 'Подключить (%s)' для настройки", common.GetAppName())
 	} else {
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"

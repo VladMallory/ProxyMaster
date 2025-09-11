@@ -13,12 +13,24 @@ import (
 func InitializeApp() {
 	log.Printf("APP: Инициализация приложения")
 
-	// Запускаем HTTP сервер для обслуживания redirect.html и API
+	// Запускаем HTTP сервер для обслуживания redirect файлов и API
 	go func() {
-		// Обработчик для redirect.html
+		// Обработчик для старого redirect.html (для обратной совместимости)
 		http.HandleFunc("/redirect.html", func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("HTTP_SERVER: Redirect request: %s", r.URL.String())
 			http.ServeFile(w, r, "redirect.html")
+		})
+
+		// Обработчик для redirect_happ.html
+		http.HandleFunc("/redirect_happ.html", func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("HTTP_SERVER: Happ redirect request: %s", r.URL.String())
+			http.ServeFile(w, r, "importRedirect/redirect_happ.html")
+		})
+
+		// Обработчик для redirect_v2raytun.html
+		http.HandleFunc("/redirect_v2raytun.html", func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("HTTP_SERVER: v2raytun redirect request: %s", r.URL.String())
+			http.ServeFile(w, r, "importRedirect/redirect_v2raytun.html")
 		})
 
 		log.Printf("HTTP_SERVER: Запуск HTTP сервера на порту 8081")

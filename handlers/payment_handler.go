@@ -92,7 +92,7 @@ func ProcessPaymentCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, u
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить (Happ)", redirectURL)),
+			tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
 			tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
@@ -114,8 +114,8 @@ func ProcessPaymentCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, u
 		"💳 Остаток: %.2f₽\n"+
 		"⏰ Активен до: %s\n\n"+
 		"🔗 Ссылка на подписку:\n`%s`\n\n"+
-		"💡 Нажмите 'Подключить (Happ)' для автоматического импорта",
-		actionText, days, common.GetDaysWord(days), cost, user.Balance, expiryDate, configURL)
+		"💡 Нажмите 'Подключить (%s)' для автоматического импорта",
+		actionText, days, common.GetDaysWord(days), cost, user.Balance, expiryDate, configURL, common.GetAppName())
 
 	log.Printf("PROCESS_PAYMENT_CALLBACK: Текст успешного платежа для TelegramID=%d: %s", user.TelegramID, text)
 	editMsg = tgbotapi.NewEditMessageText(chatID, messageID, text)
