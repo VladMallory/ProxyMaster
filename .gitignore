@@ -48,3 +48,11 @@ vendor/
 
 # Backup файлы
 backups/backupdb/
+
+# Env файлы (не коммитить реальные секреты)
+.env
+.env.*
+!/.env.example
+tools/.env
+tools/.env.*
+!tools/.env.example

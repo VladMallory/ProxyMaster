@@ -44,9 +44,9 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 			"💡 Нажмите 'Подключить (Happ)' для автоматического импорта\n\n"+
 			"📱 Приложения для самостоятельного импорта:\n"+
 			"• Android: v2rayng, Hiddify, v2box\n"+
-			"• iOS: v2raytun, Strisand, Hiddify\n"+
+			"• iOS: v2raytun, v2Box, Streisand, Hiddify\n"+
 			"• Windows, Linux: Nekoray, Hiddify \n"+
-			"• macOS: v2raytun, v2box, Strisand, Hiddify\n"+
+			"• macOS: v2raytun, v2Box, Streisand, Hiddify\n"+
 			"• Роутеры: xkeen (Keenetic), OpenWrt\n"+
 			"• ТВ: v2raytun, Happ\n\n"+
 			"Если у вас возникли вопросы, вы можете обратиться за помощью к нашей поддержке.",
