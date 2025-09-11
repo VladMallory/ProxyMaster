@@ -20,11 +20,11 @@ var db *sql.DB
 
 // Константы для PostgreSQL
 const (
-	PG_HOST     = "localhost"
-	PG_PORT     = 5432
-	PG_USER     = "vpn_bot_user"
-	PG_PASSWORD = "your_secure_password"
-	PG_DBNAME   = "vpn_bot"
+	PG_HOST     = "localhost"            // Хост PostgreSQL сервера
+	PG_PORT     = 5432                   // Порт PostgreSQL (обычно 5432)
+	PG_USER     = "vpn_bot_user"         // Имя пользователя БД
+	PG_PASSWORD = "your_secure_password" // Пароль пользователя БД
+	PG_DBNAME   = "vpn_bot"              // Название базы данных
 )
 
 // InitPostgreSQL инициализирует подключение к PostgreSQL
