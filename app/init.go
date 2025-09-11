@@ -81,5 +81,15 @@ func StartBot(token string) {
 	common.GlobalBot = bot.API
 	log.Printf("APP: Бот сохранен в глобальной переменной для IP Ban сервиса")
 
+	// Запускаем систему уведомлений о подписке
+	if common.NOTIFICATION_ENABLED {
+		log.Printf("APP: Запуск системы уведомлений о подписке")
+		notificationManager := telegram_bot.NewNotificationManager(bot.API)
+		go notificationManager.StartNotificationScheduler()
+		log.Printf("APP: Система уведомлений о подписке запущена")
+	} else {
+		log.Printf("APP: Система уведомлений о подписке отключена в конфигурации")
+	}
+
 	bot.Start()
 }

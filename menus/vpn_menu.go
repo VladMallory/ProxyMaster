@@ -20,17 +20,33 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 		subscriptionURL := common.CONFIG_BASE_URL + user.SubID
 		redirectURL := common.GetRedirectURL() + subscriptionURL
 
-		keyboard := tgbotapi.NewInlineKeyboardMarkup(
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("🔄 Продлить", "extend"),
-				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
-			),
-		)
+		var keyboard tgbotapi.InlineKeyboardMarkup
+		if common.TARIFF_MODE_ENABLED {
+			// Режим тарифов - показываем кнопку "Продлить"
+			keyboard = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🔄 Продлить", "extend"),
+					tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+				),
+			)
+		} else {
+			// Режим автосписания - без кнопки "Продлить"
+			keyboard = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+				),
+			)
+		}
 
 		expiryDate := time.UnixMilli(user.ExpiryTime).Format("02.01.2006 15:04")
 
@@ -61,26 +77,51 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 		}
 	} else {
 		log.Printf("EDIT_VPN: Конфиг неактивен для TelegramID=%d, переход к выбору периода", user.TelegramID)
-		keyboard := tgbotapi.NewInlineKeyboardMarkup(
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("1 день (10₽)", "days:1"),
-				tgbotapi.NewInlineKeyboardButtonData("3 дня (30₽)", "days:3"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("7 дней (70₽)", "days:7"),
-				tgbotapi.NewInlineKeyboardButtonData("30 дней (300₽)", "days:30"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
-			),
-		)
 
-		text := fmt.Sprintf("🔐 Создание нового VPN конфига\n\n"+
-			"💰 Ваш баланс: %.2f₽\n\n"+
-			"Выберите период для создания конфига:", user.Balance)
+		var keyboard tgbotapi.InlineKeyboardMarkup
+		var text string
+
+		if common.TARIFF_MODE_ENABLED {
+			// Режим тарифов - показываем варианты дней
+			keyboard = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("1 день (8₽)", "days:1"),
+					tgbotapi.NewInlineKeyboardButtonData("3 дня (24₽)", "days:3"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("7 дней (56₽)", "days:7"),
+					tgbotapi.NewInlineKeyboardButtonData("30 дней (240₽)", "days:30"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+				),
+			)
+			text = fmt.Sprintf("🔐 Создание нового VPN конфига\n\n"+
+				"💰 Ваш баланс: %.2f₽\n\n"+
+				"Выберите период для создания конфига:", user.Balance)
+		} else {
+			// Режим автосписания - только пополнение баланса
+			keyboard = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить баланс", "topup"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+				),
+			)
+			text = fmt.Sprintf("🔐 Автоматическое создание VPN конфига\n\n"+
+				"💰 Ваш баланс: %.2f₽\n"+
+				"💸 Стоимость дня: %d₽\n\n"+
+				"📅 Доступных дней: %d\n\n"+
+				"💡 Пополните баланс, и конфиг будет создан автоматически!",
+				user.Balance, common.PRICE_PER_DAY, int(user.Balance/float64(common.PRICE_PER_DAY)))
+		}
 
 		log.Printf("EDIT_VPN: Текст для неактивного конфига для TelegramID=%d: %s", user.TelegramID, text)
 		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)

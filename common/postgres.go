@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -103,11 +104,93 @@ func GetOrCreateUserPG(telegramID int64, username, firstName, lastName string) (
 	err = db.QueryRow(query, telegramID, username, firstName, lastName, 0.0, 0.0,
 		0, false, false, now, now).Scan(&id)
 	if err != nil {
+		// Если ошибка duplicate key, возможно пользователь был создан другим процессом
+		// Попробуем получить его еще раз
+		if strings.Contains(err.Error(), "duplicate key") {
+			log.Printf("POSTGRES: Пользователь %d уже существует, пытаемся получить его", telegramID)
+			user, err2 := GetUserByTelegramIDPG(telegramID)
+			if err2 != nil {
+				return nil, fmt.Errorf("ошибка получения существующего пользователя: %v", err2)
+			}
+			if user != nil {
+				log.Printf("POSTGRES: Найден существующий пользователь: %d", telegramID)
+				return user, nil
+			}
+		}
 		return nil, fmt.Errorf("ошибка создания пользователя: %v", err)
 	}
 
 	log.Printf("Создан новый пользователь: %s (ID: %d)", firstName, telegramID)
-	return GetUserByTelegramIDPG(telegramID)
+
+	// Получаем созданного пользователя
+	newUser, err := GetUserByTelegramIDPG(telegramID)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения созданного пользователя: %v", err)
+	}
+
+	// Проверяем, есть ли у пользователя конфиг в панели
+	go func() {
+		log.Printf("POSTGRES: Проверка конфига в панели для нового пользователя %d", telegramID)
+		syncUserWithPanel(newUser)
+	}()
+
+	return newUser, nil
+}
+
+// syncUserWithPanel синхронизирует пользователя с панелью 3x-ui
+func syncUserWithPanel(user *User) {
+	if user == nil {
+		return
+	}
+
+	// Авторизуемся в панели
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("SYNC_PANEL: Ошибка авторизации для пользователя %d: %v", user.TelegramID, err)
+		return
+	}
+
+	// Получаем наш inbound
+	targetInbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("SYNC_PANEL: Ошибка получения inbound для пользователя %d: %v", user.TelegramID, err)
+		return
+	}
+
+	if targetInbound == nil {
+		log.Printf("SYNC_PANEL: Inbound с ID %d не найден для пользователя %d", INBOUND_ID, user.TelegramID)
+		return
+	}
+
+	// Парсим settings
+	var settings Settings
+	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+		log.Printf("SYNC_PANEL: Ошибка парсинга settings для пользователя %d: %v", user.TelegramID, err)
+		return
+	}
+
+	// Ищем клиента пользователя
+	existingClient := FindClientByTelegramID(settings.Clients, user.TelegramID)
+	if existingClient != nil {
+		log.Printf("SYNC_PANEL: Найден конфиг в панели для пользователя %d, синхронизируем", user.TelegramID)
+
+		// Обновляем данные пользователя из панели
+		user.ClientID = existingClient.ID
+		user.SubID = existingClient.SubID
+		user.Email = existingClient.Email
+		user.ExpiryTime = existingClient.ExpiryTime
+		user.HasActiveConfig = existingClient.Enable && time.Now().UnixMilli() < existingClient.ExpiryTime
+		user.UpdatedAt = time.Now()
+
+		// Сохраняем в базу
+		if err := UpdateUserPG(user); err != nil {
+			log.Printf("SYNC_PANEL: Ошибка обновления пользователя %d: %v", user.TelegramID, err)
+		} else {
+			log.Printf("SYNC_PANEL: Пользователь %d успешно синхронизирован с панелью", user.TelegramID)
+		}
+	} else {
+		log.Printf("SYNC_PANEL: Конфиг в панели для пользователя %d не найден", user.TelegramID)
+	}
 }
 
 // GetUserByTelegramID получает пользователя по Telegram ID
@@ -211,6 +294,61 @@ func GetAllUsersPG() ([]User, error) {
 	return users, nil
 }
 
+// GetUsersWithActiveConfigsPG получает всех пользователей с активными конфигами
+func GetUsersWithActiveConfigsPG() ([]User, error) {
+	query := `
+		SELECT telegram_id, username, first_name, last_name, balance, total_paid,
+			   configs_count, has_active_config, client_id, sub_id, email,
+			   config_created_at, expiry_time, has_used_trial, created_at, updated_at
+		FROM users 
+		WHERE has_active_config = true AND expiry_time > 0
+		ORDER BY created_at DESC`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения пользователей с активными конфигами: %v", err)
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		var configCreatedAt sql.NullTime
+		var clientID, subID, email sql.NullString
+		var expiryTime sql.NullInt64
+
+		err := rows.Scan(
+			&user.TelegramID, &user.Username, &user.FirstName, &user.LastName,
+			&user.Balance, &user.TotalPaid, &user.ConfigsCount, &user.HasActiveConfig,
+			&clientID, &subID, &email, &configCreatedAt, &expiryTime,
+			&user.HasUsedTrial, &user.CreatedAt, &user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка сканирования пользователя: %v", err)
+		}
+
+		if configCreatedAt.Valid {
+			user.ConfigCreatedAt = configCreatedAt.Time
+		}
+		if clientID.Valid {
+			user.ClientID = clientID.String
+		}
+		if subID.Valid {
+			user.SubID = subID.String
+		}
+		if email.Valid {
+			user.Email = email.String
+		}
+		if expiryTime.Valid {
+			user.ExpiryTime = expiryTime.Int64
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 // UpdateUser обновляет данные пользователя
 func UpdateUserPG(user *User) error {
 	query := `
@@ -232,7 +370,6 @@ func UpdateUserPG(user *User) error {
 		nullIfEmpty(user.ClientID), nullIfEmpty(user.SubID), nullIfEmpty(user.Email),
 		configCreatedAt, user.ExpiryTime, user.HasUsedTrial, time.Now(),
 	)
-
 	if err != nil {
 		return fmt.Errorf("ошибка обновления пользователя: %v", err)
 	}
@@ -355,7 +492,6 @@ func SetTrafficConfigPG(config *TrafficConfig) error {
 		config.Enabled, config.DailyLimitGB, config.WeeklyLimitGB,
 		config.MonthlyLimitGB, config.LimitGB, config.ResetDays, time.Now(),
 	)
-
 	if err != nil {
 		return fmt.Errorf("ошибка сохранения конфигурации трафика: %v", err)
 	}
@@ -374,7 +510,6 @@ func GetUsersStatisticsPG() (*UsersStatistics, error) {
 		&stats.TotalRevenue, &stats.NewThisWeek, &stats.NewThisMonth,
 		&stats.ConversionRate,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("ошибка получения статистики: %v", err)
 	}
@@ -493,7 +628,7 @@ func BackupPostgreSQLPG() error {
 	backupDir := fmt.Sprintf("backups/backupdb/backup_%s", timestamp)
 
 	// Создаем директорию для бэкапа
-	if err := os.MkdirAll(backupDir, 0755); err != nil {
+	if err := os.MkdirAll(backupDir, 0o755); err != nil {
 		return fmt.Errorf("ошибка создания директории бэкапа: %v", err)
 	}
 

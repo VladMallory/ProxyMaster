@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 // Константы для совместимости (теперь используется PostgreSQL)
@@ -59,6 +61,12 @@ func GetUserByTelegramID(telegramID int64) (*User, error) {
 func GetAllUsers() ([]User, error) {
 	// Переадресация к PostgreSQL
 	return GetAllUsersPG()
+}
+
+// GetUsersWithActiveConfigs получает всех пользователей с активными конфигами
+func GetUsersWithActiveConfigs() ([]User, error) {
+	// Переадресация к PostgreSQL
+	return GetUsersWithActiveConfigsPG()
 }
 
 // AddBalance добавляет баланс пользователю
@@ -144,7 +152,85 @@ func ProcessPayment(user *User, days int) (string, error) {
 
 	configURL := fmt.Sprintf("%s%s", CONFIG_BASE_URL, user.SubID)
 	log.Printf("PROCESS_PAYMENT: Конфиг успешно создан для TelegramID=%d, ConfigURL=%s", user.TelegramID, configURL)
+
+	// Проверяем, нужно ли отправить уведомление о подписке
+	if NOTIFICATION_ENABLED && GlobalBot != nil {
+		go checkUserSubscriptionNotification(user)
+	}
+
 	return configURL, nil
+}
+
+// checkUserSubscriptionNotification проверяет подписку пользователя и отправляет уведомление при необходимости
+func checkUserSubscriptionNotification(user *User) {
+	if !NOTIFICATION_ENABLED || GlobalBot == nil {
+		return
+	}
+
+	now := time.Now()
+
+	// Проверяем, что у пользователя есть активная подписка
+	if !user.HasActiveConfig || user.ExpiryTime <= 0 {
+		return
+	}
+
+	// Проверяем, что подписка еще не истекла
+	if user.ExpiryTime <= now.UnixMilli() {
+		return
+	}
+
+	// Вычисляем количество дней до истечения
+	expiry := time.UnixMilli(user.ExpiryTime)
+	diff := expiry.Sub(now)
+	daysLeft := int(diff.Hours() / 24)
+
+	// Если осталось меньше дня, но больше 0, считаем как 1 день
+	if daysLeft == 0 && diff > 0 {
+		daysLeft = 1
+	}
+
+	// Проверяем, есть ли этот день в списке дней для уведомлений
+	shouldNotify := false
+	for _, day := range NOTIFICATION_DAYS_BEFORE {
+		if daysLeft == day {
+			shouldNotify = true
+			break
+		}
+	}
+
+	if !shouldNotify {
+		return
+	}
+
+	// Получаем сообщение для уведомления
+	var message string
+	switch daysLeft {
+	case 1:
+		message = NOTIFICATION_MESSAGE_1_DAY
+	case 3:
+		message = NOTIFICATION_MESSAGE_3_DAYS
+	case 7:
+		message = NOTIFICATION_MESSAGE_7_DAYS
+	default:
+		return
+	}
+
+	// Отправляем уведомление
+	msg := tgbotapi.NewMessage(user.TelegramID, message)
+	msg.ParseMode = tgbotapi.ModeHTML
+
+	_, err := GlobalBot.Send(msg)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления пользователю %d: %v", user.TelegramID, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление отправлено пользователю %d (осталось %d дней)", user.TelegramID, daysLeft)
+	}
+}
+
+// CheckUserSubscriptionNotification проверяет подписку пользователя и отправляет уведомление при необходимости
+// Эта функция экспортируется для использования в других пакетах
+func CheckUserSubscriptionNotification(user *User) {
+	checkUserSubscriptionNotification(user)
 }
 
 // ResetAllTrialFlags сбрасывает флаги пробных периодов для всех пользователей
@@ -361,7 +447,7 @@ func copyLatestBackup(sourceDir string) error {
 	}
 
 	// Создаем папку latest
-	if err := os.MkdirAll(latestDir, 0755); err != nil {
+	if err := os.MkdirAll(latestDir, 0o755); err != nil {
 		return fmt.Errorf("ошибка создания папки latest: %v", err)
 	}
 

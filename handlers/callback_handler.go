@@ -49,9 +49,19 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 		menus.EditMainMenu(bot, chatID, messageID, user)
 	case data == "extend":
 		log.Printf("HANDLE_CALLBACK: Вызов editExtend для TelegramID=%d", userID)
-		menus.EditExtend(bot, chatID, messageID)
+		if common.TARIFF_MODE_ENABLED {
+			menus.EditExtend(bot, chatID, messageID)
+		} else {
+			// В режиме автосписания перенаправляем на пополнение баланса
+			menus.EditTopup(bot, chatID, messageID)
+		}
 	case strings.HasPrefix(data, "days:"):
-		handleDaysCallback(bot, chatID, messageID, data, callback)
+		if common.TARIFF_MODE_ENABLED {
+			handleDaysCallback(bot, chatID, messageID, data, callback)
+		} else {
+			// В режиме автосписания перенаправляем на пополнение баланса
+			menus.EditTopup(bot, chatID, messageID)
+		}
 	case strings.HasPrefix(data, "pay:"):
 		handlePayCallback(bot, chatID, messageID, user, data, callback)
 	case strings.HasPrefix(data, "topup:"):

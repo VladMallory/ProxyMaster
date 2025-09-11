@@ -7,6 +7,7 @@ import (
 
 	"bot/app"
 	"bot/common"
+	"bot/services"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -29,6 +30,11 @@ func main() {
 	// Запускаем IP Ban сервис если включен (в отдельной горутине)
 	if common.IP_BAN_ENABLED {
 		go startIPBanService()
+	}
+
+	// Запускаем автосписание если включено (в отдельной горутине)
+	if common.AUTO_BILLING_ENABLED {
+		go startAutoBillingService()
 	}
 
 	// Запускаем Telegram бота (блокирующая функция)
@@ -100,4 +106,29 @@ func startIPBanService() {
 	}
 
 	log.Printf("IP_BAN: IP Ban сервис успешно запущен")
+}
+
+// startAutoBillingService запускает сервис автосписания
+func startAutoBillingService() {
+	log.Printf("AUTO_BILLING: Запуск сервиса автосписания...")
+
+	// Ждем инициализации бота
+	time.Sleep(5 * time.Second)
+
+	// Получаем бот из глобальной переменной
+	var bot *tgbotapi.BotAPI
+	if common.GlobalBot != nil {
+		bot = common.GlobalBot
+		log.Printf("AUTO_BILLING: Бот получен из глобальной переменной")
+	} else {
+		log.Printf("AUTO_BILLING: Бот не инициализирован, уведомления отключены")
+	}
+
+	// Создаем сервис автосписания
+	autoBillingService := services.NewAutoBillingService(bot)
+
+	// Запускаем сервис
+	autoBillingService.Start()
+
+	log.Printf("AUTO_BILLING: Сервис автосписания успешно запущен")
 }

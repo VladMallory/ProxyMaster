@@ -21,35 +21,14 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 		subscriptionURL := common.CONFIG_BASE_URL + user.SubID
 		redirectURL := common.GetRedirectURL() + subscriptionURL
 
-		keyboard = tgbotapi.NewInlineKeyboardMarkup(
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
-			),
-		)
-	} else {
-		// Проверяем, может ли пользователь использовать пробный период
-		if common.TrialManager.CanUseTrial(user) {
+		if common.TARIFF_MODE_ENABLED {
+			// Режим тарифов - показываем кнопку "Продлить"
 			keyboard = tgbotapi.NewInlineKeyboardMarkup(
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
-				),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
 				),
@@ -64,13 +43,13 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 				),
 			)
 		} else {
+			// Режим автосписания - без кнопки "Продлить"
 			keyboard = tgbotapi.NewInlineKeyboardMarkup(
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
-				),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
 				),
@@ -81,6 +60,89 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
 				),
 			)
+		}
+	} else {
+		// Проверяем, может ли пользователь использовать пробный период
+		if common.TrialManager.CanUseTrial(user) {
+			if common.TARIFF_MODE_ENABLED {
+				// Режим тарифов - показываем кнопку "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			} else {
+				// Режим автосписания - без кнопки "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			}
+		} else {
+			if common.TARIFF_MODE_ENABLED {
+				// Режим тарифов - показываем кнопку "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			} else {
+				// Режим автосписания - без кнопки "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			}
 		}
 	}
 
@@ -100,8 +162,13 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 			text += fmt.Sprintf("Пробный период: %d дней\n", common.TRIAL_PERIOD_DAYS)
 			text += "✨ Нажмите кнопку ниже, чтобы активировать пробный период."
 		} else {
-			text += "🔐 У вас нет активного конфига для подключения\n"
-			text += "💡 Выберите подходящий тариф и начните пользоваться безопасным интернетом!"
+			if common.TARIFF_MODE_ENABLED {
+				text += "🔐 У вас нет активного конфига для подключения\n"
+				text += "💡 Выберите подходящий тариф и начните пользоваться безопасным интернетом!"
+			} else {
+				text += "🔐 У вас нет активного конфига для подключения\n"
+				text += "💡 Пополните баланс и автоматически получите доступ к VPN!"
+			}
 		}
 	}
 
@@ -125,35 +192,14 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 		subscriptionURL := common.CONFIG_BASE_URL + user.SubID
 		redirectURL := common.GetRedirectURL() + subscriptionURL
 
-		keyboard = tgbotapi.NewInlineKeyboardMarkup(
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
-			),
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
-			),
-		)
-	} else {
-		// Проверяем, может ли пользователь использовать пробный период
-		if common.TrialManager.CanUseTrial(user) {
+		if common.TARIFF_MODE_ENABLED {
+			// Режим тарифов - показываем кнопку "Продлить"
 			keyboard = tgbotapi.NewInlineKeyboardMarkup(
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
-				),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
 				),
@@ -168,13 +214,13 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 				),
 			)
 		} else {
+			// Режим автосписания - без кнопки "Продлить"
 			keyboard = tgbotapi.NewInlineKeyboardMarkup(
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
-				),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
 				),
@@ -185,6 +231,89 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
 				),
 			)
+		}
+	} else {
+		// Проверяем, может ли пользователь использовать пробный период
+		if common.TrialManager.CanUseTrial(user) {
+			if common.TARIFF_MODE_ENABLED {
+				// Режим тарифов - показываем кнопку "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			} else {
+				// Режим автосписания - без кнопки "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🎁 Активировать пробный период", "activate_trial"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			}
+		} else {
+			if common.TARIFF_MODE_ENABLED {
+				// Режим тарифов - показываем кнопку "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			} else {
+				// Режим автосписания - без кнопки "Продлить"
+				keyboard = tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
+					),
+				)
+			}
 		}
 	}
 
@@ -204,8 +333,13 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 			text += fmt.Sprintf("Пробный период: %d дней\n", common.TRIAL_PERIOD_DAYS)
 			text += "✨ Нажмите кнопку ниже, чтобы активировать пробный период."
 		} else {
-			text += "🔐 У вас нет активного конфига для подключения\n"
-			text += "💡 Выберите подходящий тариф и начните пользоваться безопасным интернетом!"
+			if common.TARIFF_MODE_ENABLED {
+				text += "🔐 У вас нет активного конфига для подключения\n"
+				text += "💡 Выберите подходящий тариф и начните пользоваться безопасным интернетом!"
+			} else {
+				text += "🔐 У вас нет активного конфига для подключения\n"
+				text += "💡 Пополните баланс и автоматически получите доступ к VPN!"
+			}
 		}
 	}
 

@@ -70,6 +70,12 @@ func (tm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User
 
 	log.Printf("Пробный период успешно активирован для пользователя %d: ClientID=%s, SubID=%s, Email=%s, ExpiryTime=%d",
 		user.TelegramID, user.ClientID, user.SubID, user.Email, user.ExpiryTime)
+
+	// Проверяем, нужно ли отправить уведомление о подписке
+	if NOTIFICATION_ENABLED && GlobalBot != nil {
+		go checkUserSubscriptionNotification(user)
+	}
+
 	return nil
 }
 
