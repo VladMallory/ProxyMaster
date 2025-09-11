@@ -21,45 +21,20 @@ var russianMonths = map[time.Month]string{
 	time.December:  "декабря",
 }
 
-// FormatRussianDate форматирует дату в русском формате с правильными окончаниями
+// FormatRussianDate форматирует дату в русском формате
 // Пример: "2025 13 сентября" или "2025 21 января"
 func FormatRussianDate(t time.Time) string {
 	day := t.Day()
 	month := russianMonths[t.Month()]
 	year := t.Year()
 
-	// Определяем правильное окончание для числа
-	dayStr := getDayWithEnding(day)
-
-	return fmt.Sprintf("%d %s %s", year, dayStr, month)
+	return fmt.Sprintf("%d %d %s", year, day, month)
 }
 
 // FormatRussianDateFromUnix форматирует дату из Unix timestamp в миллисекундах
 func FormatRussianDateFromUnix(unixMilli int64) string {
 	t := time.UnixMilli(unixMilli)
 	return FormatRussianDate(t)
-}
-
-// getDayWithEnding возвращает число дня с правильным окончанием
-func getDayWithEnding(day int) string {
-	// Особые случаи для 11, 12, 13 (всегда "е")
-	if day >= 11 && day <= 13 {
-		return fmt.Sprintf("%dе", day)
-	}
-
-	// Проверяем последнюю цифру
-	lastDigit := day % 10
-
-	switch lastDigit {
-	case 1:
-		return fmt.Sprintf("%dе", day) // 1е, 21е, 31е
-	case 2:
-		return fmt.Sprintf("%dе", day) // 2е, 22е
-	case 3:
-		return fmt.Sprintf("%dе", day) // 3е, 23е
-	default:
-		return fmt.Sprintf("%dе", day) // все остальные с "е"
-	}
 }
 
 // FormatRussianDateTime форматирует дату и время в русском формате
