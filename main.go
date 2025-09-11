@@ -12,6 +12,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// Глобальная переменная для сервиса автосписания
+var globalAutoBillingService *services.AutoBillingService
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -125,10 +128,44 @@ func startAutoBillingService() {
 	}
 
 	// Создаем сервис автосписания
-	autoBillingService := services.NewAutoBillingService(bot)
+	globalAutoBillingService = services.NewAutoBillingService(bot)
+
+	// Сохраняем ссылку на сервис в common
+	common.SetAutoBillingService(globalAutoBillingService)
 
 	// Запускаем сервис
-	autoBillingService.Start()
+	globalAutoBillingService.Start()
 
 	log.Printf("AUTO_BILLING: Сервис автосписания успешно запущен")
+}
+
+// stopAutoBillingService останавливает сервис автосписания
+func stopAutoBillingService() {
+	if globalAutoBillingService != nil {
+		log.Printf("AUTO_BILLING: Остановка сервиса автосписания...")
+		globalAutoBillingService.Stop()
+		globalAutoBillingService = nil
+		log.Printf("AUTO_BILLING: Сервис автосписания остановлен")
+	}
+}
+
+// SwitchToTariffMode переключает на тарифный режим
+func SwitchToTariffMode() {
+	log.Printf("MAIN: Переключение на тарифный режим")
+	common.TARIFF_MODE_ENABLED = true
+	common.AUTO_BILLING_ENABLED = false
+	stopAutoBillingService()
+	log.Printf("MAIN: Переключение на тарифный режим завершено")
+}
+
+// SwitchToAutoBillingMode переключает на режим автосписания
+func SwitchToAutoBillingMode() {
+	log.Printf("MAIN: Переключение на режим автосписания")
+	stopAutoBillingService()
+	common.TARIFF_MODE_ENABLED = false
+	common.AUTO_BILLING_ENABLED = true
+
+	// Запускаем автосписание заново
+	go startAutoBillingService()
+	log.Printf("MAIN: Переключение на режим автосписания завершено")
 }

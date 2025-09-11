@@ -83,6 +83,12 @@ func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common
 		handleConfirmClearDatabaseCommand(bot, message)
 	case "reset_ip_counters":
 		handleResetIPCountersCommand(bot, message)
+	case "switch_tariff":
+		handleSwitchTariffCommand(bot, message)
+	case "switch_auto":
+		handleSwitchAutoCommand(bot, message)
+	case "billing_status":
+		handleBillingStatusCommand(bot, message)
 	}
 }
 
@@ -313,6 +319,79 @@ func handleResetIPCountersCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Messag
 		}
 	} else {
 		log.Printf("HANDLE_MESSAGE: Пользователь TelegramID=%d не является админом для команды /reset_ip_counters", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения о запрете для TelegramID=%d: %v", message.From.ID, err)
+		}
+	}
+}
+
+// handleSwitchTariffCommand обрабатывает команду /switch_tariff
+func handleSwitchTariffCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_MESSAGE: Выполнение команды /switch_tariff для TelegramID=%d", message.From.ID)
+
+	if message.From.ID == common.ADMIN_ID {
+		common.SwitchToTariffMode()
+
+		msg := tgbotapi.NewMessage(message.Chat.ID,
+			"✅ Переключение на тарифный режим выполнено!\n\n"+
+				"🎯 Теперь активен тарифный режим:\n"+
+				"• Пользователи покупают дни вручную\n"+
+				"• Автосписание отключено\n"+
+				"• Показываются кнопки выбора тарифов\n\n"+
+				"Используйте /billing_status для проверки статуса")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения для TelegramID=%d: %v", message.From.ID, err)
+		}
+	} else {
+		log.Printf("HANDLE_MESSAGE: Пользователь TelegramID=%d не является админом для команды /switch_tariff", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения о запрете для TelegramID=%d: %v", message.From.ID, err)
+		}
+	}
+}
+
+// handleSwitchAutoCommand обрабатывает команду /switch_auto
+func handleSwitchAutoCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_MESSAGE: Выполнение команды /switch_auto для TelegramID=%d", message.From.ID)
+
+	if message.From.ID == common.ADMIN_ID {
+		common.SwitchToAutoBillingMode()
+
+		msg := tgbotapi.NewMessage(message.Chat.ID,
+			"✅ Переключение на автосписание выполнено!\n\n"+
+				"🤖 Теперь активен режим автосписания:\n"+
+				"• Ежедневное списание с баланса\n"+
+				"• Автоматический пересчет дней\n"+
+				"• Кнопки тарифов скрыты\n\n"+
+				"⚠️ Для полного переключения требуется перезапуск бота!\n\n"+
+				"Используйте /billing_status для проверки статуса")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения для TelegramID=%d: %v", message.From.ID, err)
+		}
+	} else {
+		log.Printf("HANDLE_MESSAGE: Пользователь TelegramID=%d не является админом для команды /switch_auto", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения о запрете для TelegramID=%d: %v", message.From.ID, err)
+		}
+	}
+}
+
+// handleBillingStatusCommand обрабатывает команду /billing_status
+func handleBillingStatusCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_MESSAGE: Выполнение команды /billing_status для TelegramID=%d", message.From.ID)
+
+	if message.From.ID == common.ADMIN_ID {
+		status := common.GetBillingStatus()
+
+		msg := tgbotapi.NewMessage(message.Chat.ID, status)
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка отправки статуса для TelegramID=%d: %v", message.From.ID, err)
+		}
+	} else {
+		log.Printf("HANDLE_MESSAGE: Пользователь TelegramID=%d не является админом для команды /billing_status", message.From.ID)
 		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
 		if _, err := bot.Send(msg); err != nil {
 			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения о запрете для TelegramID=%d: %v", message.From.ID, err)

@@ -33,6 +33,11 @@ func (abs *AutoBillingService) Start() {
 		return
 	}
 
+	if common.TARIFF_MODE_ENABLED {
+		log.Printf("AUTO_BILLING: Включен тарифный режим, автосписание не запускается")
+		return
+	}
+
 	log.Printf("AUTO_BILLING: Запуск сервиса автосписания")
 
 	// Ежедневное списание в полночь
@@ -100,6 +105,12 @@ func (abs *AutoBillingService) startBalanceRecalculation() {
 
 // processDailyBilling выполняет ежедневное списание
 func (abs *AutoBillingService) processDailyBilling() {
+	// Проверяем, что автосписание все еще включено
+	if !common.AUTO_BILLING_ENABLED || common.TARIFF_MODE_ENABLED {
+		log.Printf("AUTO_BILLING: Автосписание отключено или включен тарифный режим, пропускаем ежедневное списание")
+		return
+	}
+
 	log.Printf("AUTO_BILLING: Начало ежедневного списания")
 
 	// Получаем всех пользователей с активными конфигами
@@ -190,6 +201,12 @@ func (abs *AutoBillingService) disableUserConfig(user *common.User) error {
 
 // processBalanceRecalculation выполняет пересчет дней по балансу
 func (abs *AutoBillingService) processBalanceRecalculation() {
+	// Проверяем, что автосписание все еще включено
+	if !common.AUTO_BILLING_ENABLED || common.TARIFF_MODE_ENABLED {
+		log.Printf("AUTO_BILLING: Автосписание отключено или включен тарифный режим, пропускаем пересчет баланса")
+		return
+	}
+
 	log.Printf("AUTO_BILLING: Начало пересчета дней по балансу")
 
 	// Получаем всех пользователей

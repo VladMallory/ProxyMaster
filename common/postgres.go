@@ -80,61 +80,51 @@ func GetDatabasePG() *sql.DB {
 	return db
 }
 
-// GetOrCreateUser получает или создает пользователя
+// GetOrCreateUser получает или создает пользователя (thread-safe с UPSERT)
 func GetOrCreateUserPG(telegramID int64, username, firstName, lastName string) (*User, error) {
-	// Сначала пытаемся найти пользователя
-	user, err := GetUserByTelegramIDPG(telegramID)
-	if err != nil {
-		return nil, err
-	}
+	now := time.Now()
 
-	if user != nil {
-		return user, nil // Пользователь найден
-	}
-
-	// Создаем нового пользователя
+	// Используем PostgreSQL UPSERT для атомарного создания или получения пользователя
 	query := `
 		INSERT INTO users (telegram_id, username, first_name, last_name, balance, total_paid, 
 						   configs_count, has_active_config, has_used_trial, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id`
+		ON CONFLICT (telegram_id) DO UPDATE SET
+			username = EXCLUDED.username,
+			first_name = EXCLUDED.first_name,
+			last_name = EXCLUDED.last_name,
+			updated_at = EXCLUDED.updated_at
+		RETURNING telegram_id`
 
-	now := time.Now()
-	var id int64
-	err = db.QueryRow(query, telegramID, username, firstName, lastName, 0.0, 0.0,
-		0, false, false, now, now).Scan(&id)
+	var returnedTelegramID int64
+	err := db.QueryRow(query, telegramID, username, firstName, lastName, 0.0, 0.0,
+		0, false, false, now, now).Scan(&returnedTelegramID)
 	if err != nil {
-		// Если ошибка duplicate key, возможно пользователь был создан другим процессом
-		// Попробуем получить его еще раз
-		if strings.Contains(err.Error(), "duplicate key") {
-			log.Printf("POSTGRES: Пользователь %d уже существует, пытаемся получить его", telegramID)
-			user, err2 := GetUserByTelegramIDPG(telegramID)
-			if err2 != nil {
-				return nil, fmt.Errorf("ошибка получения существующего пользователя: %v", err2)
-			}
-			if user != nil {
-				log.Printf("POSTGRES: Найден существующий пользователь: %d", telegramID)
-				return user, nil
-			}
-		}
-		return nil, fmt.Errorf("ошибка создания пользователя: %v", err)
+		return nil, fmt.Errorf("ошибка UPSERT пользователя: %v", err)
 	}
 
-	log.Printf("Создан новый пользователь: %s (ID: %d)", firstName, telegramID)
-
-	// Получаем созданного пользователя
-	newUser, err := GetUserByTelegramIDPG(telegramID)
+	// Получаем пользователя из базы (гарантированно существует после UPSERT)
+	user, err := GetUserByTelegramIDPG(telegramID)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка получения созданного пользователя: %v", err)
+		return nil, fmt.Errorf("ошибка получения пользователя после UPSERT: %v", err)
 	}
 
-	// Проверяем, есть ли у пользователя конфиг в панели
-	go func() {
-		log.Printf("POSTGRES: Проверка конфига в панели для нового пользователя %d", telegramID)
-		syncUserWithPanel(newUser)
-	}()
+	if user == nil {
+		return nil, fmt.Errorf("пользователь не найден после UPSERT")
+	}
 
-	return newUser, nil
+	// Если пользователь только что создан (баланс = 0 и конфигов нет), проверяем панель
+	if user.Balance == 0.0 && !user.HasActiveConfig && user.ClientID == "" {
+		log.Printf("POSTGRES: Новый пользователь %d, проверяем панель для синхронизации", telegramID)
+		go func() {
+			syncUserWithPanel(user)
+		}()
+		log.Printf("POSTGRES: Создан новый пользователь: %s (ID: %d)", firstName, telegramID)
+	} else {
+		log.Printf("POSTGRES: Получен существующий пользователь: %s (ID: %d)", firstName, telegramID)
+	}
+
+	return user, nil
 }
 
 // syncUserWithPanel синхронизирует пользователя с панелью 3x-ui
