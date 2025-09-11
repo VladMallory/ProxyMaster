@@ -55,10 +55,9 @@ func InitPostgreSQL() error {
 	user := getEnvOrDefault("PG_USER", PG_USER)
 	password := getEnvOrDefault("PG_PASSWORD", PG_PASSWORD)
 	dbname := getEnvOrDefault("PG_DBNAME", PG_DBNAME)
-	sslMode := getEnvOrDefault("PG_SSLMODE", "disable")
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslMode)
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
 
 	var err error
 	db, err = sql.Open("postgres", psqlInfo)
@@ -267,9 +266,11 @@ func readUserInput(prompt string) string {
 }
 
 func main() {
-	// Загружаем переменные из .env, если файл присутствует (в корне или в tools/)
-	if err := godotenv.Load(".env", "tools/.env"); err != nil {
-		log.Println(".env не найден, используем переменные окружения и значения по умолчанию")
+	// Загружаем переменные из .env, если файл присутствует
+	if err := godotenv.Load(".env"); err != nil {
+		log.Println("Файл .env не найден, используем переменные окружения и значения по умолчанию")
+	} else {
+		log.Println("Настройки загружены из .env файла")
 	}
 
 	fmt.Println("=== PostgreSQL VPN Bot Cleanup Tool ===")
