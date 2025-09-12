@@ -199,6 +199,11 @@ func (abs *AutoBillingService) disableUserConfig(user *common.User) error {
 	return nil
 }
 
+// ProcessBalanceRecalculation экспортированный метод для принудительного пересчета баланса
+func (abs *AutoBillingService) ProcessBalanceRecalculation() {
+	abs.processBalanceRecalculation()
+}
+
 // processBalanceRecalculation выполняет пересчет дней по балансу
 func (abs *AutoBillingService) processBalanceRecalculation() {
 	// Проверяем, что автосписание все еще включено

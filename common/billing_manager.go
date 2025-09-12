@@ -15,6 +15,29 @@ func SetAutoBillingService(service interface{}) {
 	autoBillingServicePtr = service
 }
 
+// ForceBalanceRecalculation принудительно запускает пересчет баланса после пополнения
+func ForceBalanceRecalculation(telegramID int64) {
+	log.Printf("BILLING_MANAGER: Принудительный пересчет баланса после пополнения для TelegramID=%d", telegramID)
+
+	// Проверяем, что автосписание включено
+	if !AUTO_BILLING_ENABLED || TARIFF_MODE_ENABLED {
+		log.Printf("BILLING_MANAGER: Автосписание отключено или включен тарифный режим, пропускаем принудительный пересчет")
+		return
+	}
+
+	// Вызываем пересчет через интерфейс
+	if autoBillingServicePtr != nil {
+		if service, ok := autoBillingServicePtr.(interface{ ProcessBalanceRecalculation() }); ok {
+			go service.ProcessBalanceRecalculation()
+			log.Printf("BILLING_MANAGER: Принудительный пересчет баланса запущен для TelegramID=%d", telegramID)
+		} else {
+			log.Printf("BILLING_MANAGER: Не удалось запустить принудительный пересчет - неподходящий интерфейс")
+		}
+	} else {
+		log.Printf("BILLING_MANAGER: Не удалось запустить принудительный пересчет - сервис автосписания не найден")
+	}
+}
+
 // SwitchToTariffMode переключает на тарифный режим
 func SwitchToTariffMode() {
 	log.Printf("BILLING_MANAGER: Переключение на тарифный режим")
