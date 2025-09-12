@@ -374,7 +374,29 @@ func (abs *AutoBillingService) forceUpdateExpiryTime(sessionCookie string, user 
 		return fmt.Errorf("ошибка обновления inbound: %v", err)
 	}
 
-	log.Printf("AUTO_BILLING: Время истечения принудительно обновлено для пользователя %d на %d дней (до %s)",
+	// ===== КРИТИЧЕСКИЙ FIX ДЛЯ СИНХРОНИЗАЦИИ КЛИЕНТОВ =====
+	// ПРОБЛЕМА: После автосписания панель 3x-ui показывает правильное время (например, 23 часа),
+	// но клиентские приложения (happ, v2rayTun, etc.) продолжают показывать старые данные (например, 18 дней).
+	//
+	// ПРИЧИНА: Панель обновляет время истечения, но клиенты кешируют конфигурацию и не получают
+	// уведомление о необходимости обновления. Это происходит только при автосписании, но НЕ в тарифном режиме.
+	//
+	// РЕШЕНИЕ: Используем ту же проверенную логику, что работает в тарифном режиме (ProcessPayment).
+	// ForceResetDepletedStatus выполняет двухфазовый сброс состояния клиента:
+	// ФАЗА A: depleted/exhausted=TRUE + disable client (пауза 1000мс)
+	// ФАЗА B: depleted/exhausted=FALSE + enable client с новыми данными
+	// Это заставляет ВСЕ клиентские приложения "увидеть" изменения и обновить конфигурацию.
+	//
+	// РЕЗУЛЬТАТ: Синхронизация панели и клиентов восстановлена - все показывают одинаковое время!
+	log.Printf("AUTO_BILLING: Принудительный сброс состояния 'исчерпано' для синхронизации клиентов TelegramID=%d", user.TelegramID)
+	if err := common.ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
+		log.Printf("AUTO_BILLING: Предупреждение - не удалось сбросить состояние 'исчерпано' для TelegramID=%d: %v", user.TelegramID, err)
+		// Не возвращаем ошибку, так как основная операция уже выполнена
+	} else {
+		log.Printf("AUTO_BILLING: Состояние 'исчерпано' успешно сброшено для TelegramID=%d - клиенты обновятся", user.TelegramID)
+	}
+
+	log.Printf("AUTO_BILLING: Конфигурация принудительно обновлена (время+синхронизация) для пользователя %d на %d дней (до %s) - FIX как в тарифах",
 		user.TelegramID, days, time.UnixMilli(newExpiryTime).Format("2006-01-02 15:04"))
 
 	return nil
