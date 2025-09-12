@@ -72,10 +72,35 @@ func (tm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User
 	log.Printf("TRIAL: Пробный баланс %d₽ успешно добавлен для пользователя %d, новый баланс: %.2f₽",
 		TRIAL_BALANCE_AMOUNT, user.TelegramID, user.Balance)
 
-	// КРИТИЧЕСКИ ВАЖНО: Принудительно запускаем пересчет баланса
-	// Это мгновенно создаст конфиг на основе нового баланса
-	log.Printf("TRIAL: Запуск принудительного пересчета баланса для создания конфига TelegramID=%d", user.TelegramID)
-	ForceBalanceRecalculation(user.TelegramID)
+	// КРИТИЧЕСКИ ВАЖНО: Синхронно создаем конфиг на основе добавленного баланса
+	//
+	// ЛОГИКА:
+	// 1. Добавили TRIAL_BALANCE_AMOUNT на баланс
+	// 2. Рассчитываем доступные дни: баланс / PRICE_PER_DAY
+	// 3. ProcessPayment создает конфиг и списывает стоимость
+	// 4. Остаток: TRIAL_BALANCE_AMOUNT - (дни * PRICE_PER_DAY)
+	//
+	// Пример: TRIAL_BALANCE_AMOUNT=50₽, PRICE_PER_DAY=50₽ → 1 день, остаток 0₽
+	availableDays := int(user.Balance) / PRICE_PER_DAY
+	log.Printf("TRIAL: Расчет доступных дней: %.2f₽ / %d₽ = %d дней", user.Balance, PRICE_PER_DAY, availableDays)
+
+	if availableDays > 0 {
+		log.Printf("TRIAL: Синхронное создание конфига на %d дней для пользователя %d", availableDays, user.TelegramID)
+
+		// Используем ProcessPayment для создания конфига (включает ForceResetDepletedStatus для синхронизации)
+		configURL, err := ProcessPayment(user, availableDays)
+		if err != nil {
+			log.Printf("TRIAL: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
+			return fmt.Errorf("ошибка создания конфига: %v", err)
+		}
+
+		log.Printf("TRIAL: ✅ Конфиг успешно создан для пользователя %d на %d дней, URL: %s, остаток баланса: %.2f₽",
+			user.TelegramID, availableDays, configURL, user.Balance)
+	} else {
+		log.Printf("TRIAL: ❌ Недостаточно баланса для создания конфига: %.2f₽ < %d₽", user.Balance, PRICE_PER_DAY)
+		log.Printf("TRIAL: ВНИМАНИЕ: Увеличьте TRIAL_BALANCE_AMOUNT до минимум %d₽ в config.go", PRICE_PER_DAY)
+		return fmt.Errorf("недостаточно пробного баланса для создания конфига (нужно минимум %d₽)", PRICE_PER_DAY)
+	}
 
 	return nil
 }
