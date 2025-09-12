@@ -24,6 +24,13 @@ func main() {
 	// Инициализируем менеджер пробных периодов
 	common.TrialManager = common.NewTrialPeriodManager()
 
+	// Инициализируем IP ban логгер
+	if err := common.InitIPBanLogger(); err != nil {
+		log.Printf("Ошибка инициализации IP ban логгера: %v", err)
+	} else {
+		log.Printf("IP ban логгер успешно инициализирован")
+	}
+
 	// Инициализируем приложение
 	app.InitializeApp()
 
