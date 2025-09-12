@@ -1,8 +1,9 @@
 package telegram_bot
 
 import (
-	"bot/handlers"
 	"log"
+
+	"bot/handlers"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

@@ -46,20 +46,20 @@ func main() {
 
 // startIPBanService запускает IP Ban сервис
 func startIPBanService() {
-	log.Printf("IP_BAN: Запуск IP Ban сервиса...")
+	common.LogIPBanInfo("Запуск IP Ban сервиса...")
 
 	// Создаем накопитель логов
 	accumulator := common.NewLogAccumulator(common.ACCESS_LOG_PATH, common.IP_ACCUMULATED_PATH)
 
 	// Запускаем накопитель логов
 	if err := accumulator.Start(); err != nil {
-		log.Printf("IP_BAN: Ошибка запуска накопителя логов: %v", err)
+		common.LogIPBanError("Ошибка запуска накопителя логов: %v", err)
 		return
 	}
 
 	// Запускаем сервис очистки старых строк
 	accumulator.StartCleanupService()
-	log.Printf("IP_BAN: Накопитель логов запущен")
+	common.LogIPBanInfo("Накопитель логов запущен")
 
 	// Создаем анализатор логов (теперь работает с накопленным файлом)
 	analyzer := common.NewLogAnalyzer(common.IP_ACCUMULATED_PATH)
@@ -85,9 +85,9 @@ func startIPBanService() {
 	var bot *tgbotapi.BotAPI
 	if common.GlobalBot != nil {
 		bot = common.GlobalBot
-		log.Printf("IP_BAN: Бот получен из глобальной переменной")
+		common.LogIPBanInfo("Бот получен из глобальной переменной")
 	} else {
-		log.Printf("IP_BAN: Бот не инициализирован, уведомления отключены")
+		common.LogIPBanWarning("Бот не инициализирован, уведомления отключены")
 	}
 
 	// Создаем IP Ban сервис
@@ -104,11 +104,11 @@ func startIPBanService() {
 
 	// Запускаем сервис
 	if err := service.Start(); err != nil {
-		log.Printf("IP_BAN: Ошибка запуска IP Ban сервиса: %v", err)
+		common.LogIPBanError("Ошибка запуска IP Ban сервиса: %v", err)
 		return
 	}
 
-	log.Printf("IP_BAN: IP Ban сервис успешно запущен")
+	common.LogIPBanInfo("IP Ban сервис успешно запущен")
 }
 
 // startAutoBillingService запускает сервис автосписания

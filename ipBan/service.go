@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -38,11 +37,10 @@ func (s *IPBanService) Start() error {
 	}
 
 	s.Running = true
-	fmt.Printf("🚀 Запуск IP Ban сервиса...\n")
-	fmt.Printf("📊 Максимум IP на конфиг: %d\n", s.MaxIPs)
-	fmt.Printf("⏰ Интервал проверки: %v\n", s.CheckInterval)
-	fmt.Printf("⏳ Период ожидания: %v\n", s.GracePeriod)
-	fmt.Println(strings.Repeat("=", 50))
+	log.Printf("Запуск IP Ban сервиса")
+	log.Printf("Максимум IP на конфиг: %d", s.MaxIPs)
+	log.Printf("Интервал проверки: %v", s.CheckInterval)
+	log.Printf("Период ожидания: %v", s.GracePeriod)
 
 	go s.monitorLoop()
 	return nil
@@ -54,7 +52,7 @@ func (s *IPBanService) Stop() {
 		return
 	}
 
-	fmt.Println("🛑 Остановка IP Ban сервиса...")
+	log.Printf("Остановка IP Ban сервиса")
 	s.Running = false
 	s.StopChan <- true
 }
@@ -69,7 +67,7 @@ func (s *IPBanService) monitorLoop() {
 		case <-ticker.C:
 			s.performCheck()
 		case <-s.StopChan:
-			fmt.Println("✅ IP Ban сервис остановлен")
+			log.Printf("IP Ban сервис остановлен")
 			return
 		}
 	}
@@ -77,12 +75,12 @@ func (s *IPBanService) monitorLoop() {
 
 // performCheck выполняет проверку и управление конфигами
 func (s *IPBanService) performCheck() {
-	fmt.Printf("\n🔍 [%s] Выполнение проверки...\n", time.Now().Format("2006-01-02 15:04:05"))
+	log.Printf("Выполнение проверки IP ban")
 
 	// Анализируем лог файл
 	stats, err := s.Analyzer.AnalyzeLog()
 	if err != nil {
-		log.Printf("❌ Ошибка анализа лога: %v", err)
+		log.Printf("Ошибка анализа лога: %v", err)
 		return
 	}
 
@@ -93,7 +91,7 @@ func (s *IPBanService) performCheck() {
 
 	// Находим подозрительные конфиги (много IP)
 	suspiciousEmails := s.Analyzer.GetSuspiciousEmails(s.MaxIPs)
-	fmt.Printf("🚨 Найдено подозрительных конфигов: %d\n", len(suspiciousEmails))
+	log.Printf("Найдено подозрительных конфигов: %d", len(suspiciousEmails))
 
 	// Отключаем подозрительные конфиги
 	for _, stats := range suspiciousEmails {
@@ -102,47 +100,50 @@ func (s *IPBanService) performCheck() {
 
 	// Находим нормальные конфиги (мало IP)
 	normalEmails := s.Analyzer.GetNormalEmails(s.MaxIPs)
-	fmt.Printf("✅ Найдено нормальных конфигов: %d\n", len(normalEmails))
+	log.Printf("Найдено нормальных конфигов: %d", len(normalEmails))
 
 	// Включаем нормальные конфиги
 	for _, stats := range normalEmails {
 		s.handleNormalConfig(stats)
 	}
 
-	fmt.Println("✅ Проверка завершена")
+	// Логируем общую статистику
+	log.Printf("IP_BAN: Всего email: %d, Подозрительных: %d, Нормальных: %d", len(stats), len(suspiciousEmails), len(normalEmails))
+
+	log.Printf("Проверка IP ban завершена")
 }
 
 // handleSuspiciousConfig обрабатывает подозрительный конфиг
 func (s *IPBanService) handleSuspiciousConfig(stats *EmailIPStats) {
-	fmt.Printf("🚨 Подозрительный конфиг: %s (IP адресов: %d)\n", stats.Email, stats.TotalIPs)
+	log.Printf("Подозрительный конфиг: %s (IP адресов: %d)", stats.Email, stats.TotalIPs)
 
-	// Выводим список IP адресов
+	// Собираем список IP адресов для логирования
+	var ips []string
 	for ip, activity := range stats.IPs {
-		fmt.Printf("   📍 %s (соединений: %d, последний раз: %s)\n",
-			ip,
-			activity.Count,
-			activity.LastSeen.Format("15:04:05"))
+		ips = append(ips, ip)
+		log.Printf("IP %s: соединений %d, последний раз %s",
+			ip, activity.Count, activity.LastSeen.Format("15:04:05"))
 	}
 
 	// Проверяем текущий статус конфига
 	currentStatus, err := s.ConfigManager.GetConfigStatus(stats.Email)
 	if err != nil {
-		log.Printf("❌ Ошибка получения статуса конфига %s: %v", stats.Email, err)
+		log.Printf("Ошибка получения статуса конфига %s: %v", stats.Email, err)
 		return
 	}
 
 	// Если конфиг уже отключен, ничего не делаем
 	if !currentStatus {
-		fmt.Printf("   ℹ️  Конфиг %s уже отключен\n", stats.Email)
+		log.Printf("Конфиг %s уже отключен", stats.Email)
 		return
 	}
 
 	// Отключаем конфиг
-	fmt.Printf("   🔒 Отключение конфига %s...\n", stats.Email)
+	log.Printf("Отключение конфига %s...", stats.Email)
 	if err := s.ConfigManager.DisableConfig(stats.Email); err != nil {
-		log.Printf("❌ Ошибка отключения конфига %s: %v", stats.Email, err)
+		log.Printf("Ошибка отключения конфига %s: %v", stats.Email, err)
 	} else {
-		fmt.Printf("   ✅ Конфиг %s успешно отключен\n", stats.Email)
+		log.Printf("IP_BAN: ВКЛЮЧЕН конфиг %s (IP адресов %d, IP: %v)", stats.Email, stats.TotalIPs, ips)
 	}
 }
 
@@ -153,27 +154,33 @@ func (s *IPBanService) handleNormalConfig(stats *EmailIPStats) {
 		return
 	}
 
-	fmt.Printf("✅ Нормальный конфиг: %s (IP адресов: %d)\n", stats.Email, stats.TotalIPs)
+	log.Printf("Нормальный конфиг: %s (IP адресов: %d)", stats.Email, stats.TotalIPs)
+
+	// Собираем список IP адресов для логирования
+	var ips []string
+	for ip := range stats.IPs {
+		ips = append(ips, ip)
+	}
 
 	// Проверяем текущий статус конфига
 	currentStatus, err := s.ConfigManager.GetConfigStatus(stats.Email)
 	if err != nil {
-		log.Printf("❌ Ошибка получения статуса конфига %s: %v", stats.Email, err)
+		log.Printf("Ошибка получения статуса конфига %s: %v", stats.Email, err)
 		return
 	}
 
 	// Если конфиг уже включен, ничего не делаем
 	if currentStatus {
-		fmt.Printf("   ℹ️  Конфиг %s уже включен\n", stats.Email)
+		log.Printf("Конфиг %s уже включен", stats.Email)
 		return
 	}
 
 	// Включаем конфиг
-	fmt.Printf("   🔓 Включение конфига %s...\n", stats.Email)
+	log.Printf("Включение конфига %s...", stats.Email)
 	if err := s.ConfigManager.EnableConfig(stats.Email); err != nil {
-		log.Printf("❌ Ошибка включения конфига %s: %v", stats.Email, err)
+		log.Printf("Ошибка включения конфига %s: %v", stats.Email, err)
 	} else {
-		fmt.Printf("   ✅ Конфиг %s успешно включен\n", stats.Email)
+		log.Printf("IP_BAN: ВКЛЮЧЕН конфиг %s (IP адресов %d, IP: %v)", stats.Email, stats.TotalIPs, ips)
 	}
 }
 
