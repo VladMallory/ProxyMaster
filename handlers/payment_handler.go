@@ -125,52 +125,85 @@ func ProcessPaymentCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, u
 	}
 }
 
-// ProcessTopup обрабатывает пополнение баланса
+// ProcessTopup обрабатывает пополнение баланса через ЮКассу
 func ProcessTopup(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.User, amount int) {
 	log.Printf("PROCESS_TOPUP: Начало обработки пополнения для TelegramID=%d, amount=%d", user.TelegramID, amount)
 
-	// Имитируем пополнение баланса (в реальности здесь была бы интеграция с платежной системой)
-	err := common.AddBalance(user.TelegramID, float64(amount))
+	// Показываем процесс создания платежа
+	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, "⏳ Создание ссылки для оплаты...")
+	if _, err := bot.Send(editMsg); err != nil {
+		log.Printf("PROCESS_TOPUP: Ошибка отправки сообщения о процессе для TelegramID=%d: %v", user.TelegramID, err)
+	}
+
+	// Создаем API ЮКассы
+	yukassaAPI := common.NewYukassaAPI()
+
+	// Создаем платеж в ЮКассе
+	description := fmt.Sprintf("Пополнение баланса на %d₽", amount)
+	payment, err := yukassaAPI.CreatePayment(user.TelegramID, float64(amount), description)
 	if err != nil {
-		log.Printf("PROCESS_TOPUP: Ошибка пополнения баланса для TelegramID=%d: %v", user.TelegramID, err)
-		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, "❌ Ошибка пополнения баланса")
+		log.Printf("PROCESS_TOPUP: Ошибка создания платежа для TelegramID=%d: %v", user.TelegramID, err)
+
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🔄 Повторить", fmt.Sprintf("topup:%d", amount)),
+				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+			),
+		)
+
+		text := fmt.Sprintf("❌ Ошибка создания платежа: %v\n\nПопробуйте еще раз или обратитесь в поддержку.", err)
+		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
+		editMsg.ReplyMarkup = &keyboard
 		if _, err := bot.Send(editMsg); err != nil {
 			log.Printf("PROCESS_TOPUP: Ошибка отправки сообщения об ошибке для TelegramID=%d: %v", user.TelegramID, err)
 		}
 		return
 	}
 
-	// Обновляем данные пользователя
-	user.Balance += float64(amount)
-	user.TotalPaid += float64(amount)
+	// Получаем URL для оплаты
+	paymentURL := common.GetPaymentURL(payment)
+	if paymentURL == "" {
+		log.Printf("PROCESS_TOPUP: Не удалось получить URL для оплаты TelegramID=%d", user.TelegramID)
 
-	log.Printf("PROCESS_TOPUP: Баланс обновлён для TelegramID=%d, Balance=%.2f, TotalPaid=%.2f", user.TelegramID, user.Balance, user.TotalPaid)
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🔄 Повторить", fmt.Sprintf("topup:%d", amount)),
+				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+			),
+		)
 
-	// Отправляем уведомление администратору о пополнении баланса
-	common.SendBalanceTopupNotificationToAdmin(user, float64(amount))
+		text := "❌ Ошибка получения ссылки для оплаты\n\nПопробуйте еще раз или обратитесь в поддержку."
+		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
+		editMsg.ReplyMarkup = &keyboard
+		if _, err := bot.Send(editMsg); err != nil {
+			log.Printf("PROCESS_TOPUP: Ошибка отправки сообщения об ошибке URL для TelegramID=%d: %v", user.TelegramID, err)
+		}
+		return
+	}
 
-	// КРИТИЧЕСКИЙ FIX: Принудительно запускаем пересчет баланса после пополнения
-	// Это обеспечивает мгновенное обновление конфигурации вместо ожидания до 24 часов
-	log.Printf("PROCESS_TOPUP: Запуск принудительного пересчета баланса для мгновенного обновления конфигурации TelegramID=%d", user.TelegramID)
-	common.ForceBalanceRecalculation(user.TelegramID)
-
+	// Создаем клавиатуру с кнопкой оплаты
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("🔐 Купить VPN", "vpn"),
+			tgbotapi.NewInlineKeyboardButtonURL("💳 Оплатить "+fmt.Sprintf("%d₽", amount), paymentURL),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🔄 Другая сумма", "topup"),
 			tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
 		),
 	)
 
-	text := fmt.Sprintf("✅ Баланс успешно пополнен!\n\n"+
-		"💰 Пополнено: %d₽\n"+
-		"💳 Ваш баланс: %.2f₽\n\n"+
-		"Теперь вы можете купить VPN конфиг!",
-		amount, user.Balance)
+	text := fmt.Sprintf("💳 Ссылка для оплаты создана!\n\n"+
+		"💰 Сумма: %d₽\n"+
+		"🏦 Платежная система: ЮКасса\n"+
+		"🔒 Безопасная оплата\n\n"+
+		"Нажмите кнопку ниже для перехода к оплате.\n"+
+		"После успешной оплаты баланс будет пополнен автоматически.",
+		amount)
 
-	log.Printf("PROCESS_TOPUP: Текст успешного пополнения для TelegramID=%d: %s", user.TelegramID, text)
-	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
+	log.Printf("PROCESS_TOPUP: Платеж создан для TelegramID=%d, ID=%s, URL=%s", user.TelegramID, payment.ID, paymentURL)
+	editMsg = tgbotapi.NewEditMessageText(chatID, messageID, text)
 	editMsg.ReplyMarkup = &keyboard
 	if _, err := bot.Send(editMsg); err != nil {
-		log.Printf("PROCESS_TOPUP: Ошибка отправки сообщения об успехе для TelegramID=%d: %v", user.TelegramID, err)
+		log.Printf("PROCESS_TOPUP: Ошибка отправки сообщения с платежной ссылкой для TelegramID=%d: %v", user.TelegramID, err)
 	}
 }

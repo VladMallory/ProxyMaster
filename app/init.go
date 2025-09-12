@@ -1,6 +1,8 @@
 package app
 
 import (
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 
@@ -33,6 +35,9 @@ func InitializeApp() {
 			http.ServeFile(w, r, "importRedirect/redirect_v2raytun.html")
 		})
 
+		// Обработчик для callback-ов ЮКассы
+		http.HandleFunc("/yukassa/callback", handleYukassaCallback)
+
 		log.Printf("HTTP_SERVER: Запуск HTTP сервера на порту 8081")
 		if err := http.ListenAndServe(":8081", nil); err != nil {
 			log.Printf("HTTP_SERVER: Ошибка запуска сервера: %v", err)
@@ -61,6 +66,55 @@ func InitializeApp() {
 	log.Printf("APP: Сервисы мониторинга трафика и очистки конфигов временно отключены")
 
 	log.Printf("APP: Инициализация приложения завершена")
+}
+
+// handleYukassaCallback обрабатывает callback от ЮКассы
+func handleYukassaCallback(w http.ResponseWriter, r *http.Request) {
+	log.Printf("YUKASSA_CALLBACK: Получен callback от ЮКассы")
+
+	// Проверяем метод запроса
+	if r.Method != http.MethodPost {
+		log.Printf("YUKASSA_CALLBACK: Неверный метод запроса: %s", r.Method)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Читаем тело запроса
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("YUKASSA_CALLBACK: Ошибка чтения тела запроса: %v", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	log.Printf("YUKASSA_CALLBACK: Получено тело запроса: %s", string(body))
+
+	// Проверяем подпись (если настроен секретный ключ)
+	signature := r.Header.Get("Authorization")
+	yukassaAPI := common.NewYukassaAPI()
+
+	if !yukassaAPI.VerifyCallback(body, signature) {
+		log.Printf("YUKASSA_CALLBACK: Неверная подпись callback-а")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Обрабатываем callback
+	err = yukassaAPI.ProcessCallback(body)
+	if err != nil {
+		log.Printf("YUKASSA_CALLBACK: Ошибка обработки callback: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Возвращаем успешный ответ
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response := map[string]string{"status": "ok"}
+	json.NewEncoder(w).Encode(response)
+
+	log.Printf("YUKASSA_CALLBACK: Callback успешно обработан")
 }
 
 // StartBot запускает Telegram бота
