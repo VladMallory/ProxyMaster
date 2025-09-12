@@ -158,7 +158,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 	} else {
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
-			text += fmt.Sprintf("Пробный период: %d дней\n", common.TRIAL_PERIOD_DAYS)
+			text += fmt.Sprintf("На ваш баланс будет добавлено %d₽ для ознакомления с сервисом.\n", common.TRIAL_BALANCE_AMOUNT)
 			text += "✨ Нажмите кнопку ниже, чтобы активировать пробный период."
 		} else {
 			if common.TARIFF_MODE_ENABLED {
@@ -329,7 +329,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 	} else {
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
-			text += fmt.Sprintf("Пробный период: %d дней\n", common.TRIAL_PERIOD_DAYS)
+			text += fmt.Sprintf("На ваш баланс будет добавлено %d₽ для ознакомления с сервисом.\n", common.TRIAL_BALANCE_AMOUNT)
 			text += "✨ Нажмите кнопку ниже, чтобы активировать пробный период."
 		} else {
 			if common.TARIFF_MODE_ENABLED {

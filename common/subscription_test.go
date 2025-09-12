@@ -215,22 +215,22 @@ func TestGetRedirectURL(t *testing.T) {
 	}{
 		{
 			domain:      "example.com",
-			expectedURL: "http://example.com/redirect.html?url=",
+			expectedURL: "http://example.com/redirect_happ.html?url=",
 			description: "Обычный домен",
 		},
 		{
 			domain:      "test.example.com",
-			expectedURL: "http://test.example.com/redirect.html?url=",
+			expectedURL: "http://test.example.com/redirect_happ.html?url=",
 			description: "Поддомен",
 		},
 		{
 			domain:      "my-vpn-service.com",
-			expectedURL: "http://my-vpn-service.com/redirect.html?url=",
+			expectedURL: "http://my-vpn-service.com/redirect_happ.html?url=",
 			description: "Домен с дефисами",
 		},
 		{
 			domain:      "localhost",
-			expectedURL: "http://localhost/redirect.html?url=",
+			expectedURL: "http://localhost/redirect_happ.html?url=",
 			description: "Локальный домен",
 		},
 	}
@@ -282,13 +282,13 @@ func TestGetTrafficConfigDescription(t *testing.T) {
 // TestTrialPeriodManager_GetTrialPeriodInfo тестирует получение информации о пробных периодах
 func TestTrialPeriodManager_GetTrialPeriodInfo(t *testing.T) {
 	// Сохраняем оригинальное значение
-	originalDays := TRIAL_PERIOD_DAYS
+	originalBalance := TRIAL_BALANCE_AMOUNT
 	defer func() {
-		TRIAL_PERIOD_DAYS = originalDays
+		TRIAL_BALANCE_AMOUNT = originalBalance
 	}()
 
 	// Устанавливаем тестовое значение
-	TRIAL_PERIOD_DAYS = 7
+	TRIAL_BALANCE_AMOUNT = 15
 
 	tm := NewTrialPeriodManager()
 	info := tm.GetTrialPeriodInfo()
@@ -296,9 +296,9 @@ func TestTrialPeriodManager_GetTrialPeriodInfo(t *testing.T) {
 	// Проверяем, что информация содержит ожидаемые данные
 	expectedContains := []string{
 		"Информация о пробных периодах",
-		"7 дней",
-		"Всего пользователей с пробными периодами: 0",
-		"Активных пробных периодов: 0",
+		"15₽",
+		"TRIAL_BALANCE_AMOUNT = 15",
+		"добавляется указанная сумма на баланс",
 	}
 
 	for _, expected := range expectedContains {
@@ -619,7 +619,7 @@ func TestConfigVariablesWithDifferentDomains(t *testing.T) {
 
 			// Проверяем генерацию redirect URL
 			redirectURL := GetRedirectURL()
-			expectedRedirect := "http://" + tt.redirectDomain + "/redirect.html?url="
+			expectedRedirect := "http://" + tt.redirectDomain + "/redirect_happ.html?url="
 			if redirectURL != expectedRedirect {
 				t.Errorf("GetRedirectURL() = %s, expected %s", redirectURL, expectedRedirect)
 			}
@@ -709,7 +709,7 @@ func TestEnvironmentConfiguration(t *testing.T) {
 
 			// Проверяем генерацию URL
 			redirectURL := GetRedirectURL()
-			expectedRedirect := "http://" + tt.redirectDomain + "/redirect.html?url="
+			expectedRedirect := "http://" + tt.redirectDomain + "/redirect_happ.html?url="
 			if redirectURL != expectedRedirect {
 				t.Errorf("GetRedirectURL() = %s, expected %s", redirectURL, expectedRedirect)
 			}
