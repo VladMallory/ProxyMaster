@@ -146,6 +146,9 @@ func ProcessTopup(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 
 	log.Printf("PROCESS_TOPUP: Баланс обновлён для TelegramID=%d, Balance=%.2f, TotalPaid=%.2f", user.TelegramID, user.Balance, user.TotalPaid)
 
+	// Отправляем уведомление администратору о пополнении баланса
+	common.SendBalanceTopupNotificationToAdmin(user, float64(amount))
+
 	// КРИТИЧЕСКИЙ FIX: Принудительно запускаем пересчет баланса после пополнения
 	// Это обеспечивает мгновенное обновление конфигурации вместо ожидания до 24 часов
 	log.Printf("PROCESS_TOPUP: Запуск принудительного пересчета баланса для мгновенного обновления конфигурации TelegramID=%d", user.TelegramID)

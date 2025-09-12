@@ -1,6 +1,7 @@
 package telegram_bot
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -165,4 +166,68 @@ func (nm *NotificationManager) CheckUserSubscription(user *common.User) {
 			}
 		}
 	}
+}
+
+// SendConfigBlockingNotification отправляет уведомление администратору о блокировке конфига
+func (nm *NotificationManager) SendConfigBlockingNotification(user *common.User) {
+	if !common.ADMIN_NOTIFICATIONS_ENABLED || !common.ADMIN_CONFIG_BLOCKING_ENABLED {
+		return
+	}
+
+	message := fmt.Sprintf(
+		"🚫 <b>Конфиг заблокирован</b>\n\n"+
+			"👤 Пользователь: %s (ID: %d)\n"+
+			"💰 Баланс: %.2f₽\n"+
+			"📧 Email: %s\n"+
+			"🕐 Время блокировки: %s\n\n"+
+			"Причина: недостаточно средств для автосписания",
+		getUserDisplayName(user), user.TelegramID, user.Balance, user.Email, time.Now().Format("2006-01-02 15:04:05"))
+
+	err := nm.sendNotification(common.ADMIN_ID, message)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления администратору о блокировке конфига пользователя %d: %v", user.TelegramID, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление о блокировке конфига пользователя %d отправлено администратору", user.TelegramID)
+	}
+}
+
+// SendBalanceTopupNotification отправляет уведомление администратору о пополнении баланса
+func (nm *NotificationManager) SendBalanceTopupNotification(user *common.User, amount float64) {
+	if !common.ADMIN_NOTIFICATIONS_ENABLED || !common.ADMIN_BALANCE_TOPUP_ENABLED {
+		return
+	}
+
+	message := fmt.Sprintf(
+		"💳 <b>Пополнение баланса</b>\n\n"+
+			"👤 Пользователь: %s (ID: %d)\n"+
+			"💰 Сумма пополнения: %.2f₽\n"+
+			"💳 Новый баланс: %.2f₽\n"+
+			"📊 Всего заплачено: %.2f₽\n"+
+			"🕐 Время пополнения: %s",
+		getUserDisplayName(user), user.TelegramID, amount, user.Balance, user.TotalPaid, time.Now().Format("2006-01-02 15:04:05"))
+
+	err := nm.sendNotification(common.ADMIN_ID, message)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления администратору о пополнении баланса пользователя %d: %v", user.TelegramID, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление о пополнении баланса пользователя %d отправлено администратору", user.TelegramID)
+	}
+}
+
+// getUserDisplayName возвращает читаемое имя пользователя
+func getUserDisplayName(user *common.User) string {
+	if user.FirstName != "" {
+		displayName := user.FirstName
+		if user.LastName != "" {
+			displayName += " " + user.LastName
+		}
+		if user.Username != "" {
+			displayName += " (@" + user.Username + ")"
+		}
+		return displayName
+	}
+	if user.Username != "" {
+		return "@" + user.Username
+	}
+	return fmt.Sprintf("ID: %d", user.TelegramID)
 }

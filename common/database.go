@@ -493,6 +493,136 @@ func GetUsersSorted(limit int) ([]User, error) {
 	return users, nil
 }
 
+// SendConfigBlockingNotificationToAdmin отправляет уведомление администратору о блокировке конфига (автосписание)
+func SendConfigBlockingNotificationToAdmin(user *User) {
+	if !ADMIN_NOTIFICATIONS_ENABLED || !ADMIN_CONFIG_BLOCKING_ENABLED || GlobalBot == nil {
+		return
+	}
+
+	displayName := getUserDisplayName(user)
+	message := fmt.Sprintf(
+		"🚫 <b>Конфиг заблокирован</b>\n\n"+
+			"👤 Пользователь: %s (ID: %d)\n"+
+			"💰 Баланс: %.2f₽\n"+
+			"📧 Email: %s\n"+
+			"🕐 Время блокировки: %s\n\n"+
+			"Причина: недостаточно средств для автосписания",
+		displayName, user.TelegramID, user.Balance, user.Email, time.Now().Format("2006-01-02 15:04:05"))
+
+	msg := tgbotapi.NewMessage(ADMIN_ID, message)
+	msg.ParseMode = tgbotapi.ModeHTML
+
+	_, err := GlobalBot.Send(msg)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления администратору о блокировке конфига пользователя %d: %v", user.TelegramID, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление о блокировке конфига пользователя %d отправлено администратору", user.TelegramID)
+	}
+}
+
+// SendIPBanNotificationToAdmin отправляет уведомление администратору о срабатывании IP ban
+func SendIPBanNotificationToAdmin(email string, ipAddresses []string, ipCount int) {
+	if !ADMIN_NOTIFICATIONS_ENABLED || !ADMIN_IP_BAN_ENABLED || GlobalBot == nil {
+		return
+	}
+
+	// Пытаемся найти пользователя по email
+	var displayName string
+	var telegramID int64
+
+	// Email в системе обычно имеет формат "123456789" (telegram_id) или "123456789 до 2025 03 09"
+	var emailParts []string
+	if strings.Contains(email, " ") {
+		emailParts = strings.Split(email, " ")
+	} else {
+		emailParts = []string{email}
+	}
+
+	if len(emailParts) > 0 {
+		if id, err := strconv.ParseInt(emailParts[0], 10, 64); err == nil {
+			telegramID = id
+			if user, err := GetUserByTelegramID(telegramID); err == nil && user != nil {
+				displayName = getUserDisplayName(user)
+			}
+		}
+	}
+
+	if displayName == "" {
+		displayName = email
+	}
+
+	// Формируем список IP адресов для сообщения
+	ipList := strings.Join(ipAddresses, ", ")
+	if len(ipList) > 200 {
+		ipList = ipList[:200] + "..."
+	}
+
+	message := fmt.Sprintf(
+		"🚨 <b>IP Ban - конфиг заблокирован</b>\n\n"+
+			"👤 Пользователь: %s\n"+
+			"📧 Email: %s\n"+
+			"🌐 Количество IP: %d (лимит: %d)\n"+
+			"📍 IP адреса: %s\n"+
+			"🕐 Время блокировки: %s\n\n"+
+			"Причина: превышен лимит IP адресов",
+		displayName, email, ipCount, MAX_IPS_PER_CONFIG, ipList, time.Now().Format("2006-01-02 15:04:05"))
+
+	msg := tgbotapi.NewMessage(ADMIN_ID, message)
+	msg.ParseMode = tgbotapi.ModeHTML
+
+	_, err := GlobalBot.Send(msg)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления администратору о IP ban для %s: %v", email, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление о IP ban для %s отправлено администратору", email)
+	}
+}
+
+// SendBalanceTopupNotificationToAdmin отправляет уведомление администратору о пополнении баланса
+func SendBalanceTopupNotificationToAdmin(user *User, amount float64) {
+	if !ADMIN_NOTIFICATIONS_ENABLED || !ADMIN_BALANCE_TOPUP_ENABLED || GlobalBot == nil {
+		return
+	}
+
+	displayName := getUserDisplayName(user)
+	message := fmt.Sprintf(
+		"💳 <b>Пополнение баланса</b>\n\n"+
+			"👤 Пользователь: %s (ID: %d)\n"+
+			"💰 Сумма пополнения: %.2f₽\n"+
+			"💳 Новый баланс: %.2f₽\n"+
+			"📊 Всего заплачено: %.2f₽\n"+
+			"🕐 Время пополнения: %s",
+		displayName, user.TelegramID, amount, user.Balance, user.TotalPaid, time.Now().Format("2006-01-02 15:04:05"))
+
+	msg := tgbotapi.NewMessage(ADMIN_ID, message)
+	msg.ParseMode = tgbotapi.ModeHTML
+
+	_, err := GlobalBot.Send(msg)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления администратору о пополнении баланса пользователя %d: %v", user.TelegramID, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление о пополнении баланса пользователя %d отправлено администратору", user.TelegramID)
+	}
+}
+
+// getUserDisplayName возвращает читаемое имя пользователя
+func getUserDisplayName(user *User) string {
+	if user.FirstName != "" {
+		displayName := user.FirstName
+		if user.LastName != "" {
+			displayName += " " + user.LastName
+		}
+		if user.Username != "" {
+			displayName += " (@" + user.Username + ")"
+		}
+		return displayName
+	}
+	if user.Username != "" {
+		return "@" + user.Username
+	}
+	return fmt.Sprintf("ID: %d", user.TelegramID)
+}
+
 // GetUsersByCategory получает пользователей по категории
 func GetUsersByCategory(category string, limit int) ([]User, error) {
 	log.Printf("GET_USERS_BY_CATEGORY: Получение пользователей категории '%s', лимит: %d", category, limit)

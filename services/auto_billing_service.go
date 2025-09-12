@@ -194,6 +194,9 @@ func (abs *AutoBillingService) disableUserConfig(user *common.User) error {
 		if err != nil {
 			log.Printf("AUTO_BILLING: Ошибка отправки уведомления пользователю %d: %v", user.TelegramID, err)
 		}
+
+		// Отправляем уведомление администратору о блокировке конфига
+		common.SendConfigBlockingNotificationToAdmin(user)
 	}
 
 	return nil

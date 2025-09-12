@@ -322,6 +322,9 @@ func (s *IPBanService) handleSuspiciousConfig(stats *EmailIPStats) {
 		fmt.Printf("   ✅ Конфиг %s отключён, UUID обновлён\n", stats.Email)
 		// Отправляем уведомление об отключении
 		s.sendConfigDisabledNotification(stats.Email, ipAddresses)
+
+		// Отправляем уведомление администратору о срабатывании IP ban
+		SendIPBanNotificationToAdmin(stats.Email, ipAddresses, stats.TotalIPs)
 	}
 }
 
