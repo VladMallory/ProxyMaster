@@ -319,12 +319,19 @@ func (s *IPBanService) handleSuspiciousConfig(stats *EmailIPStats) {
 
 	// Баним пользователя
 	reason := fmt.Sprintf("Превышение лимита IP адресов: %d (максимум: %d)", stats.TotalIPs, s.MaxIPs)
+	// Логируем в bot.log: начало банирования пользователя
+	LogIPBanInfo("Начало банирования пользователя %s (IP адресов: %d, лимит: %d)", stats.Email, stats.TotalIPs, s.MaxIPs)
+
 	if err := s.BanManager.BanUser(stats.Email, reason, ipAddresses); err != nil {
 		log.Printf("❌ Ошибка бана пользователя %s: %v", stats.Email, err)
+		// Логируем в bot.log: ошибка банирования
+		LogIPBanError("Ошибка банирования пользователя %s: %v", stats.Email, err)
 		return
 	}
 
 	fmt.Printf("   🚫 Пользователь %s забанен на %d минут\n", stats.Email, IP_BAN_DURATION)
+	// Логируем в bot.log: успешное банирование
+	LogIPBanInfo("Пользователь %s успешно забанен на %d минут", stats.Email, IP_BAN_DURATION)
 
 	// Мгновенно отключаем конфиг и ротируем UUID, чтобы обрубить активные сессии без рестарта Xray
 	fmt.Printf("   🔒 Отключение и ротация UUID для %s...\n", stats.Email)
@@ -348,12 +355,19 @@ func (s *IPBanService) handleNormalConfig(stats *EmailIPStats) {
 	if s.BanManager.IsBanned(stats.Email) {
 		// Если пользователь забанен, но активность нормализовалась, разблокируем IP
 		fmt.Printf("   🔓 Разблокировка IP адресов для %s...\n", stats.Email)
+		// Логируем в bot.log: начало разблокировки IP для забаненного пользователя
+		LogIPBanInfo("Разблокировка IP адресов для забаненного пользователя %s (активность нормализовалась)", stats.Email)
+
 		unblockedCount := 0
 		for ip := range stats.IPs {
 			if err := s.IPTables.UnblockIP(ip); err != nil {
 				log.Printf("❌ Ошибка разблокировки IP %s: %v", ip, err)
+				// Логируем в bot.log: ошибка разблокировки IP
+				LogIPBanError("Ошибка разблокировки IP %s для пользователя %s: %v", ip, stats.Email, err)
 			} else {
 				unblockedCount++
+				// Логируем в bot.log: успешная разблокировка IP
+				LogIPBanInfo("IP %s успешно разблокирован для пользователя %s", ip, stats.Email)
 			}
 		}
 
@@ -463,18 +477,29 @@ func (i *IPTablesManager) BlockIP(ipAddress string) error {
 	// Проверяем, не заблокирован ли уже IP
 	if i.BlockedIPs[ipAddress] {
 		fmt.Printf("ℹ️  IP %s уже заблокирован\n", ipAddress)
+		// Логируем в bot.log: IP уже заблокирован
+		LogIPBanInfo("IP %s уже заблокирован через iptables", ipAddress)
 		return nil
 	}
+
+	// Логируем в bot.log: начало блокировки IP
+	LogIPBanInfo("Блокировка IP %s через iptables", ipAddress)
 
 	// Блокируем IP через iptables
 	cmd := fmt.Sprintf("iptables -I INPUT -s %s -j DROP", ipAddress)
 	if err := i.executeCommand(cmd); err != nil {
+		// Логируем в bot.log: ошибка блокировки IP
+		LogIPBanError("Ошибка блокировки IP %s через iptables: %v", ipAddress, err)
 		return fmt.Errorf("ошибка блокировки IP %s: %v", ipAddress, err)
 	}
 
 	// Добавляем IP в список заблокированных
 	i.BlockedIPs[ipAddress] = true
 	fmt.Printf("✅ IP %s успешно заблокирован через iptables\n", ipAddress)
+
+	// Логируем в bot.log: успешная блокировка IP
+	LogIPBanAction("IP_ЗАБЛОКИРОВАН", ipAddress, 0, []string{})
+
 	return nil
 }
 
@@ -483,18 +508,29 @@ func (i *IPTablesManager) UnblockIP(ipAddress string) error {
 	// Проверяем, заблокирован ли IP
 	if !i.BlockedIPs[ipAddress] {
 		fmt.Printf("ℹ️  IP %s не был заблокирован\n", ipAddress)
+		// Логируем в bot.log: IP не был заблокирован
+		LogIPBanInfo("IP %s не был заблокирован через iptables", ipAddress)
 		return nil
 	}
+
+	// Логируем в bot.log: начало разблокировки IP
+	LogIPBanInfo("Разблокировка IP %s через iptables", ipAddress)
 
 	// Разблокируем IP через iptables
 	cmd := fmt.Sprintf("iptables -D INPUT -s %s -j DROP", ipAddress)
 	if err := i.executeCommand(cmd); err != nil {
+		// Логируем в bot.log: ошибка разблокировки IP
+		LogIPBanError("Ошибка разблокировки IP %s через iptables: %v", ipAddress, err)
 		return fmt.Errorf("ошибка разблокировки IP %s: %v", ipAddress, err)
 	}
 
 	// Удаляем IP из списка заблокированных
 	delete(i.BlockedIPs, ipAddress)
 	fmt.Printf("✅ IP %s успешно разблокирован через iptables\n", ipAddress)
+
+	// Логируем в bot.log: успешная разблокировка IP
+	LogIPBanAction("IP_РАЗБЛОКИРОВАН", ipAddress, 0, []string{})
+
 	return nil
 }
 

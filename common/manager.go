@@ -176,30 +176,62 @@ func (cm *ConfigManager) GetConfigByEmail(email string) (*Client, error) {
 func (cm *ConfigManager) EnableConfig(email string) error {
 	config, err := cm.GetConfigByEmail(email)
 	if err != nil {
+		// Логируем в bot.log: ошибка получения конфига
+		LogIPBanError("Ошибка получения конфига %s для включения: %v", email, err)
 		return err
 	}
 
 	if config.Enable {
 		fmt.Printf("Конфигурация %s уже включена\n", email)
+		// Логируем в bot.log: конфиг уже включен
+		LogIPBanInfo("Конфиг %s уже включен", email)
 		return nil
 	}
 
-	return cm.updateConfigStatus(email, true)
+	// Логируем в bot.log: включение конфига
+	LogIPBanInfo("Включение конфига %s через API панели", email)
+
+	err = cm.updateConfigStatus(email, true)
+	if err != nil {
+		// Логируем в bot.log: ошибка включения конфига
+		LogIPBanError("Ошибка включения конфига %s через API: %v", email, err)
+	} else {
+		// Логируем в bot.log: успешное включение конфига
+		LogIPBanAction("ВКЛЮЧЕН_ЧЕРЕЗ_API", email, 0, []string{})
+	}
+
+	return err
 }
 
 // DisableConfig отключает конфигурацию
 func (cm *ConfigManager) DisableConfig(email string) error {
 	config, err := cm.GetConfigByEmail(email)
 	if err != nil {
+		// Логируем в bot.log: ошибка получения конфига
+		LogIPBanError("Ошибка получения конфига %s для отключения: %v", email, err)
 		return err
 	}
 
 	if !config.Enable {
 		fmt.Printf("Конфигурация %s уже отключена\n", email)
+		// Логируем в bot.log: конфиг уже отключен
+		LogIPBanInfo("Конфиг %s уже отключен", email)
 		return nil
 	}
 
-	return cm.updateConfigStatus(email, false)
+	// Логируем в bot.log: отключение конфига
+	LogIPBanInfo("Отключение конфига %s через API панели", email)
+
+	err = cm.updateConfigStatus(email, false)
+	if err != nil {
+		// Логируем в bot.log: ошибка отключения конфига
+		LogIPBanError("Ошибка отключения конфига %s через API: %v", email, err)
+	} else {
+		// Логируем в bot.log: успешное отключение конфига
+		LogIPBanAction("ОТКЛЮЧЕН_ЧЕРЕЗ_API", email, 0, []string{})
+	}
+
+	return err
 }
 
 // updateConfigStatus обновляет статус конфигурации

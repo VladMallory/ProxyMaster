@@ -69,9 +69,10 @@ const (
 ### 2. Подготовка к запуску
 
 1. Сделать config.go
-   ```bash
-   cp common/config.go.example common/config.go
-   ```
+
+```bash
+cp common/config.go.example common/config.go
+```
 
 
 2. **Отредактируйте `common/config.go`** и заполните все необходимые параметры:
@@ -84,7 +85,7 @@ BOT_TOKEN = "ваш_токен_бота"
 ADMIN_ID = 123456789
 
 // Настройки панели 3x-ui
-PANEL_URL = "https://your-panel.com:57578/your-path/"
+PANEL_URL = "https://your-panel.com:123/your-path/"
 PANEL_USER = "username"
 PANEL_PASS = "password"
 INBOUND_ID = 3 // в панели 3x-ui можно посмотреть id инбаунда

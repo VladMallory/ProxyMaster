@@ -53,7 +53,7 @@ func (bm *BanManager) saveBans() error {
 		return fmt.Errorf("ошибка сериализации банов: %v", err)
 	}
 
-	return os.WriteFile(bm.BansFile, data, 0644)
+	return os.WriteFile(bm.BansFile, data, 0o644)
 }
 
 // IsBanned проверяет, забанен ли пользователь
@@ -66,6 +66,11 @@ func (bm *BanManager) IsBanned(email string) bool {
 	// Проверяем, не истек ли бан
 	if time.Now().After(ban.ExpiresAt) {
 		// Бан истек, удаляем его
+		// Логируем в bot.log: автоматическое разбанирование при проверке
+		LogIPBanAction("АВТО_РАЗБАНЕН_ПРИ_ПРОВЕРКЕ", email, len(ban.IPAddresses), ban.IPAddresses)
+		LogIPBanInfo("Пользователь %s автоматически разбанен при проверке (бан истек: %s)",
+			email, ban.ExpiresAt.Format("2006-01-02 15:04:05"))
+
 		delete(bm.Bans, email)
 		bm.saveBans()
 		return false
@@ -91,11 +96,35 @@ func (bm *BanManager) BanUser(email string, reason string, ipAddresses []string)
 	}
 
 	bm.Bans[email] = ban
+
+	// Логируем в bot.log: банирование пользователя
+	LogIPBanAction("ЗАБАНЕН", email, len(ipAddresses), ipAddresses)
+	LogIPBanInfo("Причина бана: %s", reason)
+	if banDuration > 0 {
+		LogIPBanInfo("Бан до: %s", ban.ExpiresAt.Format("2006-01-02 15:04:05"))
+	} else {
+		LogIPBanInfo("Бан бессрочный")
+	}
+
 	return bm.saveBans()
 }
 
 // UnbanUser разбанивает пользователя
 func (bm *BanManager) UnbanUser(email string) error {
+	// Получаем информацию о бане перед удалением
+	banInfo, exists := bm.Bans[email]
+	if exists {
+		// Логируем в bot.log: разбанирование пользователя с деталями
+		LogIPBanAction("РАЗБАНЕН", email, len(banInfo.IPAddresses), banInfo.IPAddresses)
+		LogIPBanInfo("Пользователь %s разбанен (был забанен: %s, причина: %s)",
+			email,
+			banInfo.BannedAt.Format("2006-01-02 15:04:05"),
+			banInfo.Reason)
+	} else {
+		// Логируем в bot.log: попытка разбанить несуществующего пользователя
+		LogIPBanWarning("Попытка разбанить пользователя %s, который не был забанен", email)
+	}
+
 	delete(bm.Bans, email)
 	return bm.saveBans()
 }
@@ -109,6 +138,11 @@ func (bm *BanManager) GetBanInfo(email string) *BanInfo {
 
 	// Проверяем, не истек ли бан
 	if time.Now().After(ban.ExpiresAt) {
+		// Логируем в bot.log: автоматическое разбанирование при получении информации
+		LogIPBanAction("АВТО_РАЗБАНЕН_ПРИ_ЗАПРОСЕ", email, len(ban.IPAddresses), ban.IPAddresses)
+		LogIPBanInfo("Пользователь %s автоматически разбанен при запросе информации (бан истек: %s)",
+			email, ban.ExpiresAt.Format("2006-01-02 15:04:05"))
+
 		delete(bm.Bans, email)
 		bm.saveBans()
 		return nil
@@ -124,6 +158,13 @@ func (bm *BanManager) CleanupExpiredBans() {
 
 	for email, ban := range bm.Bans {
 		if now.After(ban.ExpiresAt) {
+			// Логируем в bot.log: автоматическое разбанирование по истечении срока
+			LogIPBanAction("АВТО_РАЗБАНЕН", email, len(ban.IPAddresses), ban.IPAddresses)
+			LogIPBanInfo("Пользователь %s автоматически разбанен (бан истек: %s, был забанен: %s)",
+				email,
+				ban.ExpiresAt.Format("2006-01-02 15:04:05"),
+				ban.BannedAt.Format("2006-01-02 15:04:05"))
+
 			delete(bm.Bans, email)
 			expiredCount++
 		}
@@ -132,6 +173,8 @@ func (bm *BanManager) CleanupExpiredBans() {
 	if expiredCount > 0 {
 		bm.saveBans()
 		fmt.Printf("BAN_MANAGER: Удалено %d истекших банов\n", expiredCount)
+		// Логируем в bot.log: общая статистика очистки
+		LogIPBanInfo("Очистка истекших банов: удалено %d пользователей", expiredCount)
 	}
 }
 
@@ -150,6 +193,12 @@ func (bm *BanManager) CleanupOldBans(retentionMinutes int) {
 	for email, ban := range bm.Bans {
 		// Удаляем баны, которые истекли дольше retentionMinutes назад
 		if ban.ExpiresAt.Before(cutoffTime) {
+			// Логируем в bot.log: удаление старого бана
+			LogIPBanInfo("Удаление старого бана для %s (истёк: %s, был забанен: %s)",
+				email,
+				ban.ExpiresAt.Format("2006-01-02 15:04:05"),
+				ban.BannedAt.Format("2006-01-02 15:04:05"))
+
 			delete(bm.Bans, email)
 			oldBansCount++
 			fmt.Printf("BAN_MANAGER: Удален старый бан для %s (истёк: %s)\n",
@@ -160,6 +209,8 @@ func (bm *BanManager) CleanupOldBans(retentionMinutes int) {
 	if oldBansCount > 0 {
 		bm.saveBans()
 		fmt.Printf("BAN_MANAGER: Удалено %d старых банов из файла\n", oldBansCount)
+		// Логируем в bot.log: общая статистика очистки старых банов
+		LogIPBanInfo("Очистка старых банов: удалено %d пользователей (старше %d минут)", oldBansCount, retentionMinutes)
 	}
 }
 
