@@ -5,4 +5,4 @@
 {"payment_id":"3056fcb3-000f-5001-8000-19ea7d8fa412","user_id":873925520,"amount":1,"status":"succeeded","created_at":"2025-09-13T05:45:55.898738269+02:00","updated_at":"2025-09-13T05:46:56.132486077+02:00","processed":true}
 {"payment_id":"3056fd8c-000f-5000-b000-1f786bb18021","user_id":873925520,"amount":1,"status":"succeeded","created_at":"2025-09-13T05:49:32.659382394+02:00","updated_at":"2025-09-13T05:50:02.930665787+02:00","processed":true}
 {"payment_id":"3056fe5b-000f-5001-8000-1ed536b0cd03","user_id":7517377017,"amount":500,"status":"timeout","created_at":"2025-09-13T05:52:59.437020141+02:00","updated_at":"2025-09-13T06:02:59.64676245+02:00","processed":false}
-{"payment_id":"3056ff1d-000f-5001-9000-16555aa8ae2a","user_id":7517377017,"amount":1,"status":"pending","created_at":"2025-09-13T05:56:13.790887827+02:00","updated_at":"2025-09-13T05:56:13.790887877+02:00","processed":false}
+{"payment_id":"3056ff1d-000f-5001-9000-16555aa8ae2a","user_id":7517377017,"amount":1,"status":"timeout","created_at":"2025-09-13T05:56:13.790887827+02:00","updated_at":"2025-09-13T06:06:14.02982351+02:00","processed":false}
