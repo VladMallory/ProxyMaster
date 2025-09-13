@@ -1,0 +1,58 @@
+# Бинарные файлы
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.o
+*.a
+*.lib
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Исполняемые файлы
+/bot
+/main
+
+# Конфигурационные файлы
+config.go
+
+# Временные файлы
+*.tmp
+*.temp
+*.log
+*.pid
+*.swp
+*.swo
+*~
+
+# IDE файлы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS файлы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Go специфичные файлы
+vendor/
+
+# Backup файлы
+backups/backupdb/
+
+# Env файлы (не коммитить реальные секреты)
+.env
+.env.*
+!/.env.example
+tools/.env
+tools/.env.*
+!tools/.env.example
