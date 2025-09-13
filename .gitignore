@@ -32,6 +32,9 @@ config.go
 *.swo
 *~
 
+# Лог файлы платежей
+payments/pay.log
+
 # IDE файлы
 .vscode/
 .idea/
