@@ -57,48 +57,56 @@ var (
 	ADMIN_CONFIG_BLOCKING_ENABLED bool // Уведомления админу о блокировке конфигов (автосписание)
 	ADMIN_IP_BAN_ENABLED          bool // Уведомления админу о срабатывании IP ban
 	ADMIN_BALANCE_TOPUP_ENABLED   bool // Уведомления админу о пополнении баланса
+	ADMIN_REFERRAL_ENABLED        bool // Уведомления админу о новых рефералах
 
 	// === НАСТРОЙКИ ПЛАТЕЖЕЙ ===
-	
+
 	// Настройки ЮКассы через Telegram Bot API
-	YUKASSA_PROVIDER_TOKEN      string // Токен провайдера платежей от BotFather
-	TELEGRAM_PAYMENTS_ENABLED   bool   // Включены ли платежи через Telegram Bot API
-	
+	YUKASSA_PROVIDER_TOKEN    string // Токен провайдера платежей от BotFather
+	TELEGRAM_PAYMENTS_ENABLED bool   // Включены ли платежи через Telegram Bot API
+
 	// Настройки прямой интеграции с ЮКассы (API)
-	YUKASSA_SHOP_ID             string // ID магазина ЮКассы
-	YUKASSA_SECRET_KEY          string // Секретный ключ ЮКассы
+	YUKASSA_SHOP_ID              string // ID магазина ЮКассы
+	YUKASSA_SECRET_KEY           string // Секретный ключ ЮКассы
 	YUKASSA_API_PAYMENTS_ENABLED bool   // Включены ли платежи через прямое API ЮКассы
-	YUKASSA_WEBHOOK_URL         string // URL для получения уведомлений от ЮКассы
-	
+	YUKASSA_WEBHOOK_URL          string // URL для получения уведомлений от ЮКассы
+
 	// Настройки чеков для ЮКассы
-	YUKASSA_RECEIPT_ENABLED      bool   // Включена ли отправка чеков
-	YUKASSA_VAT_CODE             int    // Код НДС (1=20%, 2=10%, 3=0%, 4=без НДС, 5=20/120, 6=10/110)
-	YUKASSA_PAYMENT_SUBJECT      string // Предмет расчета (service, commodity, etc.)
-	YUKASSA_PAYMENT_MODE         string // Способ расчета (full_prepayment, partial_prepayment, advance, full_payment, partial_payment, credit, credit_payment)
+	YUKASSA_RECEIPT_ENABLED bool   // Включена ли отправка чеков
+	YUKASSA_VAT_CODE        int    // Код НДС (1=20%, 2=10%, 3=0%, 4=без НДС, 5=20/120, 6=10/110)
+	YUKASSA_PAYMENT_SUBJECT string // Предмет расчета (service, commodity, etc.)
+	YUKASSA_PAYMENT_MODE    string // Способ расчета (full_prepayment, partial_prepayment, advance, full_payment, partial_payment, credit, credit_payment)
+
+	// === НАСТРОЙКИ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===
+	REFERRAL_SYSTEM_ENABLED      bool    // Включена ли реферальная система
+	REFERRAL_BONUS_AMOUNT        float64 // Сумма бонуса для пригласившего (в рублях)
+	REFERRAL_WELCOME_BONUS       float64 // Сумма бонуса для приглашенного (в рублях)
+	REFERRAL_LINK_BASE_URL       string  // Базовый URL для реферальных ссылок
+	REFERRAL_MIN_BALANCE_FOR_REF float64 // Минимальный баланс для получения реферальной ссылки
 )
 
 // Инициализация глобальных переменных конфигурации
 func init() {
 	// Эти значения должны быть загружены из переменных окружения или конфигурационного файла
-	BOT_TOKEN = "YOUR_BOT_TOKEN_HERE" // Получите токен у @BotFather
-	ADMIN_ID = 123456789              // Замените на ваш Telegram ID
+	BOT_TOKEN = "YOUR_BOT_TOKEN_HERE" // Замените на ваш токен бота от @BotFather
+	ADMIN_ID = 123456789               // Замените на ваш Telegram ID
 
 	// URL для панели управления
-	PANEL_URL = "https://your-domain.com:port/panel_path/"
+	PANEL_URL = "https://your-panel.example.com:4803/your-path/"
 	PANEL_USER = "your_panel_username"
 	PANEL_PASS = "your_panel_password"
-	INBOUND_ID = 5
+	INBOUND_ID = 1
 
 	// URL для конфигураций
-	CONFIG_BASE_URL = "https://your-domain.com:port/sub/"
-	CONFIG_JSON_URL = "https://your-domain.com:port/json/"
+	CONFIG_BASE_URL = "https://your-config.example.com:3052/your-config-path/"
+	CONFIG_JSON_URL = "https://your-config.example.com:3052/your-json-path/"
 
-	REDIRECT_DOMAIN = "your-domain.com:port" // редирект для импорта подписки
-	REDIRECT_IMPORT = "happ"                 // тип импорта: "happ" или "v2raytun"
+	REDIRECT_DOMAIN = "your-redirect.example.com:8081" // редирект для импорта подписки
+	REDIRECT_IMPORT = "v2raytun"                       // тип импорта: "happ" или "v2raytun"
 
 	// ---TRAFIC---
 	TRAFFIC_RESET_ENABLED = true   // включен ли автоматический сброс трафика
-	PRICE_PER_DAY = 50             // стоимость подписки за день
+	PRICE_PER_DAY = 1              // стоимость подписки за день
 	TRIAL_BALANCE_AMOUNT = 50      // сумма в рублях, которая добавляется при активации пробного периода (минимум = PRICE_PER_DAY)
 	TRAFFIC_LIMIT_GB = 70          // лимиты трафика. Срок действия указывается в TRAFFIC_RESET_INTERVAL
 	TRAFFIC_RESET_INTERVAL = 10080 // 7 дней в минутах (7*24*60 = 8640)
@@ -112,8 +120,8 @@ func init() {
 	IP_BAN_ENABLED = true                               // Включена ли система IP бана
 	ACCESS_LOG_PATH = "/usr/local/x-ui/access.log"      // Путь к файлу access.log
 	IP_ACCUMULATED_PATH = "/var/log/ip_accumulated.log" // Путь к файлу накопленных логов
-	IP_BAN_LOG_PATH = "/path/to/your/bot.log"           // Путь к файлу логов IP ban
-	MAX_IPS_PER_CONFIG = 1                              // Максимальное количество IP адресов на один конфиг (если больше - отключается)
+	IP_BAN_LOG_PATH = "/root/bot/bot.log"               // Путь к файлу логов IP ban
+	MAX_IPS_PER_CONFIG = 4                              // Максимальное количество IP адресов на один конфиг (если больше - отключается)
 	IP_SAVE_INTERVAL = 25                               // Интервал сохранения новых строк в минутах
 	IP_CHECK_INTERVAL = 25                              // Интервал проверки IP в минутах
 	IP_BAN_DURATION = 120                               // Длительность бана в минутах (1 час)
@@ -156,25 +164,33 @@ func init() {
 	ADMIN_CONFIG_BLOCKING_ENABLED = true // Уведомления админу о блокировке конфигов (автосписание)
 	ADMIN_IP_BAN_ENABLED = true          // Уведомления админу о срабатывании IP ban
 	ADMIN_BALANCE_TOPUP_ENABLED = true   // Уведомления админу о пополнении баланса
+	ADMIN_REFERRAL_ENABLED = true        // Уведомления админу о новых рефералах
 
 	// ---НАСТРОЙКИ ПЛАТЕЖЕЙ---
-	
+
 	// === TELEGRAM BOT API ПЛАТЕЖИ ===
-	// Для получения токена: @BotFather -> Bot Settings -> Payments -> Connect ЮKassa
-	// Режим определяется типом токена: TEST для тестирования, LIVE для продакшна
-	YUKASSA_PROVIDER_TOKEN = "YOUR_YUKASSA_PROVIDER_TOKEN_FROM_BOTFATHER" // Токен от BotFather
-	TELEGRAM_PAYMENTS_ENABLED = true // Включить платежи через Telegram (true/false)
-	
+	// Использует интеграцию через Telegram Bot API
+	// Режим (тест/прод) определяется типом токена от BotFather (TEST/LIVE)
+	YUKASSA_PROVIDER_TOKEN = "YOUR_PROVIDER_TOKEN_HERE" // Токен от BotFather
+	TELEGRAM_PAYMENTS_ENABLED = false                   // Отключить платежи через Telegram
+
 	// === ПРЯМОЕ API ЮКАССЫ ===
-	// Для получения данных: ЮKassa личный кабинет -> Настройки -> API
-	YUKASSA_SHOP_ID = "YOUR_YUKASSA_SHOP_ID"         // ID магазина ЮКассы
-	YUKASSA_SECRET_KEY = "YOUR_YUKASSA_SECRET_KEY"   // Секретный ключ ЮКассы
-	YUKASSA_API_PAYMENTS_ENABLED = false            // Включить платежи через прямое API (true/false)
-	YUKASSA_WEBHOOK_URL = "https://yourdomain.com/yukassa/webhook" // URL для уведомлений от ЮКассы
-	
+	// Использует прямую интеграцию с API ЮКассы
+	YUKASSA_SHOP_ID = "YOUR_SHOP_ID"                                    // ID магазина ЮКассы
+	YUKASSA_SECRET_KEY = "live_YOUR_SECRET_KEY_HERE"                   // Секретный ключ ЮКассы
+	YUKASSA_API_PAYMENTS_ENABLED = true                                 // Включить платежи через прямое API
+	YUKASSA_WEBHOOK_URL = "https://your-domain.example.com:8081/yukassa/webhook" // URL для уведомлений от ЮКассы
+
 	// === НАСТРОЙКИ ЧЕКОВ ===
-	YUKASSA_RECEIPT_ENABLED = true     // Включить отправку чеков (обязательно для 54-ФЗ)
-	YUKASSA_VAT_CODE = 1              // НДС 20% (1=20%, 2=10%, 3=0%, 4=без НДС, 5=20/120, 6=10/110)
-	YUKASSA_PAYMENT_SUBJECT = "service" // Услуга (service, commodity, excise, job, gambling_bet, gambling_prize, lottery, lottery_prize, intellectual_activity, payment, agent_commission, composite, another)
+	YUKASSA_RECEIPT_ENABLED = true           // Включить отправку чеков (обязательно для 54-ФЗ)
+	YUKASSA_VAT_CODE = 1                     // НДС 20% (1=20%, 2=10%, 3=0%, 4=без НДС, 5=20/120, 6=10/110)
+	YUKASSA_PAYMENT_SUBJECT = "service"      // Услуга (service, commodity, excise, job, gambling_bet, gambling_prize, lottery, lottery_prize, intellectual_activity, payment, agent_commission, composite, another)
 	YUKASSA_PAYMENT_MODE = "full_prepayment" // Полная предоплата (full_prepayment, partial_prepayment, advance, full_payment, partial_payment, credit, credit_payment)
+
+	// === НАСТРОЙКИ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===
+	REFERRAL_SYSTEM_ENABLED = true                                    // Включена ли реферальная система
+	REFERRAL_BONUS_AMOUNT = 500.0                                     // Сумма бонуса для пригласившего (в рублях)
+	REFERRAL_WELCOME_BONUS = 500.0                                    // Сумма бонуса для приглашенного (в рублях)
+	REFERRAL_LINK_BASE_URL = "https://t.me/your_bot_username?start=ref_" // Базовый URL для реферальных ссылок
+	REFERRAL_MIN_BALANCE_FOR_REF = 0.0                                // Минимальный баланс для получения реферальной ссылки
 }
