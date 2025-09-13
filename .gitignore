@@ -52,6 +52,7 @@ desktop.ini
 vendor/
 
 # Backup файлы
+backups/
 backups/backupdb/
 
 # Env файлы (не коммитить реальные секреты)
