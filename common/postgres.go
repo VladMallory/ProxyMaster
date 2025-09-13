@@ -423,6 +423,26 @@ func AddBalancePG(telegramID int64, amount float64) error {
 	return nil
 }
 
+// UpdateTrialFlag обновляет флаг использования пробного периода
+func UpdateTrialFlagPG(telegramID int64) error {
+	query := `UPDATE users SET has_used_trial = true WHERE telegram_id = $1`
+	_, err := db.Exec(query, telegramID)
+	if err != nil {
+		return fmt.Errorf("ошибка обновления флага пробного периода: %v", err)
+	}
+	return nil
+}
+
+// ResetTrialFlag сбрасывает флаг использования пробного периода
+func ResetTrialFlagPG(telegramID int64) error {
+	query := `UPDATE users SET has_used_trial = false WHERE telegram_id = $1`
+	_, err := db.Exec(query, telegramID)
+	if err != nil {
+		return fmt.Errorf("ошибка сброса флага пробного периода: %v", err)
+	}
+	return nil
+}
+
 // ClearAllUsers удаляет всех пользователей
 func ClearAllUsersPG() error {
 	_, err := db.Exec("DELETE FROM users")

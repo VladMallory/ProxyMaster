@@ -75,6 +75,18 @@ func AddBalance(telegramID int64, amount float64) error {
 	return AddBalancePG(telegramID, amount)
 }
 
+// UpdateTrialFlag обновляет флаг использования пробного периода
+func UpdateTrialFlag(telegramID int64) error {
+	// Переадресация к PostgreSQL
+	return UpdateTrialFlagPG(telegramID)
+}
+
+// ResetTrialFlag сбрасывает флаг использования пробного периода
+func ResetTrialFlag(telegramID int64) error {
+	// Переадресация к PostgreSQL
+	return ResetTrialFlagPG(telegramID)
+}
+
 // ClearAllUsers удаляет всех пользователей
 func ClearAllUsers() error {
 	// Переадресация к PostgreSQL

@@ -174,15 +174,35 @@ func (rs *ReferralService) AwardReferralBonuses(referrerID, referredID int64, re
 
 // awardBonus начисляет бонус пользователю
 func (rs *ReferralService) awardBonus(userID int64, bonusType string, amount float64, referralCode string, relatedUserID int64, description string) error {
-	query := "SELECT award_referral_bonus($1, $2, $3, $4, $5, $6)"
-	var success bool
-	err := rs.db.QueryRow(query, userID, bonusType, amount, referralCode, relatedUserID, description).Scan(&success)
+	// Используем AddBalance для начисления бонуса
+	err := common.AddBalance(userID, amount)
 	if err != nil {
-		return fmt.Errorf("ошибка начисления бонуса: %v", err)
+		return fmt.Errorf("ошибка начисления бонуса через AddBalance: %v", err)
 	}
 
-	if !success {
-		return fmt.Errorf("не удалось начислить бонус")
+	// Записываем в историю бонусов
+	query := `
+		INSERT INTO referral_bonuses (user_telegram_id, bonus_type, amount, referral_code, related_user_id, description)
+		VALUES ($1, $2, $3, $4, $5, $6)`
+
+	_, err = rs.db.Exec(query, userID, bonusType, amount, referralCode, relatedUserID, description)
+	if err != nil {
+		log.Printf("REFERRAL_SERVICE: Ошибка записи в историю бонусов для пользователя %d: %v", userID, err)
+		// Не возвращаем ошибку, так как бонус уже начислен
+	}
+
+	// Если это бонус пригласившему, обновляем общую сумму реферальных заработков
+	if bonusType == "referrer" {
+		updateQuery := `
+			UPDATE users 
+			SET referral_earnings = referral_earnings + $2, referral_count = referral_count + 1
+			WHERE telegram_id = $1`
+
+		_, err = rs.db.Exec(updateQuery, userID, amount)
+		if err != nil {
+			log.Printf("REFERRAL_SERVICE: Ошибка обновления реферальной статистики для пользователя %d: %v", userID, err)
+			// Не возвращаем ошибку, так как бонус уже начислен
+		}
 	}
 
 	return nil
