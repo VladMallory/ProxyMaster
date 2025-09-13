@@ -20,6 +20,11 @@ type User struct {
 	HasUsedTrial    bool      `bson:"has_used_trial" json:"has_used_trial"`
 	CreatedAt       time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt       time.Time `bson:"updated_at" json:"updated_at"`
+	// Реферальная система
+	ReferralCode     string  `bson:"referral_code" json:"referral_code"`
+	ReferredBy       int64   `bson:"referred_by" json:"referred_by"`
+	ReferralEarnings float64 `bson:"referral_earnings" json:"referral_earnings"`
+	ReferralCount    int     `bson:"referral_count" json:"referral_count"`
 }
 
 // TrafficConfig представляет конфигурацию трафика

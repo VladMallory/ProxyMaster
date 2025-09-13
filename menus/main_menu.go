@@ -38,6 +38,9 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
 				),
 			)
@@ -54,6 +57,9 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
@@ -209,6 +215,9 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
 				),
 			)
@@ -225,6 +234,9 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
+				),
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),

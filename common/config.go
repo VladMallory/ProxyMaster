@@ -57,6 +57,7 @@ var (
 	ADMIN_CONFIG_BLOCKING_ENABLED bool // Уведомления админу о блокировке конфигов (автосписание)
 	ADMIN_IP_BAN_ENABLED          bool // Уведомления админу о срабатывании IP ban
 	ADMIN_BALANCE_TOPUP_ENABLED   bool // Уведомления админу о пополнении баланса
+	ADMIN_REFERRAL_ENABLED        bool // Уведомления админу о новых рефералах
 
 	// === НАСТРОЙКИ ПЛАТЕЖЕЙ ===
 
@@ -75,6 +76,13 @@ var (
 	YUKASSA_VAT_CODE        int    // Код НДС (1=20%, 2=10%, 3=0%, 4=без НДС, 5=20/120, 6=10/110)
 	YUKASSA_PAYMENT_SUBJECT string // Предмет расчета (service, commodity, etc.)
 	YUKASSA_PAYMENT_MODE    string // Способ расчета (full_prepayment, partial_prepayment, advance, full_payment, partial_payment, credit, credit_payment)
+
+	// === НАСТРОЙКИ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===
+	REFERRAL_SYSTEM_ENABLED      bool    // Включена ли реферальная система
+	REFERRAL_BONUS_AMOUNT        float64 // Сумма бонуса для пригласившего (в рублях)
+	REFERRAL_WELCOME_BONUS       float64 // Сумма бонуса для приглашенного (в рублях)
+	REFERRAL_LINK_BASE_URL       string  // Базовый URL для реферальных ссылок
+	REFERRAL_MIN_BALANCE_FOR_REF float64 // Минимальный баланс для получения реферальной ссылки
 )
 
 // Инициализация глобальных переменных конфигурации
@@ -156,6 +164,7 @@ func init() {
 	ADMIN_CONFIG_BLOCKING_ENABLED = true // Уведомления админу о блокировке конфигов (автосписание)
 	ADMIN_IP_BAN_ENABLED = true          // Уведомления админу о срабатывании IP ban
 	ADMIN_BALANCE_TOPUP_ENABLED = true   // Уведомления админу о пополнении баланса
+	ADMIN_REFERRAL_ENABLED = true        // Уведомления админу о новых рефералах
 
 	// ---НАСТРОЙКИ ПЛАТЕЖЕЙ---
 
@@ -177,4 +186,11 @@ func init() {
 	YUKASSA_VAT_CODE = 1                     // НДС 20% (1=20%, 2=10%, 3=0%, 4=без НДС, 5=20/120, 6=10/110)
 	YUKASSA_PAYMENT_SUBJECT = "service"      // Услуга (service, commodity, excise, job, gambling_bet, gambling_prize, lottery, lottery_prize, intellectual_activity, payment, agent_commission, composite, another)
 	YUKASSA_PAYMENT_MODE = "full_prepayment" // Полная предоплата (full_prepayment, partial_prepayment, advance, full_payment, partial_payment, credit, credit_payment)
+
+	// === НАСТРОЙКИ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===
+	REFERRAL_SYSTEM_ENABLED = true                                   // Включена ли реферальная система
+	REFERRAL_BONUS_AMOUNT = 500.0                                    // Сумма бонуса для пригласившего (в рублях)
+	REFERRAL_WELCOME_BONUS = 500.0                                   // Сумма бонуса для приглашенного (в рублях)
+	REFERRAL_LINK_BASE_URL = "https://t.me/aquavpn13_bot?start=ref_" // Базовый URL для реферальных ссылок
+	REFERRAL_MIN_BALANCE_FOR_REF = 0.0                               // Минимальный баланс для получения реферальной ссылки
 }

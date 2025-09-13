@@ -63,6 +63,20 @@ func (tm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User
 	user.Balance += float64(TRIAL_BALANCE_AMOUNT)
 	user.HasUsedTrial = true
 
+	// Инициализируем реферальные поля, если они не установлены
+	if user.ReferralCode == "" {
+		user.ReferralCode = ""
+	}
+	if user.ReferredBy == 0 {
+		user.ReferredBy = 0
+	}
+	if user.ReferralEarnings == 0 {
+		user.ReferralEarnings = 0
+	}
+	if user.ReferralCount == 0 {
+		user.ReferralCount = 0
+	}
+
 	// Сохраняем изменения в базу данных
 	if err := UpdateUser(user); err != nil {
 		log.Printf("TRIAL: Ошибка сохранения пользователя %d: %v", user.TelegramID, err)

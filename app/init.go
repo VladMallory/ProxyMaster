@@ -10,6 +10,7 @@ import (
 	"bot/common"
 	"bot/payments"
 	"bot/payments/promo"
+	"bot/referralLink"
 	"bot/services"
 	"bot/telegram_bot"
 )
@@ -154,6 +155,15 @@ func StartBot(token string) {
 		log.Printf("APP: Промокоды будут недоступны")
 	} else {
 		log.Printf("APP: Система промокодов успешно инициализирована")
+	}
+
+	// Инициализируем реферальную систему
+	log.Printf("APP: Инициализация реферальной системы")
+	if err := referralLink.InitReferralSystem(common.GetDB(), bot.API); err != nil {
+		log.Printf("APP: Ошибка инициализации реферальной системы: %v", err)
+		log.Printf("APP: Реферальная система будет недоступна")
+	} else {
+		log.Printf("APP: Реферальная система успешно инициализирована")
 	}
 
 	// Запускаем систему уведомлений о подписке

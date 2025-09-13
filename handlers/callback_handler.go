@@ -9,6 +9,7 @@ import (
 	"bot/menus"
 	"bot/payments"
 	"bot/payments/promo"
+	"bot/referralLink"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -48,6 +49,13 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
+	// Проверяем, является ли это callback реферальной системы
+	if referralLink.GlobalReferralManager != nil && referralLink.GlobalReferralManager.IsReferralCallback(data) {
+		referralLink.GlobalReferralManager.HandleCallback(chatID, userID, data)
+		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	}
+
 	switch {
 	case data == "balance":
 		log.Printf("HANDLE_CALLBACK: Вызов editBalance для TelegramID=%d", userID)
@@ -61,6 +69,9 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 	case data == "main":
 		log.Printf("HANDLE_CALLBACK: Вызов editMainMenu для TelegramID=%d", userID)
 		menus.EditMainMenu(bot, chatID, messageID, user)
+	case data == "ref":
+		log.Printf("HANDLE_CALLBACK: Обработка реферального меню для TelegramID=%d", userID)
+		handleRefCallback(bot, chatID, messageID, user)
 	case data == "extend":
 		log.Printf("HANDLE_CALLBACK: Вызов editExtend для TelegramID=%d", userID)
 		if common.TARIFF_MODE_ENABLED {
@@ -277,4 +288,24 @@ func handleDisableTrafficCallback(bot *tgbotapi.BotAPI, chatID int64, messageID 
 	userID := callback.From.ID
 	log.Printf("HANDLE_CALLBACK: Отключение лимитов трафика для TelegramID=%d", userID)
 	common.DisableTrafficLimit(bot, chatID, messageID)
+}
+
+// handleRefCallback обрабатывает callback реферальной системы
+func handleRefCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.User) {
+	log.Printf("HANDLE_CALLBACK: Обработка реферального callback для TelegramID=%d", user.TelegramID)
+
+	// Проверяем, включена ли реферальная система
+	if !common.REFERRAL_SYSTEM_ENABLED {
+		msg := tgbotapi.NewMessage(chatID, "❌ Реферальная система временно отключена")
+		bot.Send(msg)
+		return
+	}
+
+	// Используем глобальный менеджер рефералов
+	if referralLink.GlobalReferralManager != nil {
+		referralLink.GlobalReferralManager.SendReferralMenu(chatID, user)
+	} else {
+		msg := tgbotapi.NewMessage(chatID, "❌ Реферальная система не инициализирована")
+		bot.Send(msg)
+	}
 }

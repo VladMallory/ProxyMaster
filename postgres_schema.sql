@@ -26,7 +26,12 @@ CREATE TABLE users (
     expiry_time BIGINT,
     has_used_trial BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    -- Реферальная система
+    referral_code VARCHAR(50) UNIQUE,
+    referred_by BIGINT,
+    referral_earnings DECIMAL(10,2) DEFAULT 0.00,
+    referral_count INTEGER DEFAULT 0
 );
 
 -- Настройки трафика
@@ -66,6 +71,35 @@ CREATE TABLE ip_violations (
     FOREIGN KEY (telegram_id) REFERENCES users(telegram_id) ON DELETE CASCADE
 );
 
+-- === РЕФЕРАЛЬНАЯ СИСТЕМА ===
+
+-- Таблица для отслеживания реферальных переходов
+CREATE TABLE referral_transitions (
+    id SERIAL PRIMARY KEY,
+    referrer_telegram_id BIGINT NOT NULL,
+    referred_telegram_id BIGINT NOT NULL,
+    referral_code VARCHAR(50) NOT NULL,
+    transition_date TIMESTAMP DEFAULT NOW(),
+    bonus_paid BOOLEAN DEFAULT FALSE,
+    bonus_amount DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (referrer_telegram_id) REFERENCES users(telegram_id) ON DELETE CASCADE,
+    FOREIGN KEY (referred_telegram_id) REFERENCES users(telegram_id) ON DELETE CASCADE
+);
+
+-- Таблица для истории реферальных бонусов
+CREATE TABLE referral_bonuses (
+    id SERIAL PRIMARY KEY,
+    user_telegram_id BIGINT NOT NULL,
+    bonus_type VARCHAR(20) NOT NULL, -- 'referrer' или 'referred'
+    amount DECIMAL(10,2) NOT NULL,
+    referral_code VARCHAR(50),
+    related_user_id BIGINT, -- ID пользователя, связанного с бонусом
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (user_telegram_id) REFERENCES users(telegram_id) ON DELETE CASCADE
+);
+
 -- Индексы для производительности
 CREATE INDEX idx_users_telegram_id ON users(telegram_id);
 CREATE INDEX idx_users_created_at ON users(created_at);
@@ -80,6 +114,16 @@ CREATE INDEX idx_ip_connections_ip ON ip_connections(ip_address);
 CREATE INDEX idx_ip_violations_telegram_blocked ON ip_violations(telegram_id, is_blocked);
 CREATE INDEX idx_ip_violations_ip ON ip_violations(ip_address);
 CREATE INDEX idx_ip_violations_created_at ON ip_violations(created_at);
+
+-- Индексы для реферальной системы
+CREATE INDEX idx_users_referral_code ON users(referral_code);
+CREATE INDEX idx_users_referred_by ON users(referred_by);
+CREATE INDEX idx_referral_transitions_referrer ON referral_transitions(referrer_telegram_id);
+CREATE INDEX idx_referral_transitions_referred ON referral_transitions(referred_telegram_id);
+CREATE INDEX idx_referral_transitions_code ON referral_transitions(referral_code);
+CREATE INDEX idx_referral_bonuses_user ON referral_bonuses(user_telegram_id);
+CREATE INDEX idx_referral_bonuses_type ON referral_bonuses(bonus_type);
+CREATE INDEX idx_referral_bonuses_created_at ON referral_bonuses(created_at);
 
 -- Функция для автоматического обновления updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -124,6 +168,117 @@ BEGIN
     END IF;
     
     RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- === ФУНКЦИИ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===
+
+-- Функция для генерации уникального реферального кода
+CREATE OR REPLACE FUNCTION generate_referral_code(telegram_id BIGINT)
+RETURNS VARCHAR(50) AS $$
+DECLARE
+    code VARCHAR(50);
+    exists_count INTEGER;
+BEGIN
+    -- Генерируем код на основе telegram_id + случайные символы
+    code := 'REF' || telegram_id || LPAD(FLOOR(RANDOM() * 1000)::TEXT, 3, '0');
+    
+    -- Проверяем уникальность
+    SELECT COUNT(*) INTO exists_count FROM users WHERE referral_code = code;
+    
+    -- Если код уже существует, генерируем новый
+    WHILE exists_count > 0 LOOP
+        code := 'REF' || telegram_id || LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0');
+        SELECT COUNT(*) INTO exists_count FROM users WHERE referral_code = code;
+    END LOOP;
+    
+    RETURN code;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Функция для обработки реферального перехода
+CREATE OR REPLACE FUNCTION process_referral_transition(
+    referrer_id BIGINT,
+    referred_id BIGINT,
+    referral_code VARCHAR(50)
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    referrer_exists BOOLEAN;
+    referred_exists BOOLEAN;
+    already_referred BOOLEAN;
+    referrer_balance DECIMAL(10,2);
+BEGIN
+    -- Проверяем существование пользователей
+    SELECT EXISTS(SELECT 1 FROM users WHERE telegram_id = referrer_id) INTO referrer_exists;
+    SELECT EXISTS(SELECT 1 FROM users WHERE telegram_id = referred_id) INTO referred_exists;
+    
+    IF NOT referrer_exists OR NOT referred_exists THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Проверяем, не был ли уже приглашен этот пользователь
+    SELECT EXISTS(SELECT 1 FROM referral_transitions WHERE referred_telegram_id = referred_id) INTO already_referred;
+    
+    IF already_referred THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Проверяем, что пользователь не приглашает сам себя
+    IF referrer_id = referred_id THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Записываем переход
+    INSERT INTO referral_transitions (referrer_telegram_id, referred_telegram_id, referral_code)
+    VALUES (referrer_id, referred_id, referral_code);
+    
+    -- Обновляем счетчик рефералов у пригласившего
+    UPDATE users SET referral_count = referral_count + 1 WHERE telegram_id = referrer_id;
+    
+    -- Устанавливаем связь у приглашенного
+    UPDATE users SET referred_by = referrer_id WHERE telegram_id = referred_id;
+    
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Функция для начисления реферального бонуса
+CREATE OR REPLACE FUNCTION award_referral_bonus(
+    user_id BIGINT,
+    bonus_type VARCHAR(20),
+    amount DECIMAL(10,2),
+    referral_code VARCHAR(50) DEFAULT NULL,
+    related_user_id BIGINT DEFAULT NULL,
+    description TEXT DEFAULT NULL
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    current_balance DECIMAL(10,2);
+BEGIN
+    -- Получаем текущий баланс
+    SELECT balance INTO current_balance FROM users WHERE telegram_id = user_id;
+    
+    -- Обновляем баланс
+    UPDATE users SET balance = balance + amount WHERE telegram_id = user_id;
+    
+    -- Если это бонус пригласившему, обновляем общую сумму реферальных заработков
+    IF bonus_type = 'referrer' THEN
+        UPDATE users SET referral_earnings = referral_earnings + amount WHERE telegram_id = user_id;
+    END IF;
+    
+    -- Записываем в историю бонусов
+    INSERT INTO referral_bonuses (user_telegram_id, bonus_type, amount, referral_code, related_user_id, description)
+    VALUES (user_id, bonus_type, amount, referral_code, related_user_id, description);
+    
+    -- Обновляем статус выплаты в referral_transitions
+    IF bonus_type = 'referrer' THEN
+        UPDATE referral_transitions 
+        SET bonus_paid = TRUE, bonus_amount = amount 
+        WHERE referrer_telegram_id = user_id AND referred_telegram_id = related_user_id;
+    END IF;
+    
+    RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -181,3 +336,17 @@ COMMENT ON TABLE users IS 'Пользователи VPN бота';
 COMMENT ON TABLE traffic_configs IS 'Настройки трафика';
 COMMENT ON TABLE ip_connections IS 'Временные подключения IP адресов (TTL 1 час)';
 COMMENT ON TABLE ip_violations IS 'Нарушения и блокировки IP адресов';
+COMMENT ON TABLE referral_transitions IS 'Отслеживание реферальных переходов';
+COMMENT ON TABLE referral_bonuses IS 'История реферальных бонусов';
+
+-- Комментарии к полям реферальной системы
+COMMENT ON COLUMN users.referral_code IS 'Уникальный реферальный код пользователя';
+COMMENT ON COLUMN users.referred_by IS 'Telegram ID пользователя, который пригласил';
+COMMENT ON COLUMN users.referral_earnings IS 'Общая сумма заработанных реферальных бонусов';
+COMMENT ON COLUMN users.referral_count IS 'Количество приглашенных пользователей';
+
+-- ========================================
+-- РЕФЕРАЛЬНАЯ СИСТЕМА ИНТЕГРИРОВАНА
+-- ========================================
+-- Реферальная система полностью интегрирована в основную схему
+-- Все таблицы, функции и индексы созданы выше

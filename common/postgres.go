@@ -17,6 +17,11 @@ import (
 
 var db *sql.DB
 
+// GetDB возвращает глобальное соединение с базой данных
+func GetDB() *sql.DB {
+	return db
+}
+
 // Типы уже определены в types.go
 
 // Константы для PostgreSQL
@@ -188,19 +193,21 @@ func GetUserByTelegramIDPG(telegramID int64) (*User, error) {
 	query := `
 		SELECT telegram_id, username, first_name, last_name, balance, total_paid,
 			   configs_count, has_active_config, client_id, sub_id, email,
-			   config_created_at, expiry_time, has_used_trial, created_at, updated_at
+			   config_created_at, expiry_time, has_used_trial, created_at, updated_at,
+			   referral_code, referred_by, referral_earnings, referral_count
 		FROM users WHERE telegram_id = $1`
 
 	var user User
 	var configCreatedAt sql.NullTime
-	var clientID, subID, email sql.NullString
-	var expiryTime sql.NullInt64
+	var clientID, subID, email, referralCode sql.NullString
+	var expiryTime, referredBy sql.NullInt64
 
 	err := db.QueryRow(query, telegramID).Scan(
 		&user.TelegramID, &user.Username, &user.FirstName, &user.LastName,
 		&user.Balance, &user.TotalPaid, &user.ConfigsCount, &user.HasActiveConfig,
 		&clientID, &subID, &email, &configCreatedAt,
 		&expiryTime, &user.HasUsedTrial, &user.CreatedAt, &user.UpdatedAt,
+		&referralCode, &referredBy, &user.ReferralEarnings, &user.ReferralCount,
 	)
 
 	if err == sql.ErrNoRows {
@@ -225,6 +232,12 @@ func GetUserByTelegramIDPG(telegramID int64) (*User, error) {
 	}
 	if expiryTime.Valid {
 		user.ExpiryTime = expiryTime.Int64
+	}
+	if referralCode.Valid {
+		user.ReferralCode = referralCode.String
+	}
+	if referredBy.Valid {
+		user.ReferredBy = referredBy.Int64
 	}
 
 	return &user, nil
@@ -289,7 +302,8 @@ func GetUsersWithActiveConfigsPG() ([]User, error) {
 	query := `
 		SELECT telegram_id, username, first_name, last_name, balance, total_paid,
 			   configs_count, has_active_config, client_id, sub_id, email,
-			   config_created_at, expiry_time, has_used_trial, created_at, updated_at
+			   config_created_at, expiry_time, has_used_trial, created_at, updated_at,
+			   referral_code, referred_by, referral_earnings, referral_count
 		FROM users 
 		WHERE has_active_config = true AND expiry_time > 0
 		ORDER BY created_at DESC`
@@ -304,14 +318,15 @@ func GetUsersWithActiveConfigsPG() ([]User, error) {
 	for rows.Next() {
 		var user User
 		var configCreatedAt sql.NullTime
-		var clientID, subID, email sql.NullString
-		var expiryTime sql.NullInt64
+		var clientID, subID, email, referralCode sql.NullString
+		var expiryTime, referredBy sql.NullInt64
 
 		err := rows.Scan(
 			&user.TelegramID, &user.Username, &user.FirstName, &user.LastName,
 			&user.Balance, &user.TotalPaid, &user.ConfigsCount, &user.HasActiveConfig,
 			&clientID, &subID, &email, &configCreatedAt, &expiryTime,
 			&user.HasUsedTrial, &user.CreatedAt, &user.UpdatedAt,
+			&referralCode, &referredBy, &user.ReferralEarnings, &user.ReferralCount,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("ошибка сканирования пользователя: %v", err)
@@ -332,6 +347,12 @@ func GetUsersWithActiveConfigsPG() ([]User, error) {
 		if expiryTime.Valid {
 			user.ExpiryTime = expiryTime.Int64
 		}
+		if referralCode.Valid {
+			user.ReferralCode = referralCode.String
+		}
+		if referredBy.Valid {
+			user.ReferredBy = referredBy.Int64
+		}
 
 		users = append(users, user)
 	}
@@ -346,7 +367,8 @@ func UpdateUserPG(user *User) error {
 			username = $2, first_name = $3, last_name = $4, balance = $5,
 			total_paid = $6, configs_count = $7, has_active_config = $8,
 			client_id = $9, sub_id = $10, email = $11, config_created_at = $12,
-			expiry_time = $13, has_used_trial = $14, updated_at = $15
+			expiry_time = $13, has_used_trial = $14, updated_at = $15,
+			referral_code = $16, referred_by = $17, referral_earnings = $18, referral_count = $19
 		WHERE telegram_id = $1`
 
 	var configCreatedAt interface{}
@@ -359,6 +381,7 @@ func UpdateUserPG(user *User) error {
 		user.Balance, user.TotalPaid, user.ConfigsCount, user.HasActiveConfig,
 		nullIfEmpty(user.ClientID), nullIfEmpty(user.SubID), nullIfEmpty(user.Email),
 		configCreatedAt, user.ExpiryTime, user.HasUsedTrial, time.Now(),
+		nullIfEmpty(user.ReferralCode), user.ReferredBy, user.ReferralEarnings, user.ReferralCount,
 	)
 	if err != nil {
 		return fmt.Errorf("ошибка обновления пользователя: %v", err)
@@ -390,8 +413,12 @@ func AddBalancePG(telegramID int64, amount float64) error {
 	}
 
 	// Запускаем принудительный пересчет периода подписки после пополнения баланса
-	log.Printf("POSTGRES: Запуск принудительного пересчета после пополнения баланса для пользователя %d на сумму %.2f₽", telegramID, amount)
-	ForceBalanceRecalculation(telegramID)
+	// Добавляем небольшую задержку, чтобы база данных успела обновиться
+	go func() {
+		time.Sleep(100 * time.Millisecond) // 100ms задержка
+		log.Printf("POSTGRES: Запуск принудительного пересчета после пополнения баланса для пользователя %d на сумму %.2f₽", telegramID, amount)
+		ForceBalanceRecalculation(telegramID)
+	}()
 
 	return nil
 }

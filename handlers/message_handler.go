@@ -8,6 +8,7 @@ import (
 	"bot/common"
 	"bot/menus"
 	"bot/payments/promo"
+	"bot/referralLink"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -43,6 +44,11 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		log.Printf("HANDLE_MESSAGE: Предложение пробного периода новому пользователю TelegramID=%d", telegramUser.ID)
 		common.TrialManager.HandleTrialPeriod(bot, user, message.Chat.ID)
 		return
+	}
+
+	// Проверяем реферальную систему для команды /start
+	if message.IsCommand() && message.Command() == "start" && referralLink.GlobalReferralManager != nil {
+		referralLink.GlobalReferralManager.HandleStartCommand(message.Chat.ID, user, message.Text)
 	}
 
 	if message.IsCommand() {
@@ -110,6 +116,8 @@ func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common
 		handleSwitchAutoCommand(bot, message)
 	case "billing_status":
 		handleBillingStatusCommand(bot, message)
+	case "ref":
+		handleRefCommand(bot, message, user)
 	}
 }
 
@@ -417,5 +425,25 @@ func handleBillingStatusCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message)
 		if _, err := bot.Send(msg); err != nil {
 			log.Printf("HANDLE_MESSAGE: Ошибка отправки сообщения о запрете для TelegramID=%d: %v", message.From.ID, err)
 		}
+	}
+}
+
+// handleRefCommand обрабатывает команду /ref
+func handleRefCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common.User) {
+	log.Printf("HANDLE_MESSAGE: Выполнение команды /ref для TelegramID=%d", message.From.ID)
+
+	// Проверяем, включена ли реферальная система
+	if !common.REFERRAL_SYSTEM_ENABLED {
+		msg := tgbotapi.NewMessage(message.Chat.ID, "❌ Реферальная система временно отключена")
+		bot.Send(msg)
+		return
+	}
+
+	// Используем глобальный менеджер рефералов
+	if referralLink.GlobalReferralManager != nil {
+		referralLink.GlobalReferralManager.HandleCommand(message.Chat.ID, user, "ref")
+	} else {
+		msg := tgbotapi.NewMessage(message.Chat.ID, "❌ Реферальная система не инициализирована")
+		bot.Send(msg)
 	}
 }
