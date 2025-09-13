@@ -50,7 +50,18 @@ func (tm *TrialPeriodManager) HandleTrialPeriod(bot *tgbotapi.BotAPI, user *User
 // у пробных пользователей (0₽) конфиги затирались. Теперь добавляем реальные деньги на баланс,
 // что решает проблему затирания и делает логику единообразной с обычными пользователями.
 func (tm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User, chatID int64) error {
+	return tm.CreateTrialConfigWithReferral(bot, user, chatID, "")
+}
+
+// CreateTrialConfigWithReferral создает конфиг для пробного периода с возможным реферальным кодом
+func (tm *TrialPeriodManager) CreateTrialConfigWithReferral(bot *tgbotapi.BotAPI, user *User, chatID int64, referralCode string) error {
 	log.Printf("TRIAL: Активация пробного периода для пользователя %d (добавление %d₽ на баланс)", user.TelegramID, TRIAL_BALANCE_AMOUNT)
+
+	// Дополнительная проверка на возможность использования пробного периода
+	if !tm.CanUseTrial(user) {
+		log.Printf("TRIAL: ❌ Пользователь %d уже использовал пробный период, отменяем активацию", user.TelegramID)
+		return fmt.Errorf("пробный период уже был использован")
+	}
 
 	// Добавляем пробный баланс пользователю
 	err := AddBalance(user.TelegramID, float64(TRIAL_BALANCE_AMOUNT))
@@ -76,6 +87,12 @@ func (tm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User
 
 	log.Printf("TRIAL: Пробный баланс %d₽ успешно добавлен для пользователя %d, новый баланс: %.2f₽",
 		TRIAL_BALANCE_AMOUNT, user.TelegramID, user.Balance)
+
+	// Обрабатываем реферальный код, если он есть
+	if referralCode != "" {
+		log.Printf("TRIAL: Обработка реферального кода %s для пользователя %d", referralCode, user.TelegramID)
+		tm.processReferralCode(bot, user, chatID, referralCode)
+	}
 
 	// Обновляем только флаг использования пробного периода в базе данных
 	// Баланс уже обновлен через AddBalance
@@ -144,4 +161,44 @@ func (tm *TrialPeriodManager) GetTrialPeriodInfo() string {
 		"• Пользователь получает %d дней доступа",
 		TRIAL_BALANCE_AMOUNT, days, PRICE_PER_DAY, TRIAL_BALANCE_AMOUNT,
 		TRIAL_BALANCE_AMOUNT, PRICE_PER_DAY, days)
+}
+
+// processReferralCode обрабатывает реферальный код при активации пробного периода
+func (tm *TrialPeriodManager) processReferralCode(bot *tgbotapi.BotAPI, user *User, chatID int64, referralCode string) {
+	log.Printf("TRIAL: ===== НАЧАЛО ОБРАБОТКИ РЕФЕРАЛЬНОГО КОДА =====")
+	log.Printf("TRIAL: Пользователь: %d, Реферальный код: '%s'", user.TelegramID, referralCode)
+
+	// Проверяем, включена ли реферальная система
+	if !REFERRAL_SYSTEM_ENABLED {
+		log.Printf("TRIAL: ❌ Реферальная система отключена в конфигурации, пропускаем обработку кода %s", referralCode)
+		return
+	}
+	log.Printf("TRIAL: ✅ Реферальная система включена")
+
+	// Проверяем глобальный менеджер
+	if GlobalReferralManager == nil {
+		log.Printf("TRIAL: ❌ GlobalReferralManager не инициализирован, реферальный код %s не обработан", referralCode)
+		return
+	}
+	log.Printf("TRIAL: ✅ GlobalReferralManager инициализирован")
+
+	// Сначала обрабатываем переход (это определит referrerID внутри)
+	log.Printf("TRIAL: 🔄 Обработка реферального перехода...")
+	err := GlobalReferralManager.ProcessReferralTransition(0, user.TelegramID, referralCode)
+	if err != nil {
+		log.Printf("TRIAL: ❌ Ошибка обработки реферального перехода: %v", err)
+		return
+	}
+	log.Printf("TRIAL: ✅ Реферальный переход успешно обработан")
+
+	// Затем начисляем бонусы
+	log.Printf("TRIAL: 💰 Начисление реферальных бонусов...")
+	err = GlobalReferralManager.AwardReferralBonuses(0, user.TelegramID, referralCode)
+	if err != nil {
+		log.Printf("TRIAL: ❌ Ошибка начисления реферальных бонусов: %v", err)
+	} else {
+		log.Printf("TRIAL: ✅ Реферальные бонусы успешно начислены")
+	}
+
+	log.Printf("TRIAL: ===== КОНЕЦ ОБРАБОТКИ РЕФЕРАЛЬНОГО КОДА =====")
 }

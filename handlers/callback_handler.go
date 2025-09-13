@@ -233,14 +233,40 @@ func handleActivateTrialCallback(bot *tgbotapi.BotAPI, chatID int64, user *commo
 	messageID := callback.Message.MessageID
 	log.Printf("HANDLE_CALLBACK: Активация пробного периода для TelegramID=%d", userID)
 
-	if err := common.TrialManager.CreateTrialConfig(bot, user, chatID); err != nil {
-		log.Printf("HANDLE_CALLBACK: Ошибка создания пробного конфига для TelegramID=%d: %v", userID, err)
-		bot.Request(tgbotapi.NewCallback(callback.ID, "❌ Ошибка активации пробного периода"))
+	// Проверяем, может ли пользователь использовать пробный период
+	if !common.TrialManager.CanUseTrial(user) {
+		log.Printf("HANDLE_CALLBACK: Пользователь %d уже использовал пробный период", userID)
+		bot.Request(tgbotapi.NewCallback(callback.ID, "❌ Пробный период уже был использован"))
+		// Удаляем сообщение с кнопкой
+		deleteMsg := tgbotapi.NewDeleteMessage(chatID, messageID)
+		bot.Request(deleteMsg)
+		return
+	}
+
+	// Используем реферальный код, если он есть
+	referralCode := user.ReferralCode
+	if referralCode != "" {
+		log.Printf("HANDLE_CALLBACK: Активация пробного периода с реферальным кодом %s для TelegramID=%d", referralCode, userID)
+		if err := common.TrialManager.CreateTrialConfigWithReferral(bot, user, chatID, referralCode); err != nil {
+			log.Printf("HANDLE_CALLBACK: Ошибка создания пробного конфига с реферальным кодом для TelegramID=%d: %v", userID, err)
+			bot.Request(tgbotapi.NewCallback(callback.ID, "❌ Ошибка активации пробного периода"))
+		} else {
+			bot.Request(tgbotapi.NewCallback(callback.ID, "✅ Пробный период активирован!"))
+			// Переходим на главное меню (редактируем сообщение вместо удаления)
+			log.Printf("HANDLE_CALLBACK: Переход на главное меню после активации пробного периода для TelegramID=%d", userID)
+			menus.EditMainMenu(bot, chatID, messageID, user)
+		}
 	} else {
-		bot.Request(tgbotapi.NewCallback(callback.ID, "✅ Пробный период активирован!"))
-		// Переходим на главное меню
-		log.Printf("HANDLE_CALLBACK: Переход на главное меню после активации пробного периода для TelegramID=%d", userID)
-		menus.EditMainMenu(bot, chatID, messageID, user)
+		// Обычная активация без реферального кода
+		if err := common.TrialManager.CreateTrialConfig(bot, user, chatID); err != nil {
+			log.Printf("HANDLE_CALLBACK: Ошибка создания пробного конфига для TelegramID=%d: %v", userID, err)
+			bot.Request(tgbotapi.NewCallback(callback.ID, "❌ Ошибка активации пробного периода"))
+		} else {
+			bot.Request(tgbotapi.NewCallback(callback.ID, "✅ Пробный период активирован!"))
+			// Переходим на главное меню (редактируем сообщение вместо удаления)
+			log.Printf("HANDLE_CALLBACK: Переход на главное меню после активации пробного периода для TelegramID=%d", userID)
+			menus.EditMainMenu(bot, chatID, messageID, user)
+		}
 	}
 }
 

@@ -47,6 +47,11 @@ func main() {
 		go startAutoBillingService()
 	}
 
+	// Запускаем очистку дубликатов если включена (в отдельной горутине)
+	if common.DUPLICATE_CLEANUP_ENABLED {
+		go startDuplicateCleanupService()
+	}
+
 	// Запускаем Telegram бота (блокирующая функция)
 	app.StartBot(common.BOT_TOKEN)
 }
@@ -144,6 +149,31 @@ func startAutoBillingService() {
 	globalAutoBillingService.Start()
 
 	log.Printf("AUTO_BILLING: Сервис автосписания успешно запущен")
+}
+
+// startDuplicateCleanupService запускает сервис очистки дубликатов
+func startDuplicateCleanupService() {
+	log.Printf("DUPLICATE_CLEANUP: Запуск сервиса очистки дубликатов...")
+
+	// Ждем инициализации бота
+	time.Sleep(5 * time.Second)
+
+	// Получаем бот из глобальной переменной
+	var bot *tgbotapi.BotAPI
+	if common.GlobalBot != nil {
+		bot = common.GlobalBot
+		log.Printf("DUPLICATE_CLEANUP: Бот получен из глобальной переменной")
+	} else {
+		log.Printf("DUPLICATE_CLEANUP: Бот не инициализирован, уведомления об ошибках отключены")
+	}
+
+	// Создаем сервис очистки дубликатов
+	duplicateCleanupService := services.NewDuplicateCleanupService(bot)
+
+	// Запускаем сервис
+	duplicateCleanupService.Start()
+
+	log.Printf("DUPLICATE_CLEANUP: Сервис очистки дубликатов успешно запущен")
 }
 
 // stopAutoBillingService останавливает сервис автосписания

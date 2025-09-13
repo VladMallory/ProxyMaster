@@ -2,6 +2,12 @@ package common
 
 import "time"
 
+// ReferralManagerInterface интерфейс для реферальной системы
+type ReferralManagerInterface interface {
+	ProcessReferralTransition(referrerID, referredID int64, referralCode string) error
+	AwardReferralBonuses(referrerID, referredID int64, referralCode string) error
+}
+
 // User представляет пользователя бота
 type User struct {
 	TelegramID      int64     `bson:"telegram_id" json:"telegram_id"`

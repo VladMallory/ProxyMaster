@@ -47,6 +47,9 @@ func InitReferralSystem(db *sql.DB, bot *tgbotapi.BotAPI) error {
 		bot:     bot,
 	}
 
+	// Сохраняем ссылку в глобальной переменной common
+	common.GlobalReferralManager = GlobalReferralManager
+
 	log.Printf("REFERRAL_MANAGER: Реферальная система успешно инициализирована")
 	return nil
 }
@@ -109,6 +112,14 @@ func (rm *ReferralManager) IsReferralStart(text string) bool {
 		return false
 	}
 	return rm.handler.IsReferralStart(text)
+}
+
+// ExtractReferralCode извлекает реферальный код из команды /start
+func (rm *ReferralManager) ExtractReferralCode(text string) string {
+	if !common.REFERRAL_SYSTEM_ENABLED {
+		return ""
+	}
+	return rm.handler.ExtractReferralCode(text)
 }
 
 // GetReferralLinkInfo получает информацию о реферальной ссылке пользователя

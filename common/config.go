@@ -39,15 +39,22 @@ var (
 	// Глобальный бот для отправки уведомлений
 	GlobalBot *tgbotapi.BotAPI // Глобальный экземпляр бота
 
+	// Глобальный реферальный менеджер
+	GlobalReferralManager ReferralManagerInterface // Глобальный экземпляр реферального менеджера
+
 	// Автосписание
 	AUTO_BILLING_ENABLED    bool // Включено ли автосписание за каждый день
 	BALANCE_RECALC_INTERVAL int  // Интервал пересчета дней по балансу в минутах
 	TARIFF_MODE_ENABLED     bool // Включен ли режим тарифов (false = автосписание, true = тарифы)
 
 	// Настройки уведомлений о подписке
-	NOTIFICATION_ENABLED        bool   // Включены ли уведомления о подписке
-	NOTIFICATION_CHECK_INTERVAL int    // Интервал проверки подписок в минутах
-	NOTIFICATION_DAYS_BEFORE    []int  // За сколько дней до истечения отправлять уведомления
+	NOTIFICATION_ENABLED        bool  // Включены ли уведомления о подписке
+	NOTIFICATION_CHECK_INTERVAL int   // Интервал проверки подписок в минутах
+	NOTIFICATION_DAYS_BEFORE    []int // За сколько дней до истечения отправлять уведомления
+
+	// Очистка дубликатов в панели 3x-ui
+	DUPLICATE_CLEANUP_ENABLED   bool   // Включена ли автоматическая очистка дубликатов
+	DUPLICATE_CLEANUP_INTERVAL  int    // Интервал очистки дубликатов в минутах (по умолчанию 5 суток = 7200 минут)
 	NOTIFICATION_MESSAGE_1_DAY  string // Сообщение за 1 день до истечения
 	NOTIFICATION_MESSAGE_3_DAYS string // Сообщение за 3 дня до истечения
 	NOTIFICATION_MESSAGE_7_DAYS string // Сообщение за 7 дней до истечения
@@ -89,13 +96,13 @@ var (
 func init() {
 	// Эти значения должны быть загружены из переменных окружения или конфигурационного файла
 	BOT_TOKEN = "8415581496:AAG7dwHXvrFyem3My6XU9QYpz9wz5uLhHgQ"
-	ADMIN_ID = 873925520 // Замените на ваш Telegram ID
+	ADMIN_ID = 7517377017 // Замените на ваш Telegram ID
 
 	// URL для панели управления
 	PANEL_URL = "https://st.акуавпн.рф:4803/CxVpfzNKojmBE2pKpE/"
 	PANEL_USER = "FjuyaaiVMbLwkUL7n8KhxzNMrJ4HMWhBdRj6"
 	PANEL_PASS = "AK9UxfugFtFr43DNkcPtYteQ8pYirFGJQ4FG"
-	INBOUND_ID = 1
+	INBOUND_ID = 2
 
 	// URL для конфигураций
 	CONFIG_BASE_URL = "https://st.акуавпн.рф:3052/JVU4z4V8QeWXvGb/"
@@ -148,6 +155,12 @@ func init() {
 	NOTIFICATION_ENABLED = false              // Включены ли уведомления о подписке (отключено для автосписания)
 	NOTIFICATION_CHECK_INTERVAL = 60          // Интервал проверки подписок в минутах (1 час)
 	NOTIFICATION_DAYS_BEFORE = []int{1, 3, 7} // За сколько дней до истечения отправлять уведомления
+
+	// ---ОЧИСТКА ДУБЛИКАТОВ В ПАНЕЛИ 3X-UI---
+	DUPLICATE_CLEANUP_ENABLED = true // Включена ли автоматическая очистка дубликатов
+	DUPLICATE_CLEANUP_INTERVAL = 10  // Интервал очистки дубликатов в минутах (5 суток = 5*24*60 = 7200)
+
+	// ---УВЕДОМЛЕНИЯ О ИСТЕЧЕНИИ КОНФИГА---
 	NOTIFICATION_MESSAGE_1_DAY = "⚠️ <b>Ваша подписка истекает завтра!</b>\n\n" +
 		"Не забудьте продлить подписку, чтобы не потерять доступ к VPN.\n\n" +
 		"Нажмите /balance для просмотра баланса и продления."

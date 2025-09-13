@@ -38,17 +38,43 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	}
 	log.Printf("HANDLE_MESSAGE: Пользователь получен/создан: TelegramID=%d, Username=%s, FirstName=%s, LastName=%s", user.TelegramID, user.Username, user.FirstName, user.LastName)
 
+	// Проверяем реферальную систему для команды /start
+	if message.IsCommand() && message.Command() == "start" && referralLink.GlobalReferralManager != nil {
+		log.Printf("HANDLE_MESSAGE: Проверка реферальной системы для команды /start, текст: '%s'", message.Text)
+
+		// Проверяем, является ли это реферальным стартом
+		isReferralStart := referralLink.GlobalReferralManager.IsReferralStart(message.Text)
+		log.Printf("HANDLE_MESSAGE: IsReferralStart('%s') = %v", message.Text, isReferralStart)
+
+		if isReferralStart {
+			// Извлекаем реферальный код
+			referralCode := referralLink.GlobalReferralManager.ExtractReferralCode(message.Text)
+			log.Printf("HANDLE_MESSAGE: Извлечен реферальный код: '%s'", referralCode)
+
+			if referralCode != "" {
+				// Сохраняем реферальный код в пользователе
+				user.ReferralCode = referralCode
+				log.Printf("HANDLE_MESSAGE: Сохранен реферальный код %s для пользователя %d", referralCode, user.TelegramID)
+
+				// Обрабатываем реферальный переход
+				log.Printf("HANDLE_MESSAGE: Вызов HandleStartCommand для обработки реферального кода")
+				referralLink.GlobalReferralManager.HandleStartCommand(message.Chat.ID, user, message.Text)
+			} else {
+				log.Printf("HANDLE_MESSAGE: Реферальный код пустой, пропускаем обработку")
+			}
+		} else {
+			log.Printf("HANDLE_MESSAGE: Команда /start без реферального кода")
+		}
+	} else if message.IsCommand() && message.Command() == "start" {
+		log.Printf("HANDLE_MESSAGE: GlobalReferralManager не инициализирован, реферальная система недоступна")
+	}
+
 	// Проверяем, является ли это первым сообщением от пользователя (команда /start)
 	// и предлагаем пробный период, если пользователь новый
 	if message.IsCommand() && message.Command() == "start" && !user.HasActiveConfig && common.TrialManager.CanUseTrial(user) {
 		log.Printf("HANDLE_MESSAGE: Предложение пробного периода новому пользователю TelegramID=%d", telegramUser.ID)
 		common.TrialManager.HandleTrialPeriod(bot, user, message.Chat.ID)
 		return
-	}
-
-	// Проверяем реферальную систему для команды /start
-	if message.IsCommand() && message.Command() == "start" && referralLink.GlobalReferralManager != nil {
-		referralLink.GlobalReferralManager.HandleStartCommand(message.Chat.ID, user, message.Text)
 	}
 
 	if message.IsCommand() {

@@ -62,6 +62,8 @@ func (rs *ReferralService) generateUniqueCode(telegramID int64) string {
 		// Если функция не работает, генерируем код вручную
 		code = fmt.Sprintf("REF%d%03d", telegramID, int(telegramID%1000))
 	}
+	// Убираем префикс "ref_" если он есть, так как он добавляется в ссылке
+	code = strings.TrimPrefix(code, "ref_")
 	return code
 }
 
@@ -97,7 +99,9 @@ func (rs *ReferralService) GetReferralLinkInfo(telegramID int64) (*ReferralLinkI
 	}
 	if referralCode.Valid {
 		info.ReferralCode = referralCode.String
-		info.ReferralLink = common.REFERRAL_LINK_BASE_URL + referralCode.String
+		// Убираем префикс "ref_" из кода для ссылки, так как он уже есть в REFERRAL_LINK_BASE_URL
+		codeWithoutPrefix := strings.TrimPrefix(referralCode.String, "ref_")
+		info.ReferralLink = common.REFERRAL_LINK_BASE_URL + codeWithoutPrefix
 	} else {
 		// Генерируем код, если его нет
 		code, err := rs.GenerateReferralCode(telegramID)
@@ -105,7 +109,9 @@ func (rs *ReferralService) GetReferralLinkInfo(telegramID int64) (*ReferralLinkI
 			return nil, fmt.Errorf("ошибка генерации реферального кода: %v", err)
 		}
 		info.ReferralCode = code
-		info.ReferralLink = common.REFERRAL_LINK_BASE_URL + code
+		// Убираем префикс "ref_" из кода для ссылки
+		codeWithoutPrefix := strings.TrimPrefix(code, "ref_")
+		info.ReferralLink = common.REFERRAL_LINK_BASE_URL + codeWithoutPrefix
 	}
 
 	return &info, nil

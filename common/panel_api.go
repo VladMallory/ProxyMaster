@@ -508,47 +508,83 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 		return fmt.Errorf("ошибка десериализации settings: %v", err)
 	}
 
-	clientUUID := uuid.New().String()
 	email := fmt.Sprintf("%d", user.TelegramID)
 
 	// Рассчитываем время истечения
 	now := time.Now()
 	expiryTime := now.Add(time.Duration(days) * 24 * time.Hour).UnixMilli()
 
-	log.Printf("ADD_TRIAL_CLIENT: Создание нового клиента для пробного периода TelegramID=%d, ExpiryTime=%d", user.TelegramID, expiryTime)
+	// Проверяем, существует ли уже клиент с таким TelegramID
+	existingClient := FindClientByTelegramID(settings.Clients, user.TelegramID)
 
-	subID := GenerateSubID()
-	falseValue := false
+	if existingClient != nil {
+		log.Printf("ADD_TRIAL_CLIENT: Клиент уже существует, обновляем для пробного периода TelegramID=%d", user.TelegramID)
 
-	newClient := Client{
-		ID:         clientUUID,
-		Flow:       "xtls-rprx-vision",
-		Email:      email,
-		TotalGB:    0, // Убираем лимит трафика (0 = безлимит)
-		ExpiryTime: expiryTime,
-		Enable:     true,
-		TgID:       0,
-		SubID:      subID,
-		Reset:      0,           // Убираем автопродление
-		Depleted:   &falseValue, // НЕ устанавливаем статус "исчерпано"
-		Exhausted:  &falseValue, // НЕ устанавливаем статус "исчерпано"
-		CreatedAt:  time.Now().UnixMilli(),
-		UpdatedAt:  time.Now().UnixMilli(),
+		// Обновляем существующего клиента
+		for i, client := range settings.Clients {
+			if strings.HasPrefix(client.Email, email+"_") || strings.HasPrefix(client.Email, email+" ") || client.Email == email {
+				// Обновляем данные клиента
+				settings.Clients[i].ExpiryTime = expiryTime
+				settings.Clients[i].Enable = true
+				settings.Clients[i].TotalGB = 0 // Убираем лимит трафика
+				settings.Clients[i].Reset = 0   // Убираем автопродление
+				settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
+
+				// Сбрасываем статус "исчерпано"
+				falseValue := false
+				settings.Clients[i].Depleted = &falseValue
+				settings.Clients[i].Exhausted = &falseValue
+
+				// Обновляем данные пользователя
+				user.HasActiveConfig = true
+				user.ClientID = client.ID
+				user.Email = email
+				user.SubID = client.SubID
+				user.ConfigCreatedAt = time.Now()
+				user.ExpiryTime = expiryTime
+
+				log.Printf("ADD_TRIAL_CLIENT: Существующий клиент обновлен для пробного периода: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
+					user.TelegramID, email, client.SubID, expiryTime)
+				break
+			}
+		}
+	} else {
+		log.Printf("ADD_TRIAL_CLIENT: Создание нового клиента для пробного периода TelegramID=%d, ExpiryTime=%d", user.TelegramID, expiryTime)
+
+		clientUUID := uuid.New().String()
+		subID := GenerateSubID()
+		falseValue := false
+
+		newClient := Client{
+			ID:         clientUUID,
+			Flow:       "xtls-rprx-vision",
+			Email:      email,
+			TotalGB:    0, // Убираем лимит трафика (0 = безлимит)
+			ExpiryTime: expiryTime,
+			Enable:     true,
+			TgID:       0,
+			SubID:      subID,
+			Reset:      0,           // Убираем автопродление
+			Depleted:   &falseValue, // НЕ устанавливаем статус "исчерпано"
+			Exhausted:  &falseValue, // НЕ устанавливаем статус "исчерпано"
+			CreatedAt:  time.Now().UnixMilli(),
+			UpdatedAt:  time.Now().UnixMilli(),
+		}
+
+		// Добавляем нового клиента
+		settings.Clients = append(settings.Clients, newClient)
+
+		// Обновляем данные пользователя
+		user.HasActiveConfig = true
+		user.ClientID = clientUUID
+		user.Email = email
+		user.SubID = subID
+		user.ConfigCreatedAt = time.Now()
+		user.ExpiryTime = expiryTime
+
+		log.Printf("ADD_TRIAL_CLIENT: Новый клиент для пробного периода создан: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
+			user.TelegramID, email, subID, expiryTime)
 	}
-
-	// Добавляем нового клиента
-	settings.Clients = append(settings.Clients, newClient)
-
-	// Обновляем данные пользователя
-	user.HasActiveConfig = true
-	user.ClientID = clientUUID
-	user.Email = email
-	user.SubID = subID
-	user.ConfigCreatedAt = time.Now()
-	user.ExpiryTime = expiryTime
-
-	log.Printf("ADD_TRIAL_CLIENT: Клиент для пробного периода создан: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
-		user.TelegramID, email, subID, expiryTime)
 
 	// Сериализуем обновлённые settings
 	settingsJSON, err := json.Marshal(settings)
@@ -568,5 +604,104 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 
 	user.ConfigsCount++
 	log.Printf("ADD_TRIAL_CLIENT: Конфиг для пробного периода успешно создан, ConfigsCount=%d", user.ConfigsCount)
+	return nil
+}
+
+// RemoveDuplicateClients удаляет дубликаты клиентов в панели 3x-ui
+func RemoveDuplicateClients() error {
+	log.Printf("REMOVE_DUPLICATES: Начало удаления дубликатов клиентов")
+
+	// Авторизуемся в панели
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("REMOVE_DUPLICATES: Ошибка авторизации: %v", err)
+		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+	}
+
+	// Получаем данные inbound
+	inbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("REMOVE_DUPLICATES: Ошибка получения данных inbound: %v", err)
+		return fmt.Errorf("ошибка получения данных inbound: %v", err)
+	}
+
+	// Парсим settings
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("REMOVE_DUPLICATES: Ошибка парсинга settings: %v", err)
+		return fmt.Errorf("ошибка парсинга settings: %v", err)
+	}
+
+	log.Printf("REMOVE_DUPLICATES: Найдено клиентов до очистки: %d", len(settings.Clients))
+
+	// Создаем карту для отслеживания уникальных клиентов
+	uniqueClients := make(map[string]Client)
+	duplicateCount := 0
+
+	// Проходим по всем клиентам и оставляем только уникальные
+	for _, client := range settings.Clients {
+		email := client.Email
+
+		// Если клиент с таким email уже есть, проверяем какой оставить
+		if existingClient, exists := uniqueClients[email]; exists {
+			duplicateCount++
+			log.Printf("REMOVE_DUPLICATES: Найден дубликат для email %s", email)
+
+			// Оставляем клиента с более поздним временем создания или обновления
+			// Приоритет: UpdatedAt > CreatedAt > более новый ID
+			keepExisting := true
+
+			if client.UpdatedAt > existingClient.UpdatedAt {
+				keepExisting = false
+			} else if client.UpdatedAt == existingClient.UpdatedAt && client.CreatedAt > existingClient.CreatedAt {
+				keepExisting = false
+			} else if client.UpdatedAt == existingClient.UpdatedAt && client.CreatedAt == existingClient.CreatedAt {
+				// Если времена одинаковые, оставляем с более новым ID (лексикографически)
+				keepExisting = client.ID < existingClient.ID
+			}
+
+			if !keepExisting {
+				log.Printf("REMOVE_DUPLICATES: Заменяем клиента %s (старый: %s, новый: %s)",
+					email, existingClient.ID, client.ID)
+				uniqueClients[email] = client
+			} else {
+				log.Printf("REMOVE_DUPLICATES: Оставляем существующего клиента %s (ID: %s)",
+					email, existingClient.ID)
+			}
+		} else {
+			// Первый клиент с таким email
+			uniqueClients[email] = client
+		}
+	}
+
+	// Создаем новый список клиентов без дубликатов
+	var cleanedClients []Client
+	for _, client := range uniqueClients {
+		cleanedClients = append(cleanedClients, client)
+	}
+
+	log.Printf("REMOVE_DUPLICATES: Удалено дубликатов: %d", duplicateCount)
+	log.Printf("REMOVE_DUPLICATES: Клиентов после очистки: %d", len(cleanedClients))
+
+	// Обновляем список клиентов
+	settings.Clients = cleanedClients
+
+	// Сериализуем обновлённые settings
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		log.Printf("REMOVE_DUPLICATES: Ошибка сериализации settings: %v", err)
+		return fmt.Errorf("ошибка сериализации settings: %v", err)
+	}
+	inbound.Settings = string(settingsJSON)
+
+	// Обновляем inbound
+	log.Printf("REMOVE_DUPLICATES: Обновление inbound после удаления дубликатов")
+	err = updateInbound(sessionCookie, *inbound)
+	if err != nil {
+		log.Printf("REMOVE_DUPLICATES: Ошибка обновления inbound: %v", err)
+		return fmt.Errorf("ошибка обновления inbound: %v", err)
+	}
+
+	log.Printf("REMOVE_DUPLICATES: Дубликаты успешно удалены")
 	return nil
 }
