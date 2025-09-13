@@ -24,6 +24,7 @@ main
 
 # Конфигурационные файлы
 config.go
+common/config.go
 
 # Временные файлы
 *.tmp
