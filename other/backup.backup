@@ -1,0 +1,74 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"time"
+)
+
+// BackupMongoDB создаёт резервную копию базы данных в указанную директорию
+func BackupMongoDB() error {
+	// Создаём директорию для бэкапов, если она не существует
+	backupDir := "./backups"
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		return fmt.Errorf("не удалось создать директорию для бэкапов: %v", err)
+	}
+
+	// Формируем имя папки с временной меткой
+	backupSubDir := filepath.Join(backupDir, fmt.Sprintf("backup_%s", time.Now().Format("20060102_150405")))
+
+	// Выполняем mongodump
+	cmd := exec.Command("mongodump", "--uri", MONGO_URI, "--db", MONGO_DB_NAME, "--out", backupSubDir)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ошибка создания бэкапа: %v, вывод: %s", err, string(output))
+	}
+
+	log.Printf("Резервная копия создана: %s", backupSubDir)
+	return nil
+}
+
+// RestoreMongoDB восстанавливает базу данных из последнего бэкапа
+func RestoreMongoDB() error {
+	backupDir := "./backups"
+
+	// Получаем список всех бэкапов
+	entries, err := os.ReadDir(backupDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Println("Директория бэкапов не найдена, пропускаем восстановление")
+			return nil
+		}
+		return fmt.Errorf("ошибка чтения директории бэкапов: %v", err)
+	}
+
+	// Фильтруем директории бэкапов и сортируем по имени (последний по времени)
+	var backupDirs []string
+	for _, entry := range entries {
+		if entry.IsDir() && entry.Name() != "." && entry.Name() != ".." {
+			backupDirs = append(backupDirs, entry.Name())
+		}
+	}
+	if len(backupDirs) == 0 {
+		log.Println("Бэкапы не найдены, пропускаем восстановление")
+		return nil
+	}
+
+	sort.Strings(backupDirs)
+	latestBackup := backupDirs[len(backupDirs)-1]
+	backupPath := filepath.Join(backupDir, latestBackup)
+
+	// Выполняем mongorestore
+	cmd := exec.Command("mongorestore", "--uri", MONGO_URI, "--db", MONGO_DB_NAME, "--drop", backupPath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ошибка восстановления бэкапа из %s: %v, вывод: %s", backupPath, err, string(output))
+	}
+
+	log.Printf("База данных восстановлена из: %s", backupPath)
+	return nil
+}
