@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	log.Println("=== ТЕСТ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===")
+	log.Println("=== ТЕСТ ИСПРАВЛЕННОЙ РЕФЕРАЛЬНОЙ СИСТЕМЫ ===")
 
 	// Инициализируем глобальные переменные
 	common.InitGlobals()
@@ -64,6 +64,9 @@ func main() {
 
 	// Тест 10: Получение информации о реферальной ссылке
 	testGetReferralLinkInfo(db, referrerID)
+
+	// Тест 11: Проверка формата ссылки
+	testReferralLinkFormat(db, referrerID)
 
 	log.Println("=== ВСЕ ТЕСТЫ ЗАВЕРШЕНЫ ===")
 }
@@ -153,12 +156,20 @@ func testValidateReferralCode(db *sql.DB, code string) {
 	log.Println("\n=== ТЕСТ 4: ПРОВЕРКА ВАЛИДНОСТИ РЕФЕРАЛЬНОГО КОДА ===")
 
 	service := referralLink.NewReferralService(db)
-	isValid := service.IsValidReferralCode(code)
 
-	if isValid {
-		log.Printf("✅ Код %s валиден", code)
+	// Тестируем код с префиксом ref_
+	codeWithPrefix := "ref_" + code
+	isValidWithPrefix := service.IsValidReferralCode(codeWithPrefix)
+	log.Printf("Код с префиксом '%s' валиден: %v", codeWithPrefix, isValidWithPrefix)
+
+	// Тестируем код без префикса
+	isValidWithoutPrefix := service.IsValidReferralCode(code)
+	log.Printf("Код без префикса '%s' валиден: %v", code, isValidWithoutPrefix)
+
+	if isValidWithPrefix || isValidWithoutPrefix {
+		log.Printf("✅ Код валиден в любом формате")
 	} else {
-		log.Printf("❌ Код %s невалиден", code)
+		log.Printf("❌ Код невалиден")
 	}
 }
 
@@ -256,4 +267,27 @@ func testGetReferralLinkInfo(db *sql.DB, userID int64) {
 	log.Printf("   Пользователь: %s (ID: %d)", info.FirstName, info.UserID)
 	log.Printf("   Заработки: %.2f", info.Earnings)
 	log.Printf("   Количество рефералов: %d", info.ReferralCount)
+}
+
+func testReferralLinkFormat(db *sql.DB, userID int64) {
+	log.Println("\n=== ТЕСТ 11: ПРОВЕРКА ФОРМАТА ССЫЛКИ ===")
+
+	service := referralLink.NewReferralService(db)
+	info, err := service.GetReferralLinkInfo(userID)
+
+	if err != nil {
+		log.Printf("❌ Ошибка получения информации о ссылке: %v", err)
+		return
+	}
+
+	expectedFormat := common.REFERRAL_LINK_BASE_URL + info.ReferralCode
+	if info.ReferralLink == expectedFormat {
+		log.Printf("✅ Формат ссылки правильный:")
+		log.Printf("   Ожидаемый: %s", expectedFormat)
+		log.Printf("   Полученный: %s", info.ReferralLink)
+	} else {
+		log.Printf("❌ Формат ссылки неправильный:")
+		log.Printf("   Ожидаемый: %s", expectedFormat)
+		log.Printf("   Полученный: %s", info.ReferralLink)
+	}
 }

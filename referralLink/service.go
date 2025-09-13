@@ -54,16 +54,23 @@ func (rs *ReferralService) GenerateReferralCode(telegramID int64) (string, error
 
 // generateUniqueCode генерирует уникальный реферальный код
 func (rs *ReferralService) generateUniqueCode(telegramID int64) string {
-	// Используем функцию из БД для генерации кода
-	var code string
-	query := "SELECT generate_referral_code($1)"
-	err := rs.db.QueryRow(query, telegramID).Scan(&code)
+	// Генерируем код вручную без префиксов
+	code := fmt.Sprintf("%d%03d", telegramID, int(telegramID%1000))
+
+	// Проверяем уникальность кода
+	query := "SELECT EXISTS(SELECT 1 FROM users WHERE referral_code = $1)"
+	var exists bool
+	err := rs.db.QueryRow(query, code).Scan(&exists)
 	if err != nil {
-		// Если функция не работает, генерируем код вручную
-		code = fmt.Sprintf("REF%d%03d", telegramID, int(telegramID%1000))
+		log.Printf("REFERRAL_SERVICE: Ошибка проверки уникальности кода: %v", err)
+		return code
 	}
-	// Убираем префикс "ref_" если он есть, так как он добавляется в ссылке
-	code = strings.TrimPrefix(code, "ref_")
+
+	// Если код уже существует, добавляем случайное число
+	if exists {
+		code = fmt.Sprintf("%d%03d%d", telegramID, int(telegramID%1000), int(telegramID%100))
+	}
+
 	return code
 }
 
@@ -119,86 +126,121 @@ func (rs *ReferralService) GetReferralLinkInfo(telegramID int64) (*ReferralLinkI
 
 // ProcessReferralTransition обрабатывает переход по реферальной ссылке
 func (rs *ReferralService) ProcessReferralTransition(referrerID, referredID int64, referralCode string) error {
+	log.Printf("REFERRAL_SERVICE: ===== ОБРАБОТКА РЕФЕРАЛЬНОГО ПЕРЕХОДА =====")
+	log.Printf("REFERRAL_SERVICE: ReferrerID=%d, ReferredID=%d, Code='%s'", referrerID, referredID, referralCode)
+
 	// Проверяем, что реферальная система включена
 	if !common.REFERRAL_SYSTEM_ENABLED {
+		log.Printf("REFERRAL_SERVICE: ❌ Реферальная система отключена в конфигурации")
 		return fmt.Errorf("реферальная система отключена")
 	}
+	log.Printf("REFERRAL_SERVICE: ✅ Реферальная система включена")
 
 	// Проверяем минимальный баланс для получения реферальной ссылки
+	log.Printf("REFERRAL_SERVICE: Получение информации о пригласившем %d", referrerID)
 	referrer, err := common.GetUserByTelegramID(referrerID)
 	if err != nil {
+		log.Printf("REFERRAL_SERVICE: ❌ Ошибка получения информации о пригласившем %d: %v", referrerID, err)
 		return fmt.Errorf("ошибка получения информации о пригласившем: %v", err)
 	}
+	log.Printf("REFERRAL_SERVICE: ✅ Информация о пригласившем получена: Balance=%.2f, MinRequired=%.2f", referrer.Balance, common.REFERRAL_MIN_BALANCE_FOR_REF)
 
 	if referrer.Balance < common.REFERRAL_MIN_BALANCE_FOR_REF {
+		log.Printf("REFERRAL_SERVICE: ❌ Недостаточный баланс: %.2f < %.2f", referrer.Balance, common.REFERRAL_MIN_BALANCE_FOR_REF)
 		return fmt.Errorf("недостаточный баланс для получения реферальной ссылки")
 	}
+	log.Printf("REFERRAL_SERVICE: ✅ Баланс достаточен")
 
 	// Используем функцию из БД для обработки перехода
+	log.Printf("REFERRAL_SERVICE: Вызов функции БД process_referral_transition")
 	query := "SELECT process_referral_transition($1, $2, $3)"
 	var success bool
 	err = rs.db.QueryRow(query, referrerID, referredID, referralCode).Scan(&success)
 	if err != nil {
+		log.Printf("REFERRAL_SERVICE: ❌ Ошибка выполнения запроса process_referral_transition: %v", err)
 		return fmt.Errorf("ошибка обработки реферального перехода: %v", err)
 	}
 
 	if !success {
+		log.Printf("REFERRAL_SERVICE: ❌ Функция process_referral_transition вернула false")
 		return fmt.Errorf("не удалось обработать реферальный переход")
 	}
 
-	log.Printf("REFERRAL_SERVICE: Обработан реферальный переход: %d -> %d (код: %s)", referrerID, referredID, referralCode)
+	log.Printf("REFERRAL_SERVICE: ✅ Реферальный переход успешно обработан: %d -> %d (код: %s)", referrerID, referredID, referralCode)
 	return nil
 }
 
 // AwardReferralBonuses начисляет реферальные бонусы
 func (rs *ReferralService) AwardReferralBonuses(referrerID, referredID int64, referralCode string) error {
+	log.Printf("REFERRAL_SERVICE: ===== НАЧИСЛЕНИЕ РЕФЕРАЛЬНЫХ БОНУСОВ =====")
+	log.Printf("REFERRAL_SERVICE: ReferrerID=%d, ReferredID=%d, Code='%s'", referrerID, referredID, referralCode)
+	log.Printf("REFERRAL_SERVICE: ReferrerBonus=%.2f, WelcomeBonus=%.2f", common.REFERRAL_BONUS_AMOUNT, common.REFERRAL_WELCOME_BONUS)
+
 	// Начисляем бонус пригласившему
 	if common.REFERRAL_BONUS_AMOUNT > 0 {
+		log.Printf("REFERRAL_SERVICE: Начисление бонуса пригласившему %d: %.2f", referrerID, common.REFERRAL_BONUS_AMOUNT)
 		err := rs.awardBonus(referrerID, "referrer", common.REFERRAL_BONUS_AMOUNT, referralCode, referredID, "Реферальный бонус за приглашение друга")
 		if err != nil {
-			log.Printf("REFERRAL_SERVICE: Ошибка начисления бонуса пригласившему %d: %v", referrerID, err)
+			log.Printf("REFERRAL_SERVICE: ❌ Ошибка начисления бонуса пригласившему %d: %v", referrerID, err)
 			return err
 		}
-		log.Printf("REFERRAL_SERVICE: Начислен бонус %f пригласившему %d", common.REFERRAL_BONUS_AMOUNT, referrerID)
+		log.Printf("REFERRAL_SERVICE: ✅ Начислен бонус %.2f пригласившему %d", common.REFERRAL_BONUS_AMOUNT, referrerID)
+	} else {
+		log.Printf("REFERRAL_SERVICE: ⏭️ Бонус пригласившему отключен (%.2f)", common.REFERRAL_BONUS_AMOUNT)
 	}
 
 	// Начисляем бонус приглашенному
 	if common.REFERRAL_WELCOME_BONUS > 0 {
+		log.Printf("REFERRAL_SERVICE: Начисление приветственного бонуса приглашенному %d: %.2f", referredID, common.REFERRAL_WELCOME_BONUS)
 		err := rs.awardBonus(referredID, "referred", common.REFERRAL_WELCOME_BONUS, referralCode, referrerID, "Приветственный бонус за регистрацию по реферальной ссылке")
 		if err != nil {
-			log.Printf("REFERRAL_SERVICE: Ошибка начисления приветственного бонуса %d: %v", referredID, err)
+			log.Printf("REFERRAL_SERVICE: ❌ Ошибка начисления приветственного бонуса %d: %v", referredID, err)
 			return err
 		}
-		log.Printf("REFERRAL_SERVICE: Начислен приветственный бонус %f приглашенному %d", common.REFERRAL_WELCOME_BONUS, referredID)
+		log.Printf("REFERRAL_SERVICE: ✅ Начислен приветственный бонус %.2f приглашенному %d", common.REFERRAL_WELCOME_BONUS, referredID)
+	} else {
+		log.Printf("REFERRAL_SERVICE: ⏭️ Приветственный бонус отключен (%.2f)", common.REFERRAL_WELCOME_BONUS)
 	}
 
 	// Отправляем уведомление администратору
+	log.Printf("REFERRAL_SERVICE: Отправка уведомления администратору")
 	rs.sendAdminNotification(referrerID, referredID, referralCode)
 
+	log.Printf("REFERRAL_SERVICE: ✅ Все бонусы успешно начислены")
 	return nil
 }
 
 // awardBonus начисляет бонус пользователю
 func (rs *ReferralService) awardBonus(userID int64, bonusType string, amount float64, referralCode string, relatedUserID int64, description string) error {
+	log.Printf("REFERRAL_SERVICE: ===== НАЧИСЛЕНИЕ БОНУСА =====")
+	log.Printf("REFERRAL_SERVICE: UserID=%d, Type='%s', Amount=%.2f, Code='%s', RelatedUserID=%d", userID, bonusType, amount, referralCode, relatedUserID)
+
 	// Используем AddBalance для начисления бонуса
+	log.Printf("REFERRAL_SERVICE: Начисление баланса через AddBalance")
 	err := common.AddBalance(userID, amount)
 	if err != nil {
+		log.Printf("REFERRAL_SERVICE: ❌ Ошибка начисления бонуса через AddBalance: %v", err)
 		return fmt.Errorf("ошибка начисления бонуса через AddBalance: %v", err)
 	}
+	log.Printf("REFERRAL_SERVICE: ✅ Баланс успешно начислен")
 
 	// Записываем в историю бонусов
+	log.Printf("REFERRAL_SERVICE: Запись в историю бонусов")
 	query := `
 		INSERT INTO referral_bonuses (user_telegram_id, bonus_type, amount, referral_code, related_user_id, description)
 		VALUES ($1, $2, $3, $4, $5, $6)`
 
 	_, err = rs.db.Exec(query, userID, bonusType, amount, referralCode, relatedUserID, description)
 	if err != nil {
-		log.Printf("REFERRAL_SERVICE: Ошибка записи в историю бонусов для пользователя %d: %v", userID, err)
+		log.Printf("REFERRAL_SERVICE: ❌ Ошибка записи в историю бонусов для пользователя %d: %v", userID, err)
 		// Не возвращаем ошибку, так как бонус уже начислен
+	} else {
+		log.Printf("REFERRAL_SERVICE: ✅ Запись в историю бонусов успешна")
 	}
 
 	// Если это бонус пригласившему, обновляем общую сумму реферальных заработков
 	if bonusType == "referrer" {
+		log.Printf("REFERRAL_SERVICE: Обновление реферальной статистики для пригласившего")
 		updateQuery := `
 			UPDATE users 
 			SET referral_earnings = referral_earnings + $2, referral_count = referral_count + 1
@@ -206,11 +248,14 @@ func (rs *ReferralService) awardBonus(userID int64, bonusType string, amount flo
 
 		_, err = rs.db.Exec(updateQuery, userID, amount)
 		if err != nil {
-			log.Printf("REFERRAL_SERVICE: Ошибка обновления реферальной статистики для пользователя %d: %v", userID, err)
+			log.Printf("REFERRAL_SERVICE: ❌ Ошибка обновления реферальной статистики для пользователя %d: %v", userID, err)
 			// Не возвращаем ошибку, так как бонус уже начислен
+		} else {
+			log.Printf("REFERRAL_SERVICE: ✅ Реферальная статистика обновлена")
 		}
 	}
 
+	log.Printf("REFERRAL_SERVICE: ✅ Бонус успешно начислен пользователю %d", userID)
 	return nil
 }
 
@@ -294,11 +339,10 @@ func (rs *ReferralService) GetReferralHistory(telegramID int64, limit int) ([]Re
 
 // IsValidReferralCode проверяет, является ли код валидным реферальным кодом
 func (rs *ReferralService) IsValidReferralCode(code string) bool {
-	if !strings.HasPrefix(code, "ref_") {
-		return false
-	}
-
+	// Убираем префикс "ref_" если он есть
 	referralCode := strings.TrimPrefix(code, "ref_")
+
+	log.Printf("REFERRAL_SERVICE: Проверка валидности кода: '%s' -> '%s'", code, referralCode)
 
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE referral_code = $1)"
 	var exists bool
@@ -308,6 +352,7 @@ func (rs *ReferralService) IsValidReferralCode(code string) bool {
 		return false
 	}
 
+	log.Printf("REFERRAL_SERVICE: Код '%s' валиден: %v", referralCode, exists)
 	return exists
 }
 

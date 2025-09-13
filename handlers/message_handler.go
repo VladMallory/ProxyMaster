@@ -39,6 +39,7 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	log.Printf("HANDLE_MESSAGE: Пользователь получен/создан: TelegramID=%d, Username=%s, FirstName=%s, LastName=%s", user.TelegramID, user.Username, user.FirstName, user.LastName)
 
 	// Проверяем реферальную систему для команды /start
+	var isReferralUser bool
 	if message.IsCommand() && message.Command() == "start" && referralLink.GlobalReferralManager != nil {
 		log.Printf("HANDLE_MESSAGE: Проверка реферальной системы для команды /start, текст: '%s'", message.Text)
 
@@ -52,13 +53,48 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 			log.Printf("HANDLE_MESSAGE: Извлечен реферальный код: '%s'", referralCode)
 
 			if referralCode != "" {
-				// Сохраняем реферальный код в пользователе
-				user.ReferralCode = referralCode
-				log.Printf("HANDLE_MESSAGE: Сохранен реферальный код %s для пользователя %d", referralCode, user.TelegramID)
+				// Убираем префикс "ref_" из кода перед сохранением
+				cleanCode := strings.TrimPrefix(referralCode, "ref_")
+				user.ReferralCode = cleanCode
+				isReferralUser = true
+				log.Printf("HANDLE_MESSAGE: Сохранен реферальный код %s (очищенный от %s) для пользователя %d", cleanCode, referralCode, user.TelegramID)
 
 				// Обрабатываем реферальный переход
 				log.Printf("HANDLE_MESSAGE: Вызов HandleStartCommand для обработки реферального кода")
 				referralLink.GlobalReferralManager.HandleStartCommand(message.Chat.ID, user, message.Text)
+
+				// Всегда отправляем реферальное сообщение для реферальных пользователей
+				referralMessage := "🎉 <b>Реферальная ссылка активирована!</b>\n\n"
+				referralMessage += "💰 <b>Вам зачислены деньги на баланс!</b>\n"
+				referralMessage += "🎁 <b>Приветственный бонус:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n\n"
+				referralMessage += "Спасибо, что присоединились к нашему сервису!\n"
+				referralMessage += "Используйте кнопки ниже для управления аккаунтом."
+
+				// Создаем клавиатуру для реферального пользователя
+				keyboard := tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💰 Баланс", "balance"),
+						tgbotapi.NewInlineKeyboardButtonData("🔧 VPN", "vpn"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("💳 Пополнить", "topup"),
+						tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
+					),
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
+					),
+				)
+
+				msg := tgbotapi.NewMessage(message.Chat.ID, referralMessage)
+				msg.ParseMode = "HTML"
+				msg.ReplyMarkup = &keyboard
+
+				if _, err := bot.Send(msg); err != nil {
+					log.Printf("HANDLE_MESSAGE: Ошибка отправки реферального сообщения: %v", err)
+				} else {
+					log.Printf("HANDLE_MESSAGE: ✅ Реферальное сообщение отправлено пользователю %d", user.TelegramID)
+				}
+				return
 			} else {
 				log.Printf("HANDLE_MESSAGE: Реферальный код пустой, пропускаем обработку")
 			}
@@ -70,8 +106,8 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	}
 
 	// Проверяем, является ли это первым сообщением от пользователя (команда /start)
-	// и предлагаем пробный период, если пользователь новый
-	if message.IsCommand() && message.Command() == "start" && !user.HasActiveConfig && common.TrialManager.CanUseTrial(user) {
+	// и предлагаем пробный период, если пользователь новый (НО НЕ реферальный)
+	if message.IsCommand() && message.Command() == "start" && !user.HasActiveConfig && common.TrialManager.CanUseTrial(user) && !isReferralUser {
 		log.Printf("HANDLE_MESSAGE: Предложение пробного периода новому пользователю TelegramID=%d", telegramUser.ID)
 		common.TrialManager.HandleTrialPeriod(bot, user, message.Chat.ID)
 		return

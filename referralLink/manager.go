@@ -2,6 +2,7 @@ package referralLink
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"bot/common"
@@ -67,12 +68,20 @@ func (rm *ReferralManager) HandleCommand(chatID int64, user *common.User, comman
 
 // HandleCallback обрабатывает callback'и реферальной системы
 func (rm *ReferralManager) HandleCallback(chatID int64, userID int64, data string) {
+	log.Printf("REFERRAL_MANAGER: ===== ОБРАБОТКА CALLBACK =====")
+	log.Printf("REFERRAL_MANAGER: ChatID=%d, UserID=%d, Data='%s'", chatID, userID, data)
+
 	if !common.REFERRAL_SYSTEM_ENABLED {
+		log.Printf("REFERRAL_MANAGER: ❌ Реферальная система отключена в конфигурации")
 		return
 	}
+	log.Printf("REFERRAL_MANAGER: ✅ Реферальная система включена")
 
 	if rm.handler.IsReferralCallback(data) {
+		log.Printf("REFERRAL_MANAGER: ✅ Callback '%s' является реферальным, передаем обработчику", data)
 		rm.handler.HandleRefCallback(chatID, userID, data)
+	} else {
+		log.Printf("REFERRAL_MANAGER: ❌ Callback '%s' не является реферальным", data)
 	}
 }
 
@@ -116,10 +125,78 @@ func (rm *ReferralManager) IsReferralStart(text string) bool {
 
 // ExtractReferralCode извлекает реферальный код из команды /start
 func (rm *ReferralManager) ExtractReferralCode(text string) string {
+	log.Printf("REFERRAL_MANAGER: Извлечение реферального кода из текста: '%s'", text)
+	code := rm.handler.ExtractReferralCode(text)
+	log.Printf("REFERRAL_MANAGER: Извлеченный код: '%s'", code)
+	return code
+}
+
+// SendReferralMenu отправляет реферальное меню
+func (rm *ReferralManager) SendReferralMenu(chatID int64, user *common.User) {
+	log.Printf("REFERRAL_MANAGER: ===== ОТПРАВКА РЕФЕРАЛЬНОГО МЕНЮ =====")
+	log.Printf("REFERRAL_MANAGER: ChatID=%d, UserID=%d", chatID, user.TelegramID)
+
 	if !common.REFERRAL_SYSTEM_ENABLED {
-		return ""
+		log.Printf("REFERRAL_MANAGER: ❌ Реферальная система отключена")
+		return
 	}
-	return rm.handler.ExtractReferralCode(text)
+
+	if rm.menu != nil {
+		log.Printf("REFERRAL_MANAGER: ✅ Отправка меню через ReferralMenu")
+		rm.menu.SendReferralMenu(chatID, user)
+	} else {
+		log.Printf("REFERRAL_MANAGER: ❌ ReferralMenu не инициализирован")
+	}
+}
+
+// ProcessReferralTransition обрабатывает реферальный переход
+func (rm *ReferralManager) ProcessReferralTransition(referrerID, referredID int64, referralCode string) error {
+	log.Printf("REFERRAL_MANAGER: ===== ОБРАБОТКА РЕФЕРАЛЬНОГО ПЕРЕХОДА =====")
+	log.Printf("REFERRAL_MANAGER: ReferrerID=%d, ReferredID=%d, Code='%s'", referrerID, referredID, referralCode)
+
+	if !common.REFERRAL_SYSTEM_ENABLED {
+		log.Printf("REFERRAL_MANAGER: ❌ Реферальная система отключена")
+		return fmt.Errorf("реферальная система отключена")
+	}
+
+	if rm.service != nil {
+		log.Printf("REFERRAL_MANAGER: ✅ Обработка перехода через ReferralService")
+		err := rm.service.ProcessReferralTransition(referrerID, referredID, referralCode)
+		if err != nil {
+			log.Printf("REFERRAL_MANAGER: ❌ Ошибка обработки перехода: %v", err)
+		} else {
+			log.Printf("REFERRAL_MANAGER: ✅ Переход успешно обработан")
+		}
+		return err
+	} else {
+		log.Printf("REFERRAL_MANAGER: ❌ ReferralService не инициализирован")
+		return fmt.Errorf("сервис рефералов не инициализирован")
+	}
+}
+
+// AwardReferralBonuses начисляет реферальные бонусы
+func (rm *ReferralManager) AwardReferralBonuses(referrerID, referredID int64, referralCode string) error {
+	log.Printf("REFERRAL_MANAGER: ===== НАЧИСЛЕНИЕ РЕФЕРАЛЬНЫХ БОНУСОВ =====")
+	log.Printf("REFERRAL_MANAGER: ReferrerID=%d, ReferredID=%d, Code='%s'", referrerID, referredID, referralCode)
+
+	if !common.REFERRAL_SYSTEM_ENABLED {
+		log.Printf("REFERRAL_MANAGER: ❌ Реферальная система отключена")
+		return fmt.Errorf("реферальная система отключена")
+	}
+
+	if rm.service != nil {
+		log.Printf("REFERRAL_MANAGER: ✅ Начисление бонусов через ReferralService")
+		err := rm.service.AwardReferralBonuses(referrerID, referredID, referralCode)
+		if err != nil {
+			log.Printf("REFERRAL_MANAGER: ❌ Ошибка начисления бонусов: %v", err)
+		} else {
+			log.Printf("REFERRAL_MANAGER: ✅ Бонусы успешно начислены")
+		}
+		return err
+	} else {
+		log.Printf("REFERRAL_MANAGER: ❌ ReferralService не инициализирован")
+		return fmt.Errorf("сервис рефералов не инициализирован")
+	}
 }
 
 // GetReferralLinkInfo получает информацию о реферальной ссылке пользователя
@@ -136,30 +213,6 @@ func (rm *ReferralManager) GetReferralStats(telegramID int64) (*ReferralStats, e
 		return &ReferralStats{}, nil
 	}
 	return rm.service.GetReferralStats(telegramID)
-}
-
-// ProcessReferralTransition обрабатывает переход по реферальной ссылке
-func (rm *ReferralManager) ProcessReferralTransition(referrerID, referredID int64, referralCode string) error {
-	if !common.REFERRAL_SYSTEM_ENABLED {
-		return nil
-	}
-	return rm.service.ProcessReferralTransition(referrerID, referredID, referralCode)
-}
-
-// AwardReferralBonuses начисляет реферальные бонусы
-func (rm *ReferralManager) AwardReferralBonuses(referrerID, referredID int64, referralCode string) error {
-	if !common.REFERRAL_SYSTEM_ENABLED {
-		return nil
-	}
-	return rm.service.AwardReferralBonuses(referrerID, referredID, referralCode)
-}
-
-// SendReferralMenu отправляет реферальное меню
-func (rm *ReferralManager) SendReferralMenu(chatID int64, user *common.User) {
-	if !common.REFERRAL_SYSTEM_ENABLED {
-		return
-	}
-	rm.menu.SendReferralMenu(chatID, user)
 }
 
 // EditReferralMenu редактирует реферальное меню

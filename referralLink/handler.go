@@ -104,13 +104,22 @@ func (rh *ReferralHandler) HandleRefCallback(chatID int64, userID int64, data st
 
 	switch data {
 	case "ref_stats":
+		log.Printf("REFERRAL_HANDLER: Обработка callback ref_stats")
 		rh.handleStatsCallback(chatID, user)
 	case "ref_history":
+		log.Printf("REFERRAL_HANDLER: Обработка callback ref_history")
 		rh.handleHistoryCallback(chatID, user)
 	case "ref_share":
+		log.Printf("REFERRAL_HANDLER: Обработка callback ref_share")
 		rh.handleShareCallback(chatID, user)
+	case "ref_menu":
+		log.Printf("REFERRAL_HANDLER: Обработка callback ref_menu")
+		rh.handleMenuCallback(chatID, user)
+	case "ref_refresh":
+		log.Printf("REFERRAL_HANDLER: Обработка callback ref_refresh")
+		rh.handleRefreshCallback(chatID, user)
 	default:
-		log.Printf("REFERRAL_HANDLER: Неизвестный callback: %s", data)
+		log.Printf("REFERRAL_HANDLER: ❌ Неизвестный callback: %s", data)
 	}
 }
 
@@ -209,14 +218,90 @@ func (rh *ReferralHandler) handleShareCallback(chatID int64, user *common.User) 
 	rh.bot.Send(msg)
 }
 
+// handleMenuCallback обрабатывает callback возврата в меню
+func (rh *ReferralHandler) handleMenuCallback(chatID int64, user *common.User) {
+	log.Printf("REFERRAL_HANDLER: Возврат в реферальное меню для пользователя %d", user.TelegramID)
+
+	// Получаем информацию о реферальной ссылке
+	linkInfo, err := rh.service.GetReferralLinkInfo(user.TelegramID)
+	if err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка получения реферальной ссылки: %v", err)
+		msg := tgbotapi.NewMessage(chatID, "❌ Ошибка получения реферальной ссылки")
+		rh.bot.Send(msg)
+		return
+	}
+
+	// Получаем статистику
+	stats, err := rh.service.GetReferralStats(user.TelegramID)
+	if err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка получения статистики: %v", err)
+		stats = &ReferralStats{}
+	}
+
+	// Формируем текст меню
+	text := fmt.Sprintf("🎯 <b>Реферальная система</b>\n\n")
+	text += "💰 <b>Ваш бонус за приглашение:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_BONUS_AMOUNT) + "₽\n"
+	text += "🎁 <b>Бонус для друга:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n\n"
+
+	text += "📊 <b>Ваша статистика:</b>\n"
+	text += "👥 Приглашено друзей: " + fmt.Sprintf("%d", stats.TotalReferrals) + "\n"
+
+	text += "🔗 <b>Ваша реферальная ссылка:</b>\n"
+	text += "<code>" + linkInfo.ReferralLink + "</code>\n\n"
+
+	text += "📱 <b>Как пригласить друга:</b>\n"
+	text += "1️⃣ Отправьте ссылку другу\n"
+	text += "2️⃣ Друг переходит по ссылке и регистрируется\n"
+	text += "3️⃣ Вы оба получаете бонусы!\n\n"
+
+	// Создаем клавиатуру
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("📊 Статистика", "ref_stats"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("📋 История бонусов", "ref_history"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🔗 Поделиться ссылкой", "ref_share"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🔄 Обновить", "ref_refresh"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🏠 Главное меню", "main_menu"),
+		),
+	)
+
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = "HTML"
+	msg.ReplyMarkup = &keyboard
+
+	if _, err := rh.bot.Send(msg); err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка отправки сообщения: %v", err)
+	}
+}
+
+// handleRefreshCallback обрабатывает callback обновления меню
+func (rh *ReferralHandler) handleRefreshCallback(chatID int64, user *common.User) {
+	log.Printf("REFERRAL_HANDLER: Обновление реферального меню для пользователя %d", user.TelegramID)
+
+	// Просто вызываем обработку меню заново
+	rh.handleMenuCallback(chatID, user)
+}
+
 // ProcessReferralStart обрабатывает команду /start с реферальным кодом
 func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User, referralCode string) {
 	log.Printf("REFERRAL_HANDLER: Обработка реферального перехода для пользователя %d, код: %s", user.TelegramID, referralCode)
 
+	// Убираем префикс "ref_" из кода перед поиском
+	cleanCode := strings.TrimPrefix(referralCode, "ref_")
+	log.Printf("REFERRAL_HANDLER: Очищенный код: %s", cleanCode)
+
 	// Получаем информацию о пригласившем
-	referrer, err := rh.service.GetReferrerByCode(referralCode)
+	referrer, err := rh.service.GetReferrerByCode(cleanCode)
 	if err != nil {
-		log.Printf("REFERRAL_HANDLER: Ошибка получения пригласившего по коду %s: %v", referralCode, err)
+		log.Printf("REFERRAL_HANDLER: Ошибка получения пригласившего по коду %s: %v", cleanCode, err)
 		return
 	}
 
@@ -266,7 +351,7 @@ func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User,
 // IsReferralCallback проверяет, является ли callback реферальным
 func (rh *ReferralHandler) IsReferralCallback(data string) bool {
 	referralCallbacks := []string{
-		"ref_stats", "ref_history", "ref_share", "ref_menu",
+		"ref_stats", "ref_history", "ref_share", "ref_menu", "ref_refresh",
 	}
 
 	for _, callback := range referralCallbacks {
