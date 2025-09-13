@@ -105,20 +105,14 @@ func (tm *TrialPeriodManager) CreateTrialConfig(bot *tgbotapi.BotAPI, user *User
 		return fmt.Errorf("ошибка авторизации в панели: %v", err)
 	}
 
-	// Создаем конфиг без списания денег (только для пробного периода)
-	err = AddClient(sessionCookie, user, 0) // 0 дней - конфиг создается без привязки к дням
+	// Создаем конфиг для пробного периода БЕЗ установки статуса "исчерпано"
+	// Рассчитываем дни на основе пробного баланса
+	trialDays := TRIAL_BALANCE_AMOUNT / PRICE_PER_DAY
+	log.Printf("TRIAL: Создание конфига на %d дней для пробного периода пользователя %d", trialDays, user.TelegramID)
+	err = AddTrialClient(sessionCookie, user, trialDays)
 	if err != nil {
 		log.Printf("TRIAL: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
 		return fmt.Errorf("ошибка создания конфига: %v", err)
-	}
-
-	// Принудительно сбрасываем состояние "исчерпано" после создания конфига
-	log.Printf("TRIAL: Принудительный сброс состояния 'исчерпано' для пользователя %d", user.TelegramID)
-	if err := ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
-		log.Printf("TRIAL: Предупреждение - не удалось сбросить состояние 'исчерпано' для пользователя %d: %v", user.TelegramID, err)
-		// Не возвращаем ошибку, так как основная операция уже выполнена
-	} else {
-		log.Printf("TRIAL: Состояние 'исчерпано' успешно сброшено для пользователя %d", user.TelegramID)
 	}
 
 	// НЕ списываем деньги - они остаются на балансе для автосписания

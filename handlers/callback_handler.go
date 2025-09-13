@@ -238,8 +238,8 @@ func handleActivateTrialCallback(bot *tgbotapi.BotAPI, chatID int64, user *commo
 		bot.Request(tgbotapi.NewCallback(callback.ID, "❌ Ошибка активации пробного периода"))
 	} else {
 		bot.Request(tgbotapi.NewCallback(callback.ID, "✅ Пробный период активирован!"))
-		// Переводим пользователя на главное меню
-		log.Printf("HANDLE_CALLBACK: Переход на главное меню для TelegramID=%d", userID)
+		// Переходим на главное меню
+		log.Printf("HANDLE_CALLBACK: Переход на главное меню после активации пробного периода для TelegramID=%d", userID)
 		menus.EditMainMenu(bot, chatID, messageID, user)
 	}
 }

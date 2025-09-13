@@ -491,3 +491,82 @@ func FindClientByTelegramID(clients []Client, telegramID int64) *Client {
 	}
 	return nil
 }
+
+// AddTrialClient создает конфиг для пробного периода БЕЗ установки статуса "исчерпано"
+func AddTrialClient(sessionCookie string, user *User, days int) error {
+	log.Printf("ADD_TRIAL_CLIENT: Создание конфига для пробного периода TelegramID=%d, days=%d", user.TelegramID, days)
+
+	inbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("ADD_TRIAL_CLIENT: Ошибка получения inbound: %v", err)
+		return fmt.Errorf("ошибка получения inbound: %v", err)
+	}
+
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("ADD_TRIAL_CLIENT: Ошибка десериализации settings: %v", err)
+		return fmt.Errorf("ошибка десериализации settings: %v", err)
+	}
+
+	clientUUID := uuid.New().String()
+	email := fmt.Sprintf("%d", user.TelegramID)
+
+	// Рассчитываем время истечения
+	now := time.Now()
+	expiryTime := now.Add(time.Duration(days) * 24 * time.Hour).UnixMilli()
+
+	log.Printf("ADD_TRIAL_CLIENT: Создание нового клиента для пробного периода TelegramID=%d, ExpiryTime=%d", user.TelegramID, expiryTime)
+
+	subID := GenerateSubID()
+	falseValue := false
+
+	newClient := Client{
+		ID:         clientUUID,
+		Flow:       "xtls-rprx-vision",
+		Email:      email,
+		TotalGB:    0, // Убираем лимит трафика (0 = безлимит)
+		ExpiryTime: expiryTime,
+		Enable:     true,
+		TgID:       0,
+		SubID:      subID,
+		Reset:      0,           // Убираем автопродление
+		Depleted:   &falseValue, // НЕ устанавливаем статус "исчерпано"
+		Exhausted:  &falseValue, // НЕ устанавливаем статус "исчерпано"
+		CreatedAt:  time.Now().UnixMilli(),
+		UpdatedAt:  time.Now().UnixMilli(),
+	}
+
+	// Добавляем нового клиента
+	settings.Clients = append(settings.Clients, newClient)
+
+	// Обновляем данные пользователя
+	user.HasActiveConfig = true
+	user.ClientID = clientUUID
+	user.Email = email
+	user.SubID = subID
+	user.ConfigCreatedAt = time.Now()
+	user.ExpiryTime = expiryTime
+
+	log.Printf("ADD_TRIAL_CLIENT: Клиент для пробного периода создан: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
+		user.TelegramID, email, subID, expiryTime)
+
+	// Сериализуем обновлённые settings
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		log.Printf("ADD_TRIAL_CLIENT: Ошибка сериализации settings: %v", err)
+		return fmt.Errorf("ошибка сериализации settings: %v", err)
+	}
+	inbound.Settings = string(settingsJSON)
+
+	// Обновляем inbound
+	log.Printf("ADD_TRIAL_CLIENT: Обновление inbound для TelegramID=%d", user.TelegramID)
+	err = updateInbound(sessionCookie, *inbound)
+	if err != nil {
+		log.Printf("ADD_TRIAL_CLIENT: Ошибка обновления inbound: %v", err)
+		return fmt.Errorf("ошибка обновления inbound: %v", err)
+	}
+
+	user.ConfigsCount++
+	log.Printf("ADD_TRIAL_CLIENT: Конфиг для пробного периода успешно создан, ConfigsCount=%d", user.ConfigsCount)
+	return nil
+}
