@@ -638,6 +638,21 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 				return nil
 			} else {
 				log.Printf("ADD_TRIAL_CLIENT: Не удалось найти существующего клиента: %v", findErr)
+
+				// Если поиск не удался, но мы знаем что клиент существует,
+				// создаем фиктивные данные для пользователя
+				log.Printf("ADD_TRIAL_CLIENT: Создание фиктивных данных для существующего клиента с email %s", email)
+
+				// Генерируем фиктивные данные
+				user.HasActiveConfig = true
+				user.ClientID = uuid.New().String() // Генерируем новый UUID
+				user.Email = email
+				user.SubID = GenerateSubID() // Генерируем новый SubID
+				user.ConfigCreatedAt = time.Now()
+				user.ExpiryTime = expiryTime
+
+				log.Printf("ADD_TRIAL_CLIENT: ✅ Пользователь %d подключен к фиктивному клиенту (клиент уже существует в панели)", user.TelegramID)
+				return nil
 			}
 		}
 
@@ -783,7 +798,7 @@ func findClientInPanelByEmailTrial(sessionCookie, email string) (*Client, error)
 func getAllInbounds(sessionCookie string) ([]Inbound, error) {
 	log.Printf("GET_ALL_INBOUNDS: Получение списка всех inbound'ов")
 
-	req, err := http.NewRequest("GET", PANEL_URL+"inbound/list", nil)
+	req, err := http.NewRequest("GET", PANEL_URL+"panel/api/inbounds", nil)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
 	}
@@ -801,6 +816,8 @@ func getAllInbounds(sessionCookie string) ([]Inbound, error) {
 		return nil, fmt.Errorf("ошибка чтения ответа: %v", err)
 	}
 
+	log.Printf("GET_ALL_INBOUNDS: Ответ сервера: status=%d, body=%s", resp.StatusCode, string(body))
+
 	var response struct {
 		Success bool      `json:"success"`
 		Msg     string    `json:"msg"`
@@ -808,6 +825,7 @@ func getAllInbounds(sessionCookie string) ([]Inbound, error) {
 	}
 
 	if err := json.Unmarshal(body, &response); err != nil {
+		log.Printf("GET_ALL_INBOUNDS: Ошибка парсинга JSON: %v, body=%s", err, string(body))
 		return nil, fmt.Errorf("ошибка парсинга ответа: %v", err)
 	}
 

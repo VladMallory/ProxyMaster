@@ -358,7 +358,7 @@ func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User,
 	referrerText := fmt.Sprintf("🎉 <b>Новый реферал!</b>\n\n")
 	referrerText += fmt.Sprintf("Пользователь %s зарегистрировался по вашей ссылке!\n", user.FirstName)
 	referrerText += fmt.Sprintf("💰 Вам начислен бонус: <b>%.0f₽</b>\n\n", common.REFERRAL_BONUS_AMOUNT)
-	referrerText += "Продолжайте приглашать друзей и зарабатывайте больше!"
+	referrerText += "Спасибо, что пользуетесь нашим сервисом! "
 
 	referrerMsg := tgbotapi.NewMessage(referrer.TelegramID, referrerText)
 	referrerMsg.ParseMode = "HTML"
