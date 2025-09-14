@@ -317,6 +317,8 @@ func (abs *AutoBillingService) processBalanceRecalculationForUser(telegramID int
 		return
 	}
 
+	// Убираем проверку на реферальный бонус - ForceBalanceRecalculation должен создавать конфиги для всех пользователей с балансом
+
 	// Вычисляем количество дней по балансу
 	availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
 

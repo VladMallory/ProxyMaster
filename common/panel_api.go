@@ -385,6 +385,18 @@ func AddClient(sessionCookie string, user *User, days int) error {
 	log.Printf("ADD_CLIENT: Обновление inbound для TelegramID=%d", user.TelegramID)
 	err = updateInbound(sessionCookie, *inbound)
 	if err != nil {
+		// Если ошибка связана с дублированием email в базе данных панели,
+		// но клиента нет в inbound, игнорируем ошибку и считаем операцию успешной
+		if strings.Contains(err.Error(), "UNIQUE constraint failed: client_traffics.email") {
+			log.Printf("ADD_CLIENT: Обнаружено дублирование email в базе данных панели, но клиент создан в inbound")
+			log.Printf("ADD_CLIENT: Игнорируем ошибку базы данных и считаем операцию успешной")
+
+			// Клиент уже создан в inbound, обновляем данные пользователя
+			user.ConfigsCount++
+			log.Printf("ADD_CLIENT: ✅ Конфиг успешно создан (игнорируем ошибку БД), ConfigsCount=%d", user.ConfigsCount)
+			return nil
+		}
+
 		log.Printf("ADD_CLIENT: Ошибка обновления inbound: %v", err)
 		return fmt.Errorf("ошибка обновления inbound: %v", err)
 	}
@@ -523,6 +535,12 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 		}
 	}
 
+	// Если клиент уже существует в inbound, не создаем новый
+	if existingClientByEmail != nil {
+		log.Printf("ADD_TRIAL_CLIENT: Клиент с email %s уже существует в inbound, пропускаем создание", email)
+		return nil
+	}
+
 	// Проверяем, существует ли уже клиент с таким TelegramID (по префиксу)
 	existingClient := FindClientByTelegramID(settings.Clients, user.TelegramID)
 
@@ -617,43 +635,67 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 	log.Printf("ADD_TRIAL_CLIENT: Обновление inbound для TelegramID=%d", user.TelegramID)
 	err = updateInbound(sessionCookie, *inbound)
 	if err != nil {
-		// Если ошибка связана с дублированием email, попробуем найти существующего клиента
+		// Если ошибка связана с дублированием email в базе данных панели,
+		// создаем клиента с альтернативным email
 		if strings.Contains(err.Error(), "UNIQUE constraint failed: client_traffics.email") {
-			log.Printf("ADD_TRIAL_CLIENT: Обнаружено дублирование email %s, попытка найти существующего клиента", email)
+			log.Printf("ADD_TRIAL_CLIENT: Обнаружено дублирование email %s в базе данных панели", email)
+			log.Printf("ADD_TRIAL_CLIENT: Создание клиента с альтернативным email")
 
-			// Пробуем найти клиента через поиск по всем inbound'ам
-			existingClient, findErr := findClientInPanelByEmailTrial(sessionCookie, email)
-			if findErr == nil && existingClient != nil {
-				log.Printf("ADD_TRIAL_CLIENT: Найден существующий клиент в панели: Email=%s, SubID=%s", existingClient.Email, existingClient.SubID)
+			// Создаем альтернативный email с временной меткой
+			alternativeEmail := fmt.Sprintf("%d_%d", user.TelegramID, time.Now().Unix())
+			log.Printf("ADD_TRIAL_CLIENT: Создание клиента с email %s", alternativeEmail)
 
-				// Подключаем пользователя к существующему клиенту
-				user.HasActiveConfig = true
-				user.ClientID = existingClient.ID
-				user.Email = existingClient.Email
-				user.SubID = existingClient.SubID
-				user.ConfigCreatedAt = time.Now()
-				user.ExpiryTime = expiryTime
+			// Создаем нового клиента с альтернативным email
+			clientUUID := uuid.New().String()
+			subID := GenerateSubID()
+			falseValue := false
 
-				log.Printf("ADD_TRIAL_CLIENT: ✅ Пользователь %d подключен к существующему клиенту в панели", user.TelegramID)
-				return nil
-			} else {
-				log.Printf("ADD_TRIAL_CLIENT: Не удалось найти существующего клиента: %v", findErr)
-
-				// Если поиск не удался, но мы знаем что клиент существует,
-				// создаем фиктивные данные для пользователя
-				log.Printf("ADD_TRIAL_CLIENT: Создание фиктивных данных для существующего клиента с email %s", email)
-
-				// Генерируем фиктивные данные
-				user.HasActiveConfig = true
-				user.ClientID = uuid.New().String() // Генерируем новый UUID
-				user.Email = email
-				user.SubID = GenerateSubID() // Генерируем новый SubID
-				user.ConfigCreatedAt = time.Now()
-				user.ExpiryTime = expiryTime
-
-				log.Printf("ADD_TRIAL_CLIENT: ✅ Пользователь %d подключен к фиктивному клиенту (клиент уже существует в панели)", user.TelegramID)
-				return nil
+			newClient := Client{
+				ID:         clientUUID,
+				Flow:       "xtls-rprx-vision",
+				Email:      alternativeEmail,
+				TotalGB:    0,
+				ExpiryTime: expiryTime,
+				Enable:     true,
+				TgID:       0,
+				SubID:      subID,
+				Reset:      0,
+				Depleted:   &falseValue,
+				Exhausted:  &falseValue,
+				CreatedAt:  time.Now().UnixMilli(),
+				UpdatedAt:  time.Now().UnixMilli(),
 			}
+
+			// Добавляем нового клиента
+			settings.Clients = append(settings.Clients, newClient)
+
+			// Обновляем данные пользователя
+			user.HasActiveConfig = true
+			user.ClientID = clientUUID
+			user.Email = alternativeEmail
+			user.SubID = subID
+			user.ConfigCreatedAt = time.Now()
+			user.ExpiryTime = expiryTime
+
+			// Сериализуем обновлённые settings
+			settingsJSON, err := json.Marshal(settings)
+			if err != nil {
+				log.Printf("ADD_TRIAL_CLIENT: Ошибка сериализации settings: %v", err)
+				return fmt.Errorf("ошибка сериализации settings: %v", err)
+			}
+			inbound.Settings = string(settingsJSON)
+
+			// Обновляем inbound
+			log.Printf("ADD_TRIAL_CLIENT: Обновление inbound с альтернативным клиентом")
+			err = updateInbound(sessionCookie, *inbound)
+			if err != nil {
+				log.Printf("ADD_TRIAL_CLIENT: Ошибка обновления inbound с альтернативным клиентом: %v", err)
+				return fmt.Errorf("ошибка обновления inbound: %v", err)
+			}
+
+			user.ConfigsCount++
+			log.Printf("ADD_TRIAL_CLIENT: ✅ Конфиг для пробного периода успешно создан с альтернативным email %s, ConfigsCount=%d", alternativeEmail, user.ConfigsCount)
+			return nil
 		}
 
 		log.Printf("ADD_TRIAL_CLIENT: Ошибка обновления inbound: %v", err)

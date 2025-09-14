@@ -1,6 +1,7 @@
 package referralLink
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -52,7 +53,7 @@ func (rh *ReferralHandler) HandleRefCommand(chatID int64, user *common.User) {
 	}
 
 	// Формируем сообщение
-	text := fmt.Sprintf("🎯 <b>Реферальная система</b>\n\n")
+	text := "🎯 <b>Реферальная система</b>\n\n"
 	text += "💰 <b>Ваш бонус за приглашение:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_BONUS_AMOUNT) + "₽\n"
 	text += "🎁 <b>Бонус для друга:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n\n"
 
@@ -238,7 +239,7 @@ func (rh *ReferralHandler) handleMenuCallback(chatID int64, user *common.User) {
 	}
 
 	// Формируем текст меню
-	text := fmt.Sprintf("🎯 <b>Реферальная система</b>\n\n")
+	text := "🎯 <b>Реферальная система</b>\n\n"
 	text += "💰 <b>Ваш бонус за приглашение:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_BONUS_AMOUNT) + "₽\n"
 	text += "🎁 <b>Бонус для друга:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n\n"
 
@@ -324,28 +325,12 @@ func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User,
 		return
 	}
 
-	// КРИТИЧЕСКИ ВАЖНО: Создаем VPN конфиг для реферального пользователя
-	// Получаем актуальные данные пользователя после начисления бонусов
-	updatedUser, err := common.GetUserByTelegramID(user.TelegramID)
-	if err != nil {
-		log.Printf("REFERRAL_HANDLER: Ошибка получения обновленных данных пользователя %d: %v", user.TelegramID, err)
-	} else if updatedUser != nil {
-		// Обновляем данные пользователя в памяти
-		*user = *updatedUser
-
-		// Создаем конфиг для реферального пользователя
-		log.Printf("REFERRAL_HANDLER: Создание VPN конфига для реферального пользователя %d", user.TelegramID)
-		err = rh.createReferralConfig(user)
-		if err != nil {
-			log.Printf("REFERRAL_HANDLER: Ошибка создания конфига для реферального пользователя %d: %v", user.TelegramID, err)
-			// Не прерываем выполнение, так как бонусы уже начислены
-		} else {
-			log.Printf("REFERRAL_HANDLER: ✅ VPN конфиг успешно создан для реферального пользователя %d", user.TelegramID)
-		}
-	}
+	// ForceBalanceRecalculation автоматически создаст конфиг для реферального пользователя
+	// после начисления бонуса через AddBalance
+	log.Printf("REFERRAL_HANDLER: Бонусы начислены, ForceBalanceRecalculation автоматически создаст конфиг для пользователя %d", user.TelegramID)
 
 	// Отправляем уведомление приглашенному
-	text := fmt.Sprintf("🎉 <b>Добро пожаловать!</b>\n\n")
+	text := "🎉 <b>Добро пожаловать!</b>\n\n"
 	text += fmt.Sprintf("Вы зарегистрировались по реферальной ссылке от %s!\n", referrer.FirstName)
 	text += fmt.Sprintf("🎁 На ваш баланс начислен приветственный бонус: <b>%.0f₽</b>\n\n", common.REFERRAL_WELCOME_BONUS)
 	text += "Спасибо, что присоединились к нашему сервису!"
@@ -355,7 +340,7 @@ func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User,
 	rh.bot.Send(msg)
 
 	// Отправляем уведомление пригласившему
-	referrerText := fmt.Sprintf("🎉 <b>Новый реферал!</b>\n\n")
+	referrerText := "🎉 <b>Новый реферал!</b>\n\n"
 	referrerText += fmt.Sprintf("Пользователь %s зарегистрировался по вашей ссылке!\n", user.FirstName)
 	referrerText += fmt.Sprintf("💰 Вам начислен бонус: <b>%.0f₽</b>\n\n", common.REFERRAL_BONUS_AMOUNT)
 	referrerText += "Спасибо, что пользуетесь нашим сервисом! "
@@ -401,45 +386,33 @@ func (rh *ReferralHandler) ExtractReferralCode(text string) string {
 	return ""
 }
 
-// createReferralConfig создает VPN конфиг для реферального пользователя
-func (rh *ReferralHandler) createReferralConfig(user *common.User) error {
-	log.Printf("REFERRAL_HANDLER: ===== СОЗДАНИЕ VPN КОНФИГА ДЛЯ РЕФЕРАЛЬНОГО ПОЛЬЗОВАТЕЛЯ =====")
-	log.Printf("REFERRAL_HANDLER: Пользователь: %d, Баланс: %.2f₽", user.TelegramID, user.Balance)
+// checkUserExistsInPanel проверяет, существует ли пользователь в панели
+func (rh *ReferralHandler) checkUserExistsInPanel(sessionCookie string, telegramID int64) (bool, error) {
+	log.Printf("REFERRAL_HANDLER: Проверка существования пользователя %d в панели", telegramID)
 
-	// Проверяем, что у пользователя есть активный конфиг
-	if user.HasActiveConfig {
-		log.Printf("REFERRAL_HANDLER: У пользователя %d уже есть активный конфиг, пропускаем создание", user.TelegramID)
-		return nil
-	}
-
-	// Создаем конфиг через панель 3x-ui
-	sessionCookie, err := common.Login()
+	// Получаем inbound
+	inbound, err := common.GetInbound(sessionCookie)
 	if err != nil {
-		log.Printf("REFERRAL_HANDLER: Ошибка авторизации в панели для пользователя %d: %v", user.TelegramID, err)
-		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+		log.Printf("REFERRAL_HANDLER: Ошибка получения inbound для проверки пользователя %d: %v", telegramID, err)
+		return false, fmt.Errorf("ошибка получения inbound: %v", err)
 	}
 
-	// Рассчитываем дни на основе приветственного бонуса
-	referralDays := int(common.REFERRAL_WELCOME_BONUS / float64(common.PRICE_PER_DAY))
-	log.Printf("REFERRAL_HANDLER: Создание конфига на %d дней для реферального пользователя %d (бонус: %.0f₽)",
-		referralDays, user.TelegramID, common.REFERRAL_WELCOME_BONUS)
-
-	// Создаем конфиг БЕЗ списания денег (как в пробном периоде)
-	err = common.AddTrialClient(sessionCookie, user, referralDays)
-	if err != nil {
-		log.Printf("REFERRAL_HANDLER: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
-		return fmt.Errorf("ошибка создания конфига: %v", err)
+	// Парсим settings
+	var settings common.Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка парсинга settings для проверки пользователя %d: %v", telegramID, err)
+		return false, fmt.Errorf("ошибка парсинга settings: %v", err)
 	}
 
-	// Обновляем данные пользователя в базе
-	if err := common.UpdateUser(user); err != nil {
-		log.Printf("REFERRAL_HANDLER: Ошибка обновления пользователя: %v", err)
-		return fmt.Errorf("ошибка обновления пользователя: %v", err)
+	// Ищем пользователя по TelegramID
+	telegramIDStr := fmt.Sprintf("%d", telegramID)
+	for _, client := range settings.Clients {
+		if client.Email == telegramIDStr || strings.HasPrefix(client.Email, telegramIDStr+"_") || strings.HasPrefix(client.Email, telegramIDStr+" ") {
+			log.Printf("REFERRAL_HANDLER: Пользователь %d найден в панели: Email=%s, SubID=%s", telegramID, client.Email, client.SubID)
+			return true, nil
+		}
 	}
 
-	configURL := fmt.Sprintf("%s%s", common.CONFIG_BASE_URL, user.SubID)
-	log.Printf("REFERRAL_HANDLER: ✅ VPN конфиг успешно создан для реферального пользователя %d, URL: %s, баланс остался: %.2f₽",
-		user.TelegramID, configURL, user.Balance)
-
-	return nil
+	log.Printf("REFERRAL_HANDLER: Пользователь %d не найден в панели", telegramID)
+	return false, nil
 }
