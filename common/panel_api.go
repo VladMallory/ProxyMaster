@@ -514,15 +514,34 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 	now := time.Now()
 	expiryTime := now.Add(time.Duration(days) * 24 * time.Hour).UnixMilli()
 
-	// Проверяем, существует ли уже клиент с таким TelegramID
+	// Сначала проверяем, есть ли клиент с точно таким же email (для случаев очистки базы)
+	var existingClientByEmail *Client
+	for _, client := range settings.Clients {
+		if client.Email == email {
+			existingClientByEmail = &client
+			break
+		}
+	}
+
+	// Проверяем, существует ли уже клиент с таким TelegramID (по префиксу)
 	existingClient := FindClientByTelegramID(settings.Clients, user.TelegramID)
 
-	if existingClient != nil {
+	// Приоритет: сначала используем клиента с точно таким же email, потом по TelegramID
+	var clientToUse *Client
+	if existingClientByEmail != nil {
+		clientToUse = existingClientByEmail
+		log.Printf("ADD_TRIAL_CLIENT: Найден клиент с точно таким же email %s, подключаем к нему TelegramID=%d", email, user.TelegramID)
+	} else if existingClient != nil {
+		clientToUse = existingClient
+		log.Printf("ADD_TRIAL_CLIENT: Найден клиент по TelegramID, обновляем для пробного периода TelegramID=%d", user.TelegramID)
+	}
+
+	if clientToUse != nil {
 		log.Printf("ADD_TRIAL_CLIENT: Клиент уже существует, обновляем для пробного периода TelegramID=%d", user.TelegramID)
 
 		// Обновляем существующего клиента
 		for i, client := range settings.Clients {
-			if strings.HasPrefix(client.Email, email+"_") || strings.HasPrefix(client.Email, email+" ") || client.Email == email {
+			if client.Email == clientToUse.Email {
 				// Обновляем данные клиента
 				settings.Clients[i].ExpiryTime = expiryTime
 				settings.Clients[i].Enable = true
@@ -538,13 +557,13 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 				// Обновляем данные пользователя
 				user.HasActiveConfig = true
 				user.ClientID = client.ID
-				user.Email = email
+				user.Email = client.Email // Используем email из панели, а не генерируем новый
 				user.SubID = client.SubID
 				user.ConfigCreatedAt = time.Now()
 				user.ExpiryTime = expiryTime
 
 				log.Printf("ADD_TRIAL_CLIENT: Существующий клиент обновлен для пробного периода: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
-					user.TelegramID, email, client.SubID, expiryTime)
+					user.TelegramID, client.Email, client.SubID, expiryTime)
 				break
 			}
 		}
@@ -598,6 +617,30 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 	log.Printf("ADD_TRIAL_CLIENT: Обновление inbound для TelegramID=%d", user.TelegramID)
 	err = updateInbound(sessionCookie, *inbound)
 	if err != nil {
+		// Если ошибка связана с дублированием email, попробуем найти существующего клиента
+		if strings.Contains(err.Error(), "UNIQUE constraint failed: client_traffics.email") {
+			log.Printf("ADD_TRIAL_CLIENT: Обнаружено дублирование email %s, попытка найти существующего клиента", email)
+
+			// Пробуем найти клиента через поиск по всем inbound'ам
+			existingClient, findErr := findClientInPanelByEmailTrial(sessionCookie, email)
+			if findErr == nil && existingClient != nil {
+				log.Printf("ADD_TRIAL_CLIENT: Найден существующий клиент в панели: Email=%s, SubID=%s", existingClient.Email, existingClient.SubID)
+
+				// Подключаем пользователя к существующему клиенту
+				user.HasActiveConfig = true
+				user.ClientID = existingClient.ID
+				user.Email = existingClient.Email
+				user.SubID = existingClient.SubID
+				user.ConfigCreatedAt = time.Now()
+				user.ExpiryTime = expiryTime
+
+				log.Printf("ADD_TRIAL_CLIENT: ✅ Пользователь %d подключен к существующему клиенту в панели", user.TelegramID)
+				return nil
+			} else {
+				log.Printf("ADD_TRIAL_CLIENT: Не удалось найти существующего клиента: %v", findErr)
+			}
+		}
+
 		log.Printf("ADD_TRIAL_CLIENT: Ошибка обновления inbound: %v", err)
 		return fmt.Errorf("ошибка обновления inbound: %v", err)
 	}
@@ -704,4 +747,74 @@ func RemoveDuplicateClients() error {
 
 	log.Printf("REMOVE_DUPLICATES: Дубликаты успешно удалены")
 	return nil
+}
+
+// findClientInPanelByEmailTrial ищет клиента по email во всех inbound'ах панели для пробного периода
+func findClientInPanelByEmailTrial(sessionCookie, email string) (*Client, error) {
+	log.Printf("FIND_CLIENT_IN_PANEL: Поиск клиента с email %s во всех inbound'ах", email)
+
+	// Получаем список всех inbound'ов
+	inbounds, err := getAllInbounds(sessionCookie)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения списка inbound'ов: %v", err)
+	}
+
+	// Ищем клиента во всех inbound'ах
+	for _, inbound := range inbounds {
+		var settings Settings
+		if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+			continue // Пропускаем поврежденные настройки
+		}
+
+		// Ищем клиента с нужным email
+		for _, client := range settings.Clients {
+			if client.Email == email {
+				log.Printf("FIND_CLIENT_IN_PANEL: Найден клиент: Email=%s, SubID=%s, InboundID=%d", client.Email, client.SubID, inbound.ID)
+				return &client, nil
+			}
+		}
+	}
+
+	log.Printf("FIND_CLIENT_IN_PANEL: Клиент с email %s не найден", email)
+	return nil, fmt.Errorf("клиент с email %s не найден", email)
+}
+
+// getAllInbounds получает список всех inbound'ов
+func getAllInbounds(sessionCookie string) ([]Inbound, error) {
+	log.Printf("GET_ALL_INBOUNDS: Получение списка всех inbound'ов")
+
+	req, err := http.NewRequest("GET", PANEL_URL+"inbound/list", nil)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+
+	req.Header.Set("Cookie", sessionCookie)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+
+	var response struct {
+		Success bool      `json:"success"`
+		Msg     string    `json:"msg"`
+		Obj     []Inbound `json:"obj"`
+	}
+
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("ошибка парсинга ответа: %v", err)
+	}
+
+	if !response.Success {
+		return nil, fmt.Errorf("неудачное получение списка inbound'ов: %s", response.Msg)
+	}
+
+	log.Printf("GET_ALL_INBOUNDS: Получено %d inbound'ов", len(response.Obj))
+	return response.Obj, nil
 }

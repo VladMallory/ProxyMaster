@@ -324,6 +324,26 @@ func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User,
 		return
 	}
 
+	// КРИТИЧЕСКИ ВАЖНО: Создаем VPN конфиг для реферального пользователя
+	// Получаем актуальные данные пользователя после начисления бонусов
+	updatedUser, err := common.GetUserByTelegramID(user.TelegramID)
+	if err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка получения обновленных данных пользователя %d: %v", user.TelegramID, err)
+	} else if updatedUser != nil {
+		// Обновляем данные пользователя в памяти
+		*user = *updatedUser
+
+		// Создаем конфиг для реферального пользователя
+		log.Printf("REFERRAL_HANDLER: Создание VPN конфига для реферального пользователя %d", user.TelegramID)
+		err = rh.createReferralConfig(user)
+		if err != nil {
+			log.Printf("REFERRAL_HANDLER: Ошибка создания конфига для реферального пользователя %d: %v", user.TelegramID, err)
+			// Не прерываем выполнение, так как бонусы уже начислены
+		} else {
+			log.Printf("REFERRAL_HANDLER: ✅ VPN конфиг успешно создан для реферального пользователя %d", user.TelegramID)
+		}
+	}
+
 	// Отправляем уведомление приглашенному
 	text := fmt.Sprintf("🎉 <b>Добро пожаловать!</b>\n\n")
 	text += fmt.Sprintf("Вы зарегистрировались по реферальной ссылке от %s!\n", referrer.FirstName)
@@ -379,4 +399,47 @@ func (rh *ReferralHandler) ExtractReferralCode(text string) string {
 		return parts[1]
 	}
 	return ""
+}
+
+// createReferralConfig создает VPN конфиг для реферального пользователя
+func (rh *ReferralHandler) createReferralConfig(user *common.User) error {
+	log.Printf("REFERRAL_HANDLER: ===== СОЗДАНИЕ VPN КОНФИГА ДЛЯ РЕФЕРАЛЬНОГО ПОЛЬЗОВАТЕЛЯ =====")
+	log.Printf("REFERRAL_HANDLER: Пользователь: %d, Баланс: %.2f₽", user.TelegramID, user.Balance)
+
+	// Проверяем, что у пользователя есть активный конфиг
+	if user.HasActiveConfig {
+		log.Printf("REFERRAL_HANDLER: У пользователя %d уже есть активный конфиг, пропускаем создание", user.TelegramID)
+		return nil
+	}
+
+	// Создаем конфиг через панель 3x-ui
+	sessionCookie, err := common.Login()
+	if err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка авторизации в панели для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+	}
+
+	// Рассчитываем дни на основе приветственного бонуса
+	referralDays := int(common.REFERRAL_WELCOME_BONUS / float64(common.PRICE_PER_DAY))
+	log.Printf("REFERRAL_HANDLER: Создание конфига на %d дней для реферального пользователя %d (бонус: %.0f₽)",
+		referralDays, user.TelegramID, common.REFERRAL_WELCOME_BONUS)
+
+	// Создаем конфиг БЕЗ списания денег (как в пробном периоде)
+	err = common.AddTrialClient(sessionCookie, user, referralDays)
+	if err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка создания конфига: %v", err)
+	}
+
+	// Обновляем данные пользователя в базе
+	if err := common.UpdateUser(user); err != nil {
+		log.Printf("REFERRAL_HANDLER: Ошибка обновления пользователя: %v", err)
+		return fmt.Errorf("ошибка обновления пользователя: %v", err)
+	}
+
+	configURL := fmt.Sprintf("%s%s", common.CONFIG_BASE_URL, user.SubID)
+	log.Printf("REFERRAL_HANDLER: ✅ VPN конфиг успешно создан для реферального пользователя %d, URL: %s, баланс остался: %.2f₽",
+		user.TelegramID, configURL, user.Balance)
+
+	return nil
 }

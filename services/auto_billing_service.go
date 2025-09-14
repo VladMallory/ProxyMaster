@@ -374,11 +374,36 @@ func (abs *AutoBillingService) processBalanceRecalculationForUser(telegramID int
 	log.Printf("AUTO_BILLING: Пересчет дней для пользователя %d завершен", telegramID)
 }
 
-// createConfigFromBalance создает конфиг на основе баланса
+// createConfigFromBalance создает конфиг на основе баланса БЕЗ списания денег
 func (abs *AutoBillingService) createConfigFromBalance(user *common.User, days int) error {
-	// Используем существующую логику создания конфига
-	_, err := common.ProcessPayment(user, days)
-	return err
+	log.Printf("AUTO_BILLING: ===== СОЗДАНИЕ КОНФИГА ИЗ БАЛАНСА БЕЗ СПИСАНИЯ =====")
+	log.Printf("AUTO_BILLING: Пользователь: %d, Баланс: %.2f₽, Дни: %d", user.TelegramID, user.Balance, days)
+
+	// Создаем конфиг через панель 3x-ui БЕЗ списания денег (как в пробном периоде)
+	sessionCookie, err := common.Login()
+	if err != nil {
+		log.Printf("AUTO_BILLING: Ошибка авторизации в панели для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+	}
+
+	// Создаем конфиг БЕЗ списания денег (как в пробном периоде)
+	err = common.AddTrialClient(sessionCookie, user, days)
+	if err != nil {
+		log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка создания конфига: %v", err)
+	}
+
+	// Обновляем данные пользователя в базе БЕЗ изменения баланса
+	if err := common.UpdateUser(user); err != nil {
+		log.Printf("AUTO_BILLING: Ошибка обновления пользователя: %v", err)
+		return fmt.Errorf("ошибка обновления пользователя: %v", err)
+	}
+
+	configURL := fmt.Sprintf("%s%s", common.CONFIG_BASE_URL, user.SubID)
+	log.Printf("AUTO_BILLING: ✅ Конфиг успешно создан для пользователя %d, URL: %s, баланс остался: %.2f₽",
+		user.TelegramID, configURL, user.Balance)
+
+	return nil
 }
 
 // updateConfigExpiry принудительно устанавливает время истечения конфига на основе баланса

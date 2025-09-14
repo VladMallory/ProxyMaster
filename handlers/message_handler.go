@@ -66,7 +66,8 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 				// Всегда отправляем реферальное сообщение для реферальных пользователей
 				referralMessage := "🎉 <b>Реферальная ссылка активирована!</b>\n\n"
 				referralMessage += "💰 <b>Вам зачислены деньги на баланс!</b>\n"
-				referralMessage += "🎁 <b>Приветственный бонус:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n\n"
+				referralMessage += "🎁 <b>Приветственный бонус:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n"
+				referralMessage += "🔧 <b>VPN конфиг создан!</b>\n\n"
 				referralMessage += "Спасибо, что присоединились к нашему сервису!\n"
 				referralMessage += "Используйте кнопки ниже для управления аккаунтом."
 
