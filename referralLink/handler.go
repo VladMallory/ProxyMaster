@@ -169,7 +169,6 @@ func (rh *ReferralHandler) handleHistoryCallback(chatID int64, user *common.User
 
 	if len(bonuses) == 0 {
 		text += "📭 Пока нет бонусов\n"
-		text += "Пригласите друзей, чтобы начать зарабатывать!"
 	} else {
 		for i, bonus := range bonuses {
 			text += fmt.Sprintf("%d. %s: <b>+%.2f₽</b>\n", i+1, bonus.Description, bonus.Amount)

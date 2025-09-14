@@ -106,9 +106,9 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	}
 
 	// Проверяем, является ли это первым сообщением от пользователя (команда /start)
-	// и предлагаем пробный период, если пользователь новый (НО НЕ реферальный)
-	if message.IsCommand() && message.Command() == "start" && !user.HasActiveConfig && common.TrialManager.CanUseTrial(user) && !isReferralUser {
-		log.Printf("HANDLE_MESSAGE: Предложение пробного периода новому пользователю TelegramID=%d", telegramUser.ID)
+	// и предлагаем пробный период, если пользователь новый (включая реферальных)
+	if message.IsCommand() && message.Command() == "start" && !user.HasActiveConfig && common.TrialManager.CanUseTrial(user) {
+		log.Printf("HANDLE_MESSAGE: Предложение пробного периода новому пользователю TelegramID=%d (реферальный: %v)", telegramUser.ID, isReferralUser)
 		common.TrialManager.HandleTrialPeriod(bot, user, message.Chat.ID)
 		return
 	}
