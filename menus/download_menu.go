@@ -3,6 +3,8 @@ package menus
 import (
 	"log"
 
+	"bot/common"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -10,18 +12,53 @@ import (
 func EditDownloadApp(bot *tgbotapi.BotAPI, chatID int64, messageID int) {
 	log.Printf("EDIT_DOWNLOAD_APP: Показ меню выбора устройства для ChatID=%d, MessageID=%d", chatID, messageID)
 
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("🍎 iOS", "device_ios"),
-			tgbotapi.NewInlineKeyboardButtonData("🤖 Android", "device_android"),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
-		),
-	)
+	var keyboard tgbotapi.InlineKeyboardMarkup
+	var text string
 
-	text := "📱 Скачать приложение\n\n" +
-		"Какой у вас устройство?"
+	// Проверяем тип импорта
+	if common.REDIRECT_IMPORT == "v2raytun" {
+		// Для v2raytun показываем прямые ссылки на приложения
+		keyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonURL("🍎 iOS", "https://apps.apple.com/ru/app/v2raytun/id6476628951"),
+				tgbotapi.NewInlineKeyboardButtonURL("🤖 Android", "https://play.google.com/store/apps/details?id=com.v2raytun.android&hl=ru"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+			),
+		)
+
+		text = "📱 Скачать v2RayTun\n\n" +
+			"Выберите вашу платформу для скачивания приложения:"
+	} else if common.REDIRECT_IMPORT == "happ" {
+		// Для happ показываем обычное меню выбора устройства
+		keyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🍎 iOS", "device_ios"),
+				tgbotapi.NewInlineKeyboardButtonData("🤖 Android", "device_android"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+			),
+		)
+
+		text = "📱 Скачать приложение\n\n" +
+			"Какой у вас устройство?"
+	} else {
+		// Fallback для неизвестного типа импорта - показываем happ по умолчанию
+		keyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🍎 iOS", "device_ios"),
+				tgbotapi.NewInlineKeyboardButtonData("🤖 Android", "device_android"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+			),
+		)
+
+		text = "📱 Скачать приложение\n\n" +
+			"Какой у вас устройство?"
+	}
 
 	log.Printf("EDIT_DOWNLOAD_APP: Текст для выбора устройства ChatID=%d: %s", chatID, text)
 	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
