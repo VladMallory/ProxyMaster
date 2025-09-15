@@ -17,9 +17,9 @@ import (
 
 // Константы для подключения к панели 3x-ui (из config.go)
 const (
-	PANEL_URL  = "https://st.moment-was-da.ru:43690/Tisj8rRdMqK1kOHN74/"
-	PANEL_USER = "FjuyaaiVMbLwkUL7n8KhxzNMrJ4HMWhBdRj6"
-	PANEL_PASS = "AK9UxfugFtFr43DNkcPtYteQ8pYirFGJQ4FG"
+	PANEL_URL  = ""
+	PANEL_USER = ""
+	PANEL_PASS = ""
 	INBOUND_ID = 3
 
 	// PostgreSQL настройки
