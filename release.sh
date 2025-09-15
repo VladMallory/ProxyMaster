@@ -12,17 +12,36 @@ echo "=================================="
 
 # Функция для получения последнего тега
 get_latest_tag() {
-    git tag -l "v*" | sort -V | tail -n1
+    # Получаем все теги, начинающиеся с 'v' и содержащие цифры
+    local tags=$(git tag -l "v*" | grep -E '^v[0-9]+\.[0-9]+(\.[0-9]+)?$' | sort -V)
+    
+    if [[ -z "$tags" ]]; then
+        echo ""
+        return
+    fi
+    
+    # Возвращаем последний тег (самую большую версию)
+    echo "$tags" | tail -n1
 }
 
 # Функция для увеличения версии
 increment_version() {
     local version=$1
+    
+    # Проверяем формат vX.Y (основной формат)
     if [[ $version =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
-        major=${BASH_REMATCH[1]}
-        minor=${BASH_REMATCH[2]}
-        new_minor=$((minor + 1))
+        local major=${BASH_REMATCH[1]}
+        local minor=${BASH_REMATCH[2]}
+        local new_minor=$((minor + 1))
         echo "v${major}.${new_minor}"
+    # Проверяем формат vX.Y.Z (с патчем)
+    elif [[ $version =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+        local major=${BASH_REMATCH[1]}
+        local minor=${BASH_REMATCH[2]}
+        local patch=${BASH_REMATCH[3]}
+        local new_patch=$((patch + 1))
+        echo "v${major}.${minor}.${new_patch}"
+    # Если формат не распознан, начинаем с v0.1
     else
         echo "v0.1"
     fi
@@ -48,7 +67,20 @@ if [[ -z $current_tag ]]; then
     echo -e "${YELLOW}📋 Текущих тегов не найдено, начинаем с $new_tag${NC}"
 else
     new_tag=$(increment_version $current_tag)
+    if [[ $? -ne 0 || -z $new_tag ]]; then
+        echo -e "${RED}❌ Ошибка при определении новой версии${NC}"
+        echo -e "${YELLOW}💡 Попробуйте создать тег вручную или проверьте формат существующих тегов${NC}"
+        exit 1
+    fi
     echo -e "${GREEN}📋 Текущий тег: $current_tag${NC}"
+    echo -e "${GREEN}📋 Следующий тег: $new_tag${NC}"
+fi
+
+# Проверяем, что новый тег не существует
+if git tag -l | grep -q "^$new_tag$"; then
+    echo -e "${RED}❌ Тег $new_tag уже существует!${NC}"
+    echo -e "${YELLOW}💡 Возможно, произошла ошибка в логике инкремента версии${NC}"
+    exit 1
 fi
 
 echo -e "${BLUE}🏷️  Новый тег: $new_tag${NC}"
@@ -71,6 +103,9 @@ fi
 # Подтверждение
 echo ""
 echo -e "${YELLOW}📝 Сводка релиза:${NC}"
+if [[ -n $current_tag ]]; then
+    echo "  Предыдущий тег: $current_tag"
+fi
 echo "  Новый тег: $new_tag"
 if [[ $skip_commit == false ]]; then
     echo "  Сообщение коммита: $commit_message"
