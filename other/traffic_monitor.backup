@@ -1,0 +1,440 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+)
+
+// TrafficStats структура для статистики трафика клиента
+type TrafficStats struct {
+	ID         int    `json:"id"`
+	InboundID  int    `json:"inboundId"`
+	Enable     bool   `json:"enable"`
+	Email      string `json:"email"`
+	Up         int64  `json:"up"`
+	Down       int64  `json:"down"`
+	ExpiryTime int64  `json:"expiryTime"`
+	Total      int64  `json:"total"`
+	Reset      int    `json:"reset"`
+}
+
+// GetClientTrafficStats получает статистику трафика для всех клиентов
+func GetClientTrafficStats(sessionCookie string) ([]TrafficStats, error) {
+	log.Printf("GET_CLIENT_TRAFFIC_STATS: Получение статистики трафика")
+	
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/list", PANEL_URL), nil)
+	if err != nil {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Ошибка создания запроса: %v", err)
+		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+	req.Header.Set("Cookie", sessionCookie)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Ошибка выполнения запроса: %v", err)
+		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Ошибка чтения ответа: %v", err)
+		return nil, fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Некорректный статус ответа: %d", resp.StatusCode)
+		return nil, fmt.Errorf("некорректный статус ответа: %d", resp.StatusCode)
+	}
+
+	var inboundListResponse struct {
+		Success bool      `json:"success"`
+		Msg     string    `json:"msg"`
+		Obj     []Inbound `json:"obj"`
+	}
+	
+	if err := json.Unmarshal(body, &inboundListResponse); err != nil {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Ошибка десериализации ответа: %v", err)
+		return nil, fmt.Errorf("ошибка десериализации ответа: %v", err)
+	}
+
+	if !inboundListResponse.Success {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Запрос не успешен: %s", inboundListResponse.Msg)
+		return nil, fmt.Errorf("запрос не успешен: %s", inboundListResponse.Msg)
+	}
+
+	// Ищем нужный inbound
+	var targetInbound *Inbound
+	for _, inbound := range inboundListResponse.Obj {
+		if inbound.ID == INBOUND_ID {
+			targetInbound = &inbound
+			break
+		}
+	}
+
+	if targetInbound == nil {
+		log.Printf("GET_CLIENT_TRAFFIC_STATS: Inbound с ID=%d не найден", INBOUND_ID)
+		return nil, fmt.Errorf("inbound с ID=%d не найден", INBOUND_ID)
+	}
+
+	// Извлекаем статистику клиентов из clientStats
+	var clientStats []TrafficStats
+	if targetInbound.ClientStats != nil {
+		statsData, err := json.Marshal(targetInbound.ClientStats)
+		if err != nil {
+			log.Printf("GET_CLIENT_TRAFFIC_STATS: Ошибка сериализации clientStats: %v", err)
+			return nil, fmt.Errorf("ошибка сериализации clientStats: %v", err)
+		}
+
+		if err := json.Unmarshal(statsData, &clientStats); err != nil {
+			log.Printf("GET_CLIENT_TRAFFIC_STATS: Ошибка десериализации clientStats: %v", err)
+			return nil, fmt.Errorf("ошибка десериализации clientStats: %v", err)
+		}
+	}
+
+	log.Printf("GET_CLIENT_TRAFFIC_STATS: Получено %d записей статистики", len(clientStats))
+	return clientStats, nil
+}
+
+// CheckAndDisableTrafficLimit проверяет трафик и отключает/включает клиентов
+func CheckAndDisableTrafficLimit() error {
+	log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Начало проверки трафика")
+
+	// Если лимит трафика не установлен, пропускаем проверку
+	if TRAFFIC_LIMIT_GB <= 0 {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Лимит трафика не установлен (TRAFFIC_LIMIT_GB=%d), пропускаем проверку", TRAFFIC_LIMIT_GB)
+		return nil
+	}
+
+	// Авторизуемся в панели
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка авторизации: %v", err)
+		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+	}
+
+	// Получаем статистику трафика
+	trafficStats, err := GetClientTrafficStats(sessionCookie)
+	if err != nil {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка получения статистики трафика: %v", err)
+		return fmt.Errorf("ошибка получения статистики трафика: %v", err)
+	}
+
+	// Получаем inbound для обновления
+	inbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка получения inbound: %v", err)
+		return fmt.Errorf("ошибка получения inbound: %v", err)
+	}
+
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка десериализации settings: %v", err)
+		return fmt.Errorf("ошибка десериализации settings: %v", err)
+	}
+
+	// Создаем карту статистики по email клиента
+	statsMap := make(map[string]TrafficStats)
+	for _, stat := range trafficStats {
+		statsMap[stat.Email] = stat
+	}
+
+	// Проверяем каждого клиента
+	modified := false
+	trafficLimitBytes := int64(TRAFFIC_LIMIT_GB) * 1024 * 1024 * 1024 // конвертируем ГБ в байты
+
+	for i, client := range settings.Clients {
+		if !client.Enable {
+			continue // пропускаем уже отключенных клиентов
+		}
+
+		// Ищем статистику для этого клиента
+		stat, exists := statsMap[client.Email]
+		if !exists {
+			log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Статистика не найдена для клиента ID=%s, Email=%s", client.ID, client.Email)
+			continue
+		}
+
+		// Вычисляем общий трафик (up + down)
+		totalTraffic := stat.Up + stat.Down
+
+		// Проверяем лимит трафика
+		if totalTraffic > trafficLimitBytes {
+			log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Превышен лимит трафика для клиента ID=%s, Email=%s, Up=%d bytes (%.2f GB), Down=%d bytes (%.2f GB), Total=%d bytes (%.2f GB), Limit=%d bytes (%.2f GB)", 
+				client.ID, client.Email, stat.Up, float64(stat.Up)/1024/1024/1024, stat.Down, float64(stat.Down)/1024/1024/1024, totalTraffic, float64(totalTraffic)/1024/1024/1024, trafficLimitBytes, float64(trafficLimitBytes)/1024/1024/1024)
+			
+			// Отключаем клиента
+			settings.Clients[i].Enable = false
+			modified = true
+
+			// Обновляем статус в базе данных
+			if err := updateUserTrafficStatus(client.Email, false); err != nil {
+				log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка обновления статуса в БД для клиента Email=%s: %v", client.Email, err)
+			}
+		} else {
+			// Проверяем, нужно ли включить клиента обратно
+			if !client.Enable && totalTraffic <= trafficLimitBytes {
+				log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Включаем клиента обратно (трафик в норме) ID=%s, Email=%s, Up=%d bytes (%.2f GB), Down=%d bytes (%.2f GB), Total=%d bytes (%.2f GB), Limit=%d bytes (%.2f GB)", 
+					client.ID, client.Email, stat.Up, float64(stat.Up)/1024/1024/1024, stat.Down, float64(stat.Down)/1024/1024/1024, totalTraffic, float64(totalTraffic)/1024/1024/1024, trafficLimitBytes, float64(trafficLimitBytes)/1024/1024/1024)
+				
+				// Включаем клиента обратно
+				settings.Clients[i].Enable = true
+				modified = true
+
+				// Обновляем статус в базе данных
+				if err := updateUserTrafficStatus(client.Email, true); err != nil {
+					log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка обновления статуса в БД для клиента Email=%s: %v", client.Email, err)
+				}
+			} else {
+				log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Трафик в норме для клиента ID=%s, Email=%s, Up=%d bytes (%.2f GB), Down=%d bytes (%.2f GB), Total=%d bytes (%.2f GB), Limit=%d bytes (%.2f GB)", 
+					client.ID, client.Email, stat.Up, float64(stat.Up)/1024/1024/1024, stat.Down, float64(stat.Down)/1024/1024/1024, totalTraffic, float64(totalTraffic)/1024/1024/1024, trafficLimitBytes, float64(trafficLimitBytes)/1024/1024/1024)
+			}
+		}
+	}
+
+	if modified {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Обновление inbound с отключенными клиентами")
+		settingsJSON, err := json.Marshal(settings)
+		if err != nil {
+			log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка сериализации settings: %v", err)
+			return fmt.Errorf("ошибка сериализации settings: %v", err)
+		}
+		inbound.Settings = string(settingsJSON)
+
+		if err := updateInbound(sessionCookie, *inbound); err != nil {
+			log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Ошибка обновления inbound: %v", err)
+			return fmt.Errorf("ошибка обновления inbound: %v", err)
+		}
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Inbound успешно обновлен")
+	} else {
+		log.Printf("CHECK_AND_DISABLE_TRAFFIC_LIMIT: Нет клиентов для отключения")
+	}
+
+	return nil
+}
+
+// updateUserTrafficStatus обновляет статус пользователя в базе данных при отключении из-за трафика
+func updateUserTrafficStatus(email string, hasActiveConfig bool) error {
+	log.Printf("UPDATE_USER_TRAFFIC_STATUS: Обновление статуса для Email=%s, HasActiveConfig=%v", email, hasActiveConfig)
+
+	// Извлекаем Telegram ID из email (формат: "123456789_до_2025-08-25")
+	parts := strings.Split(email, "_")
+	if len(parts) < 2 {
+		log.Printf("UPDATE_USER_TRAFFIC_STATUS: Неверный формат email: %s", email)
+		return fmt.Errorf("неверный формат email: %s", email)
+	}
+
+	telegramIDStr := parts[0]
+	telegramID, err := strconv.ParseInt(telegramIDStr, 10, 64)
+	if err != nil {
+		log.Printf("UPDATE_USER_TRAFFIC_STATUS: Ошибка парсинга Telegram ID из email %s: %v", email, err)
+		return fmt.Errorf("ошибка парсинга Telegram ID: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	update := bson.M{
+		"$set": bson.M{
+			"has_active_config": hasActiveConfig,
+			"updated_at":        time.Now(),
+		},
+	}
+
+	result, err := users.UpdateOne(ctx, bson.M{"telegram_id": telegramID}, update)
+	if err != nil {
+		log.Printf("UPDATE_USER_TRAFFIC_STATUS: Ошибка обновления пользователя TelegramID=%d: %v", telegramID, err)
+		return fmt.Errorf("ошибка обновления пользователя: %v", err)
+	}
+
+	if result.ModifiedCount > 0 {
+		log.Printf("UPDATE_USER_TRAFFIC_STATUS: Пользователь TelegramID=%d успешно обновлен", telegramID)
+	} else {
+		log.Printf("UPDATE_USER_TRAFFIC_STATUS: Пользователь TelegramID=%d не найден", telegramID)
+	}
+
+	return nil
+}
+
+// StartTrafficMonitoring запускает периодический мониторинг трафика
+func StartTrafficMonitoring() {
+	log.Printf("START_TRAFFIC_MONITORING: Запуск мониторинга трафика с интервалом %d минут", TRAFFIC_CHECK_INTERVAL)
+	
+	interval := time.Duration(TRAFFIC_CHECK_INTERVAL) * time.Minute
+	ticker := time.NewTicker(interval)
+	
+	go func() {
+		defer ticker.Stop()
+		for range ticker.C {
+			log.Printf("START_TRAFFIC_MONITORING: Выполнение проверки трафика")
+			if err := CheckAndDisableTrafficLimit(); err != nil {
+				log.Printf("START_TRAFFIC_MONITORING: Ошибка проверки трафика: %v", err)
+			} else {
+				log.Printf("START_TRAFFIC_MONITORING: Проверка трафика успешно выполнена")
+			}
+		}
+	}()
+	
+	// Запускаем периодический сброс трафика
+	if TRAFFIC_RESET_ENABLED && TRAFFIC_RESET_INTERVAL > 0 {
+		go startPeriodicTrafficReset()
+	}
+	
+	log.Printf("START_TRAFFIC_MONITORING: Запущен мониторинг трафика (каждые %d минут)", TRAFFIC_CHECK_INTERVAL)
+}
+
+// startPeriodicTrafficReset запускает периодический сброс трафика
+func startPeriodicTrafficReset() {
+	log.Printf("START_PERIODIC_TRAFFIC_RESET: Запуск периодического сброса трафика каждые %d минут", TRAFFIC_RESET_INTERVAL)
+	
+	interval := time.Duration(TRAFFIC_RESET_INTERVAL) * time.Minute
+	ticker := time.NewTicker(interval)
+	
+	go func() {
+		defer ticker.Stop()
+		for range ticker.C {
+			log.Printf("START_PERIODIC_TRAFFIC_RESET: Выполнение сброса трафика")
+			if err := resetAllTraffic(); err != nil {
+				log.Printf("START_PERIODIC_TRAFFIC_RESET: Ошибка сброса трафика: %v", err)
+			} else {
+				log.Printf("START_PERIODIC_TRAFFIC_RESET: Сброс трафика успешно выполнен")
+			}
+		}
+	}()
+	
+	log.Printf("START_PERIODIC_TRAFFIC_RESET: Запущен периодический сброс трафика (каждые %d минут)", TRAFFIC_RESET_INTERVAL)
+}
+
+// resetAllTraffic сбрасывает трафик всех клиентов и включает их обратно
+func resetAllTraffic() error {
+	log.Printf("RESET_ALL_TRAFFIC: Начало сброса трафика всех клиентов")
+	
+	// Авторизуемся в панели
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("RESET_ALL_TRAFFIC: Ошибка авторизации: %v", err)
+		return fmt.Errorf("ошибка авторизации в панели: %v", err)
+	}
+	
+	// Получаем inbound
+	inbound, err := GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("RESET_ALL_TRAFFIC: Ошибка получения inbound: %v", err)
+		return fmt.Errorf("ошибка получения inbound: %v", err)
+	}
+	
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("RESET_ALL_TRAFFIC: Ошибка десериализации settings: %v", err)
+		return fmt.Errorf("ошибка десериализации settings: %v", err)
+	}
+	
+	// Включаем всех отключенных клиентов и сбрасываем счётчики трафика через смену email
+	modified := false
+	resetSuffix := time.Now().Format("20060102-1504")
+
+	// Фаза 1: добавить временный суффикс -r для сброса
+	for i, client := range settings.Clients {
+		parts := strings.Split(client.Email, "_")
+		var newEmail string
+		if len(parts) >= 3 {
+			dateRaw := parts[2]
+			if idx := strings.Index(dateRaw, "-r"); idx >= 0 {
+				dateRaw = dateRaw[:idx]
+			}
+			// Нормализуем дату в формат YYYY-DD-MM
+			dateNormalized := dateRaw
+			if t, err := time.Parse("2006-01-02", dateRaw); err == nil {
+				dateNormalized = t.Format("2006-02-01")
+			} else if t2, err2 := time.Parse("2006-02-01", dateRaw); err2 == nil {
+				dateNormalized = t2.Format("2006-02-01")
+			}
+			baseEmail := parts[0] + "_до_" + dateNormalized
+			newEmail = baseEmail + "-r" + resetSuffix
+		} else {
+			newEmail = client.Email + "-r" + resetSuffix
+		}
+
+		if client.Email != newEmail {
+			log.Printf("RESET_ALL_TRAFFIC: Сброс трафика клиента через смену email (фаза 1): '%s' -> '%s' (ID=%s)", client.Email, newEmail, client.ID)
+			settings.Clients[i].Email = newEmail
+			modified = true
+		}
+
+		if !client.Enable {
+			log.Printf("RESET_ALL_TRAFFIC: Включаем клиента ID=%s, Email=%s", client.ID, newEmail)
+			settings.Clients[i].Enable = true
+			modified = true
+			if err := updateUserTrafficStatus(newEmail, true); err != nil {
+				log.Printf("RESET_ALL_TRAFFIC: Ошибка обновления статуса в БД для клиента Email=%s: %v", newEmail, err)
+			}
+		}
+	}
+
+	if modified {
+		log.Printf("RESET_ALL_TRAFFIC: Обновление inbound (фаза 1 — сброс)")
+		settingsJSON, err := json.Marshal(settings)
+		if err != nil {
+			log.Printf("RESET_ALL_TRAFFIC: Ошибка сериализации settings: %v", err)
+			return fmt.Errorf("ошибка сериализации settings: %v", err)
+		}
+		inbound.Settings = string(settingsJSON)
+		if err := updateInbound(sessionCookie, *inbound); err != nil {
+			log.Printf("RESET_ALL_TRAFFIC: Ошибка обновления inbound (фаза 1): %v", err)
+			return fmt.Errorf("ошибка обновления inbound: %v", err)
+		}
+
+		// Фаза 2: убрать временный суффикс и оставить нормализованный базовый email
+		secondModified := false
+		for i, client := range settings.Clients {
+			parts := strings.Split(client.Email, "_")
+			if len(parts) >= 3 {
+				dateRaw := parts[2]
+				if idx := strings.Index(dateRaw, "-r"); idx >= 0 {
+					dateRaw = dateRaw[:idx]
+				}
+				dateNormalized := dateRaw
+				if t, err := time.Parse("2006-01-02", dateRaw); err == nil {
+					dateNormalized = t.Format("2006-02-01")
+				} else if t2, err2 := time.Parse("2006-02-01", dateRaw); err2 == nil {
+					dateNormalized = t2.Format("2006-02-01")
+				}
+				baseEmail := parts[0] + "_до_" + dateNormalized
+				if settings.Clients[i].Email != baseEmail {
+					log.Printf("RESET_ALL_TRAFFIC: Возврат email к базовому виду (фаза 2): '%s' -> '%s' (ID=%s)", settings.Clients[i].Email, baseEmail, client.ID)
+					settings.Clients[i].Email = baseEmail
+					secondModified = true
+				}
+			}
+		}
+
+		if secondModified {
+			log.Printf("RESET_ALL_TRAFFIC: Обновление inbound (фаза 2 — нормализация email)")
+			settingsJSON2, err := json.Marshal(settings)
+			if err != nil {
+				log.Printf("RESET_ALL_TRAFFIC: Ошибка сериализации settings (фаза 2): %v", err)
+				return fmt.Errorf("ошибка сериализации settings: %v", err)
+			}
+			inbound.Settings = string(settingsJSON2)
+			if err := updateInbound(sessionCookie, *inbound); err != nil {
+				log.Printf("RESET_ALL_TRAFFIC: Ошибка обновления inbound (фаза 2): %v", err)
+				return fmt.Errorf("ошибка обновления inbound: %v", err)
+			}
+		}
+
+		log.Printf("RESET_ALL_TRAFFIC: Сброс трафика применен, email нормализованы")
+	} else {
+		log.Printf("RESET_ALL_TRAFFIC: Нет клиентов для включения")
+	}
+	
+	return nil
+}

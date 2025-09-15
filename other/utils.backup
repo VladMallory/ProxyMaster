@@ -1,0 +1,374 @@
+package main
+
+import (
+  "context"
+  "encoding/json"
+  "fmt"
+  "log"
+  "time"
+
+  "go.mongodb.org/mongo-driver/bson"
+)
+
+// ProcessPayment обрабатывает оплату и создает/продлевает конфиг
+func ProcessPayment(user *User, days int) (string, error) {
+  log.Printf("PROCESS_PAYMENT: Начало обработки платежа для TelegramID=%d, days=%d", user.TelegramID, days)
+
+  // Создаём бэкап перед изменением данных
+  log.Printf("PROCESS_PAYMENT: Создание бэкапа для TelegramID=%d", user.TelegramID)
+  if err := BackupMongoDB(); err != nil {
+    log.Printf("PROCESS_PAYMENT: Ошибка создания бэкапа: %v", err)
+    return "", fmt.Errorf("ошибка создания бэкапа: %v", err)
+  }
+  log.Printf("PROCESS_PAYMENT: Бэкап успешно создан")
+
+  cost := float64(days * PRICE_PER_DAY)
+  log.Printf("PROCESS_PAYMENT: Расчёт стоимости: TelegramID=%d, days=%d, balance=%.2f, cost=%.2f", user.TelegramID, days, user.Balance, cost)
+
+  // Проверяем баланс
+  if user.Balance < cost {
+    log.Printf("PROCESS_PAYMENT: Недостаточно средств для TelegramID=%d, Balance=%.2f, Cost=%.2f", user.TelegramID, user.Balance, cost)
+    return "", fmt.Errorf("недостаточно средств на балансе. Нужно: %.2f₽, доступно: %.2f₽", cost, user.Balance)
+  }
+
+  // Авторизуемся в панели
+  log.Printf("PROCESS_PAYMENT: Вызов авторизации в панели для TelegramID=%d", user.TelegramID)
+  sessionCookie, err := Login()
+  if err != nil {
+    log.Printf("PROCESS_PAYMENT: Ошибка авторизации: %v", err)
+    return "", fmt.Errorf("ошибка авторизации в панели: %v", err)
+  }
+  log.Printf("PROCESS_PAYMENT: Авторизация успешна, sessionCookie=%s", sessionCookie)
+
+  // Получаем список клиентов из панели
+  log.Printf("PROCESS_PAYMENT: Получение списка клиентов для TelegramID=%d", user.TelegramID)
+  clients, err := GetInboundClients(sessionCookie)
+  if err != nil {
+    log.Printf("PROCESS_PAYMENT: Ошибка получения списка клиентов: %v", err)
+    return "", fmt.Errorf("ошибка получения списка клиентов: %v", err)
+  }
+  log.Printf("PROCESS_PAYMENT: Получено %d клиентов", len(clients))
+
+  // Ищем существующего клиента по префиксу Telegram ID
+  log.Printf("PROCESS_PAYMENT: Поиск клиента для TelegramID=%d", user.TelegramID)
+  existingClient := FindClientByTelegramID(clients, user.TelegramID)
+
+  // Списываем средства заранее
+  originalBalance := user.Balance
+  user.Balance -= cost
+  log.Printf("PROCESS_PAYMENT: Средства списаны: TelegramID=%d, Balance=%.2f, OriginalBalance=%.2f", user.TelegramID, user.Balance, originalBalance)
+
+  var configURL string
+
+  if existingClient != nil {
+    // Обновляем существующий конфиг
+    log.Printf("PROCESS_PAYMENT: Найден существующий клиент для TelegramID=%d: Email=%s, SubID=%s", user.TelegramID, existingClient.Email, existingClient.SubID)
+    log.Printf("PROCESS_PAYMENT: Вызов AddClient для продления конфига TelegramID=%d, days=%d", user.TelegramID, days)
+
+    err = AddClient(sessionCookie, user, days)
+    if err != nil {
+      log.Printf("PROCESS_PAYMENT: Ошибка продления конфига: %v", err)
+      user.Balance = originalBalance // Возвращаем деньги при ошибке
+      log.Printf("PROCESS_PAYMENT: Баланс восстановлен: TelegramID=%d, Balance=%.2f", user.TelegramID, user.Balance)
+      return "", fmt.Errorf("ошибка продления конфига: %v", err)
+    }
+
+    // Если SubID не был установлен, используем существующий или генерируем новый
+    if user.SubID == "" {
+      user.SubID = existingClient.SubID
+      if user.SubID == "" {
+        user.SubID = generateSubID()
+        log.Printf("PROCESS_PAYMENT: Сгенерирован новый SubID для TelegramID=%d: %s", user.TelegramID, user.SubID)
+      }
+    }
+
+    configURL = CONFIG_BASE_URL + user.SubID
+    log.Printf("PROCESS_PAYMENT: Конфиг продлён до %s, configURL=%s", time.UnixMilli(user.ExpiryTime).Format("02.01.2006 15:04"), configURL)
+
+  } else {
+    // Создаём новый конфиг
+    log.Printf("PROCESS_PAYMENT: Клиент не найден, создание нового для TelegramID=%d", user.TelegramID)
+    log.Printf("PROCESS_PAYMENT: Вызов AddClient для создания нового конфига TelegramID=%d, days=%d", user.TelegramID, days)
+
+    err = AddClient(sessionCookie, user, days)
+    if err != nil {
+      log.Printf("PROCESS_PAYMENT: Ошибка создания конфига: %v", err)
+      user.Balance = originalBalance // Возвращаем деньги при ошибке
+      log.Printf("PROCESS_PAYMENT: Баланс восстановлен: TelegramID=%d, Balance=%.2f", user.TelegramID, user.Balance)
+      return "", fmt.Errorf("ошибка создания конфига: %v", err)
+    }
+
+    configURL = CONFIG_BASE_URL + user.SubID
+    log.Printf("PROCESS_PAYMENT: Новый конфиг создан, configURL=%s", configURL)
+  }
+
+  // Обновляем данные пользователя в базе
+  log.Printf("PROCESS_PAYMENT: Обновление данных пользователя в базе для TelegramID=%d", user.TelegramID)
+  if err := UpdateUser(user); err != nil {
+    log.Printf("PROCESS_PAYMENT: Ошибка обновления пользователя: %v", err)
+    return "", fmt.Errorf("ошибка обновления пользователя: %v", err)
+  }
+  log.Printf("PROCESS_PAYMENT: Пользователь успешно обновлён: TelegramID=%d, Balance=%.2f, ExpiryTime=%d", user.TelegramID, user.Balance, user.ExpiryTime)
+
+  return configURL, nil
+}
+
+// IsConfigActive проверяет, активен ли конфиг
+func IsConfigActive(user *User) bool {
+  if !user.HasActiveConfig || user.ExpiryTime == 0 {
+    return false
+  }
+  return time.Now().UnixMilli() < user.ExpiryTime
+}
+
+// GetDaysWord возвращает правильное склонение слова "день"
+func GetDaysWord(days int) string {
+  if days%10 == 1 && days%100 != 11 {
+    return "день"
+  } else if days%10 >= 2 && days%10 <= 4 && (days%100 < 10 || days%100 > 20) {
+    return "дня"
+  }
+  return "дней"
+}
+
+// GetAdminStats возвращает статистику для админа
+func GetAdminStats() (map[string]interface{}, error) {
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  defer cancel()
+
+  stats := make(map[string]interface{})
+
+  // Общее количество пользователей
+  totalUsers, err := users.CountDocuments(ctx, bson.M{})
+  if err != nil {
+    log.Printf("GET_ADMIN_STATS: Ошибка подсчета пользователей: %v", err)
+    return nil, fmt.Errorf("ошибка подсчета пользователей: %v", err)
+  }
+  stats["total_users"] = totalUsers
+
+  // Пользователи с активными конфигами
+  activeConfigs, err := users.CountDocuments(ctx, bson.M{"has_active_config": true})
+  if err != nil {
+    log.Printf("GET_ADMIN_STATS: Ошибка подсчета активных конфигов: %v", err)
+    return nil, fmt.Errorf("ошибка подсчета активных конфигов: %v", err)
+  }
+  stats["active_configs"] = activeConfigs
+
+  // Суммарный баланс и выручка
+  var result []bson.M
+  cursor, err := users.Aggregate(ctx, []bson.M{
+    {
+      "$group": bson.M{
+        "_id":          nil,
+        "totalBalance": bson.M{"$sum": "$balance"},
+        "totalPaid":    bson.M{"$sum": "$total_paid"},
+      },
+    },
+  })
+  if err != nil {
+    log.Printf("GET_ADMIN_STATS: Ошибка выполнения агрегации: %v", err)
+    return nil, fmt.Errorf("ошибка выполнения агрегации: %v", err)
+  }
+  if err := cursor.All(ctx, &result); err != nil {
+    log.Printf("GET_ADMIN_STATS: Ошибка чтения результатов агрегации: %v", err)
+    return nil, fmt.Errorf("ошибка чтения результатов агрегации: %v", err)
+  }
+
+  if len(result) > 0 {
+    stats["total_balance"] = result[0]["totalBalance"]
+    stats["total_revenue"] = result[0]["totalPaid"]
+  } else {
+    stats["total_balance"] = 0.0
+    stats["total_revenue"] = 0.0
+  }
+
+  // Количество пользователей, зарегистрированных сегодня
+  today := time.Now().Truncate(24 * time.Hour)
+  todayUsers, err := users.CountDocuments(ctx, bson.M{
+    "created_at": bson.M{
+      "$gte": today,
+    },
+  })
+  if err != nil {
+    log.Printf("GET_ADMIN_STATS: Ошибка подсчета пользователей за сегодня: %v", err)
+    return nil, fmt.Errorf("ошибка подсчета пользователей за сегодня: %v", err)
+  }
+  stats["today_registrations"] = todayUsers
+
+  log.Printf("GET_ADMIN_STATS: Статистика собрана: %+v", stats)
+  return stats, nil
+}
+
+// FormatBalance форматирует баланс для отображения
+func FormatBalance(balance float64) string {
+  if balance == float64(int64(balance)) {
+    return fmt.Sprintf("%.0f₽", balance)
+  }
+  return fmt.Sprintf("%.2f₽", balance)
+}
+
+// ValidateUserInput проверяет корректность пользовательского ввода
+func ValidateUserInput(input string, inputType string) bool {
+  switch inputType {
+  case "telegram_id":
+    if len(input) == 0 || len(input) > 15 {
+      return false
+    }
+    for _, char := range input {
+      if char < '0' || char > '9' {
+        return false
+      }
+    }
+    return true
+  case "username":
+    if len(input) == 0 || len(input) > 32 {
+      return false
+    }
+    for _, char := range input {
+      if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+          (char >= '0' && char <= '9') || char == '_') {
+        return false
+      }
+    }
+    return true
+  case "name":
+    return len(input) > 0 && len(input) <= 64
+  }
+  return true
+}
+
+// LogUserAction логирует действия пользователя
+func LogUserAction(userID int64, action string, details string) {
+  log.Printf("USER_ACTION: ID=%d, ACTION=%s, DETAILS=%s", userID, action, details)
+}
+
+// GetTimeUntilExpiry возвращает время до истечения конфига в читаемом формате
+func GetTimeUntilExpiry(expiryTime int64) string {
+  if expiryTime == 0 {
+    return "неактивен"
+  }
+
+  expiry := time.UnixMilli(expiryTime)
+  now := time.Now()
+
+  if expiry.Before(now) {
+    return "истек"
+  }
+
+  duration := expiry.Sub(now)
+
+  days := int(duration.Hours() / 24)
+  hours := int(duration.Hours()) % 24
+  minutes := int(duration.Minutes()) % 60
+
+  if days > 0 {
+    return fmt.Sprintf("%d %s %d ч.", days, GetDaysWord(days), hours)
+  } else if hours > 0 {
+    return fmt.Sprintf("%d ч. %d мин.", hours, minutes)
+  } else {
+    return fmt.Sprintf("%d мин.", minutes)
+  }
+}
+
+// CheckAndCleanExpiredConfigs очищает истёкшие конфиги
+func CheckAndCleanExpiredConfigs() error {
+  log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Начало очистки истёкших конфигов")
+
+  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+  defer cancel()
+
+  // Находим пользователей с истёкшими конфигами
+  now := time.Now().UnixMilli()
+  filter := bson.M{
+    "has_active_config": true,
+    "expiry_time": bson.M{
+      "$lte": now,
+    },
+  }
+
+  // Обновляем статус конфигов
+  update := bson.M{
+    "$set": bson.M{
+      "has_active_config": false,
+      "updated_at":        time.Now(),
+    },
+  }
+
+  result, err := users.UpdateMany(ctx, filter, update)
+  if err != nil {
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Ошибка обновления истёкших конфигов: %v", err)
+    return fmt.Errorf("ошибка обновления истёкших конфигов: %v", err)
+  }
+
+  log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Обновлено %d истёкших конфигов", result.ModifiedCount)
+
+  // Авторизуемся в панели для отключения клиентов
+  log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Авторизация в панели")
+  sessionCookie, err := Login()
+  if err != nil {
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Ошибка авторизации: %v", err)
+    return fmt.Errorf("ошибка авторизации в панели: %v", err)
+  }
+
+  // Получаем inbound
+  log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Получение inbound")
+  inbound, err := GetInbound(sessionCookie)
+  if err != nil {
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Ошибка получения inbound: %v", err)
+    return fmt.Errorf("ошибка получения inbound: %v", err)
+  }
+
+  var settings Settings
+  if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Ошибка десериализации settings: %v", err)
+    return fmt.Errorf("ошибка десериализации settings: %v", err)
+  }
+
+  // Отключаем истёкшие клиенты
+  modified := false
+  for i, client := range settings.Clients {
+    if client.Enable && client.ExpiryTime > 0 && client.ExpiryTime <= now {
+      log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Отключение клиента: Email=%s, ExpiryTime=%d", client.Email, client.ExpiryTime)
+      settings.Clients[i].Enable = false
+      modified = true
+    }
+  }
+
+  if modified {
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Обновление inbound с отключёнными клиентами")
+    settingsJSON, err := json.Marshal(settings)
+    if err != nil {
+      log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Ошибка сериализации settings: %v", err)
+      return fmt.Errorf("ошибка сериализации settings: %v", err)
+    }
+    inbound.Settings = string(settingsJSON)
+
+    if err := updateInbound(sessionCookie, *inbound); err != nil {
+      log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Ошибка обновления inbound: %v", err)
+      return fmt.Errorf("ошибка обновления inbound: %v", err)
+    }
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Inbound успешно обновлён")
+  } else {
+    log.Printf("CHECK_AND_CLEAN_EXPIRED_CONFIGS: Нет истёкших клиентов для отключения")
+  }
+
+  return nil
+}
+
+// StartExpiredConfigsCleanup запускает сервис очистки истекших конфигов
+func StartExpiredConfigsCleanup() {
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour) // Проверяем каждый час
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				if err := CheckAndCleanExpiredConfigs(); err != nil {
+					log.Printf("CLEANUP_EXPIRED_CONFIGS: Ошибка очистки истекших конфигов: %v", err)
+				}
+			}
+		}
+	}()
+	log.Println("START_EXPIRED_CONFIGS_CLEANUP: Запущен сервис очистки истекших конфигов (каждый час)")
+}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Подключение к Happ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .status {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Подключение к Happ</h1>
+        <div id="loading">
+            <div class="spinner"></div>
+            <div class="status">Перенаправление в Happ...</div>
+        </div>
+        <div id="manual" style="display: none;">
+            <div class="status">Если приложение не открылось автоматически:</div>
+            <a href="" id="manual-link" class="btn">📱 Открыть в Happ</a>
+            <br>
+            <a href="" id="copy-link" class="btn">📋 Скопировать ссылку</a>
+            <br>
+            <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+                <strong>💡 Совет:</strong> Если автоматический импорт не работает, скопируйте ссылку и вставьте её вручную в Happ через "Добавить конфигурацию"
+            </div>
+        </div>
+        <div id="error" style="display: none;" class="error">
+            <h3>❌ Ошибка</h3>
+            <p id="error-text"></p>
+        </div>
+    </div>
+
+<script>
+    // Получаем URL из параметра
+    const urlParams = new URLSearchParams(window.location.search);
+    const configUrl = urlParams.get('url');
+    
+    console.log('Получен URL параметр:', configUrl);
+
+    if (configUrl) {
+        const v2rayUrl = 'happ://add/' + encodeURIComponent(configUrl);
+        console.log('Сформирован Happ URL:', v2rayUrl);
+        
+        // Устанавливаем ссылки
+        document.getElementById('manual-link').href = v2rayUrl;
+        document.getElementById('copy-link').href = 'javascript:void(0)';
+        
+        // Функция копирования ссылки
+        document.getElementById('copy-link').addEventListener('click', function() {
+            navigator.clipboard.writeText(configUrl).then(function() {
+                alert('✅ Ссылка скопирована!\n\nОткройте Happ → Добавить конфигурацию → Вставить ссылку');
+            }).catch(function() {
+                // Fallback для старых браузеров
+                const textArea = document.createElement('textarea');
+                textArea.value = configUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ Ссылка скопирована!\n\nОткройте Happ → Добавить конфигурацию → Вставить ссылку');
+            });
+        });
+
+        // Пытаемся открыть приложение
+        let appOpened = false;
+        
+        // Первая попытка - немедленно
+        try {
+            console.log('Попытка 1: открытие', v2rayUrl);
+            window.location.href = v2rayUrl;
+            appOpened = true;
+        } catch (e) {
+            console.log('Первая попытка открытия приложения не удалась:', e);
+        }
+        
+        // Вторая попытка через 1 секунду
+        setTimeout(function() {
+            if (!appOpened) {
+                try {
+                    console.log('Попытка 2: открытие', v2rayUrl);
+                    window.location.href = v2rayUrl;
+                    appOpened = true;
+                } catch (e) {
+                    console.log('Вторая попытка открытия приложения не удалась:', e);
+                }
+            }
+        }, 1000);
+        
+        // Третья попытка через 3 секунды (если предыдущие не сработали)
+        setTimeout(function() {
+            if (!appOpened) {
+                try {
+                    console.log('Попытка 3: открытие', v2rayUrl);
+                    window.location.href = v2rayUrl;
+                    appOpened = true;
+                } catch (e) {
+                    console.log('Третья попытка открытия приложения не удалась:', e);
+                }
+            }
+        }, 3000);
+        
+        // Показываем ручные кнопки через 4 секунды
+        setTimeout(function() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('manual').style.display = 'block';
+        }, 4000);
+        
+    } else {
+        console.log('URL параметр не найден');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error-text').textContent = 'Не указана ссылка на конфигурацию Happ';
+    }
+</script>
+</body>
+</html>
