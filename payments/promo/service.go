@@ -285,6 +285,15 @@ func (ps *PromoService) UsePromoCode(code string, userID int64) (*PromoCode, err
 	log.Printf("PROMO: Промокод %s использован пользователем %d на сумму %.2f₽",
 		promo.Code, userID, promo.Amount)
 
+	// ИСПРАВЛЕНИЕ: Запускаем принудительный пересчет баланса для создания конфига
+	// Проблема: промокоды пополняют баланс напрямую через SQL, минуя AddBalance,
+	// которая автоматически вызывает ForceBalanceRecalculation
+	go func() {
+		time.Sleep(100 * time.Millisecond) // Небольшая задержка для обновления базы
+		log.Printf("PROMO: Запуск принудительного пересчета после использования промокода для пользователя %d", userID)
+		common.ForceBalanceRecalculation(userID)
+	}()
+
 	return promo, nil
 }
 

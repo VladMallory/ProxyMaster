@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"bot/common"
 	"bot/menus"
@@ -15,7 +17,10 @@ import (
 
 // HandleMessage обрабатывает входящие сообщения
 func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
-	log.Printf("HANDLE_MESSAGE: Обработка сообщения от TelegramID=%d, команда='%s'", message.From.ID, message.Command())
+	log.Printf("HANDLE_MESSAGE: ===== НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ =====")
+	log.Printf("HANDLE_MESSAGE: TelegramID=%d, Username=%s, FirstName=%s, LastName=%s",
+		message.From.ID, message.From.UserName, message.From.FirstName, message.From.LastName)
+	log.Printf("HANDLE_MESSAGE: Команда='%s', Текст='%s'", message.Command(), message.Text)
 
 	telegramUser := message.From
 
@@ -31,12 +36,16 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		lastName = telegramUser.LastName
 	}
 
+	log.Printf("HANDLE_MESSAGE: Получение/создание пользователя: TelegramID=%d, Username=%s, FirstName=%s, LastName=%s",
+		telegramUser.ID, username, firstName, lastName)
+
 	user, err := common.GetOrCreateUser(telegramUser.ID, username, firstName, lastName)
 	if err != nil {
-		log.Printf("HANDLE_MESSAGE: Ошибка работы с пользователем TelegramID=%d: %v", telegramUser.ID, err)
+		log.Printf("HANDLE_MESSAGE: ❌ Ошибка работы с пользователем TelegramID=%d: %v", telegramUser.ID, err)
 		return
 	}
-	log.Printf("HANDLE_MESSAGE: Пользователь получен/создан: TelegramID=%d, Username=%s, FirstName=%s, LastName=%s", user.TelegramID, user.Username, user.FirstName, user.LastName)
+	log.Printf("HANDLE_MESSAGE: ✅ Пользователь получен/создан: TelegramID=%d, Username=%s, FirstName=%s, LastName=%s, HasActiveConfig=%v, Balance=%.2f₽, ClientID=%s, SubID=%s",
+		user.TelegramID, user.Username, user.FirstName, user.LastName, user.HasActiveConfig, user.Balance, user.ClientID, user.SubID)
 
 	// Проверяем реферальную систему для команды /start
 	var isReferralUser bool
@@ -114,6 +123,9 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		return
 	}
 
+	log.Printf("HANDLE_MESSAGE: Проверка команды: %s, IsCommand=%v, HasActiveConfig=%v, CanUseTrial=%v",
+		message.Command(), message.IsCommand(), user.HasActiveConfig, common.TrialManager.CanUseTrial(user))
+
 	if message.IsCommand() {
 		// Проверяем, является ли это команда промокодов
 		log.Printf("HANDLE_MESSAGE: Проверка команды: %s, GlobalPromoManager: %v", message.Command(), promo.GlobalPromoManager != nil)
@@ -140,14 +152,28 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 
 // handleCommand обрабатывает команды
 func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common.User) {
+	log.Printf("HANDLE_COMMAND: ===== НАЧАЛО ОБРАБОТКИ КОМАНДЫ =====")
 	telegramUser := message.From
+	log.Printf("HANDLE_COMMAND: Команда='%s', TelegramID=%d, HasActiveConfig=%v, Balance=%.2f₽",
+		message.Command(), telegramUser.ID, user.HasActiveConfig, user.Balance)
 
 	switch message.Command() {
 	case "start":
-		log.Printf("HANDLE_MESSAGE: Выполнение команды /start для TelegramID=%d", telegramUser.ID)
+		log.Printf("HANDLE_COMMAND: ===== ОБРАБОТКА КОМАНДЫ /start =====")
+		log.Printf("HANDLE_COMMAND: Выполнение команды /start для TelegramID=%d", telegramUser.ID)
+
+		// Проверяем и создаем конфиг, если нужно
+		log.Printf("HANDLE_COMMAND: Вызов ensureUserHasConfig для пользователя %d", telegramUser.ID)
+		ensureUserHasConfig(bot, user, message.Chat.ID)
+
+		log.Printf("HANDLE_COMMAND: Отправка главного меню для пользователя %d", telegramUser.ID)
 		menus.SendMainMenu(bot, message.Chat.ID, user)
 	case "balance":
 		log.Printf("HANDLE_MESSAGE: Выполнение команды /balance для TelegramID=%d", telegramUser.ID)
+
+		// Проверяем и создаем конфиг, если нужно
+		ensureUserHasConfig(bot, user, message.Chat.ID)
+
 		menus.SendBalance(bot, message.Chat.ID, user)
 	case "debug":
 		handleDebugCommand(bot, message, user)
@@ -509,4 +535,144 @@ func handleRefCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *com
 		msg := tgbotapi.NewMessage(message.Chat.ID, "❌ Реферальная система не инициализирована")
 		bot.Send(msg)
 	}
+}
+
+// ensureUserHasConfig проверяет и создает конфиг для пользователя, если нужно
+func ensureUserHasConfig(bot *tgbotapi.BotAPI, user *common.User, chatID int64) {
+	log.Printf("ENSURE_CONFIG: ===== НАЧАЛО ПРОВЕРКИ КОНФИГА =====")
+	log.Printf("ENSURE_CONFIG: Пользователь: %d, HasActiveConfig=%v, Balance=%.2f₽, ClientID=%s, SubID=%s",
+		user.TelegramID, user.HasActiveConfig, user.Balance, user.ClientID, user.SubID)
+
+	// Если у пользователя уже есть активный конфиг, ничего не делаем
+	if user.HasActiveConfig {
+		log.Printf("ENSURE_CONFIG: ✅ У пользователя %d уже есть активный конфиг, пропускаем", user.TelegramID)
+		return
+	}
+
+	// Если у пользователя нет баланса, ничего не делаем
+	if user.Balance <= 0 {
+		log.Printf("ENSURE_CONFIG: ❌ У пользователя %d нет баланса (%.2f₽), пропускаем создание конфига",
+			user.TelegramID, user.Balance)
+		return
+	}
+
+	// Если автосписание отключено, ничего не делаем
+	if !common.AUTO_BILLING_ENABLED || common.TARIFF_MODE_ENABLED {
+		log.Printf("ENSURE_CONFIG: ❌ Автосписание отключено (AUTO_BILLING_ENABLED=%v) или включен тарифный режим (TARIFF_MODE_ENABLED=%v), пропускаем создание конфига для пользователя %d",
+			common.AUTO_BILLING_ENABLED, common.TARIFF_MODE_ENABLED, user.TelegramID)
+		return
+	}
+
+	// ВАЖНО: Сначала синхронизируем с панелью, возможно конфиг уже есть
+	log.Printf("ENSURE_CONFIG: 🔄 Синхронизация с панелью для пользователя %d", user.TelegramID)
+	go func() {
+		time.Sleep(100 * time.Millisecond) // Небольшая задержка
+		log.Printf("ENSURE_CONFIG: Запуск syncUserWithPanelFromHandler для пользователя %d", user.TelegramID)
+		syncUserWithPanelFromHandler(user)
+
+		// После синхронизации проверяем еще раз
+		log.Printf("ENSURE_CONFIG: Получение обновленного пользователя %d после синхронизации", user.TelegramID)
+		updatedUser, err := common.GetUserByTelegramID(user.TelegramID)
+		if err != nil {
+			log.Printf("ENSURE_CONFIG: ❌ Ошибка получения обновленного пользователя %d: %v", user.TelegramID, err)
+			return
+		}
+
+		log.Printf("ENSURE_CONFIG: Обновленный пользователь %d: HasActiveConfig=%v, ClientID=%s, SubID=%s",
+			updatedUser.TelegramID, updatedUser.HasActiveConfig, updatedUser.ClientID, updatedUser.SubID)
+
+		if updatedUser.HasActiveConfig {
+			log.Printf("ENSURE_CONFIG: ✅ После синхронизации у пользователя %d найден активный конфиг", user.TelegramID)
+			return
+		}
+
+		log.Printf("ENSURE_CONFIG: ❌ У пользователя %d есть баланс %.2f₽, но нет конфига. Запускаем принудительный пересчет",
+			user.TelegramID, user.Balance)
+
+		// Запускаем принудительный пересчет баланса для создания конфига
+		log.Printf("ENSURE_CONFIG: Запуск ForceBalanceRecalculation для пользователя %d", user.TelegramID)
+		common.ForceBalanceRecalculation(user.TelegramID)
+	}()
+}
+
+// syncUserWithPanelFromHandler синхронизирует пользователя с панелью 3x-ui (копия из common/postgres.go)
+func syncUserWithPanelFromHandler(user *common.User) {
+	log.Printf("SYNC_PANEL: ===== НАЧАЛО СИНХРОНИЗАЦИИ С ПАНЕЛЬЮ =====")
+	log.Printf("SYNC_PANEL: Пользователь: %d", user.TelegramID)
+
+	if user == nil {
+		log.Printf("SYNC_PANEL: ❌ Пользователь nil, прерываем синхронизацию")
+		return
+	}
+
+	// Авторизуемся в панели
+	log.Printf("SYNC_PANEL: Авторизация в панели для пользователя %d", user.TelegramID)
+	sessionCookie, err := common.Login()
+	if err != nil {
+		log.Printf("SYNC_PANEL: ❌ Ошибка авторизации для пользователя %d: %v", user.TelegramID, err)
+		return
+	}
+	log.Printf("SYNC_PANEL: ✅ Успешная авторизация для пользователя %d", user.TelegramID)
+
+	// Получаем наш inbound
+	log.Printf("SYNC_PANEL: Получение inbound для пользователя %d", user.TelegramID)
+	targetInbound, err := common.GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("SYNC_PANEL: ❌ Ошибка получения inbound для пользователя %d: %v", user.TelegramID, err)
+		return
+	}
+
+	if targetInbound == nil {
+		log.Printf("SYNC_PANEL: ❌ Inbound с ID %d не найден для пользователя %d", common.INBOUND_ID, user.TelegramID)
+		return
+	}
+	log.Printf("SYNC_PANEL: ✅ Inbound получен для пользователя %d", user.TelegramID)
+
+	// Парсим settings
+	log.Printf("SYNC_PANEL: Парсинг settings для пользователя %d", user.TelegramID)
+	var settings common.Settings
+	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+		log.Printf("SYNC_PANEL: ❌ Ошибка парсинга settings для пользователя %d: %v", user.TelegramID, err)
+		return
+	}
+	log.Printf("SYNC_PANEL: ✅ Settings распарсены для пользователя %d, найдено клиентов: %d", user.TelegramID, len(settings.Clients))
+
+	// Ищем клиента пользователя
+	log.Printf("SYNC_PANEL: Поиск клиента для пользователя %d среди %d клиентов", user.TelegramID, len(settings.Clients))
+	existingClient := common.FindClientByTelegramID(settings.Clients, user.TelegramID)
+	if existingClient != nil {
+		log.Printf("SYNC_PANEL: ✅ Найден клиент в панели для пользователя %d: Email=%s, SubID=%s, Enable=%v, ExpiryTime=%d",
+			user.TelegramID, existingClient.Email, existingClient.SubID, existingClient.Enable, existingClient.ExpiryTime)
+
+		// Обновляем данные пользователя из панели
+		oldClientID := user.ClientID
+		oldSubID := user.SubID
+		oldHasActiveConfig := user.HasActiveConfig
+
+		user.ClientID = existingClient.ID
+		user.SubID = existingClient.SubID
+		user.Email = existingClient.Email
+		user.ExpiryTime = existingClient.ExpiryTime
+		user.HasActiveConfig = existingClient.Enable && time.Now().UnixMilli() < existingClient.ExpiryTime
+		user.UpdatedAt = time.Now()
+
+		log.Printf("SYNC_PANEL: Обновление данных пользователя %d: ClientID %s->%s, SubID %s->%s, HasActiveConfig %v->%v",
+			user.TelegramID, oldClientID, user.ClientID, oldSubID, user.SubID, oldHasActiveConfig, user.HasActiveConfig)
+
+		// Сохраняем в базу
+		log.Printf("SYNC_PANEL: Сохранение обновленного пользователя %d в базу", user.TelegramID)
+		if err := common.UpdateUser(user); err != nil {
+			log.Printf("SYNC_PANEL: ❌ Ошибка обновления пользователя %d: %v", user.TelegramID, err)
+		} else {
+			log.Printf("SYNC_PANEL: ✅ Пользователь %d успешно синхронизирован с панелью, HasActiveConfig=%v",
+				user.TelegramID, user.HasActiveConfig)
+		}
+	} else {
+		log.Printf("SYNC_PANEL: ❌ Конфиг в панели для пользователя %d не найден", user.TelegramID)
+		log.Printf("SYNC_PANEL: Доступные клиенты в панели:")
+		for i, client := range settings.Clients {
+			log.Printf("SYNC_PANEL:   [%d] Email=%s, SubID=%s, Enable=%v", i, client.Email, client.SubID, client.Enable)
+		}
+	}
+	log.Printf("SYNC_PANEL: ===== КОНЕЦ СИНХРОНИЗАЦИИ С ПАНЕЛЬЮ =====")
 }

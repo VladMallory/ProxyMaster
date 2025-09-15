@@ -62,6 +62,10 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 		menus.EditBalance(bot, chatID, messageID, user)
 	case data == "vpn":
 		log.Printf("HANDLE_CALLBACK: Вызов editVPN для TelegramID=%d", userID)
+
+		// Проверяем и создаем конфиг, если нужно
+		ensureUserHasConfig(bot, user, chatID)
+
 		menus.EditVPN(bot, chatID, messageID, user)
 	case data == "topup":
 		log.Printf("HANDLE_CALLBACK: Вызов editTopup для TelegramID=%d", userID)
