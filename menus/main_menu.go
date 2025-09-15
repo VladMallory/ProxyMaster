@@ -27,17 +27,14 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
 				),
 				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
 					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
-				),
-				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
@@ -51,17 +48,14 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
 				),
 				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
-				),
-				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
 				),
 			)
@@ -204,17 +198,14 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
 				),
 				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
 					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
-				),
-				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
@@ -228,17 +219,14 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL)),
-				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
+					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
 				),
 				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
 					tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
-				),
-				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
 				),
 			)

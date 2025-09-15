@@ -12,7 +12,7 @@ func EditTopup(bot *tgbotapi.BotAPI, chatID int64, messageID int) {
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("💰 1₽", "topup:1"),
+			tgbotapi.NewInlineKeyboardButtonData("💰 100₽", "topup:100"),
 			tgbotapi.NewInlineKeyboardButtonData("💰 300₽", "topup:300"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
