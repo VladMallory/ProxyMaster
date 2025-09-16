@@ -67,7 +67,7 @@ func (rm *ReferralManager) HandleCommand(chatID int64, user *common.User, comman
 }
 
 // HandleCallback обрабатывает callback'и реферальной системы
-func (rm *ReferralManager) HandleCallback(chatID int64, userID int64, data string) {
+func (rm *ReferralManager) HandleCallback(chatID int64, messageID int, userID int64, data string) {
 	log.Printf("REFERRAL_MANAGER: ===== ОБРАБОТКА CALLBACK =====")
 	log.Printf("REFERRAL_MANAGER: ChatID=%d, UserID=%d, Data='%s'", chatID, userID, data)
 
@@ -79,7 +79,7 @@ func (rm *ReferralManager) HandleCallback(chatID int64, userID int64, data strin
 
 	if rm.handler.IsReferralCallback(data) {
 		log.Printf("REFERRAL_MANAGER: ✅ Callback '%s' является реферальным, передаем обработчику", data)
-		rm.handler.HandleRefCallback(chatID, userID, data)
+		rm.handler.HandleRefCallback(chatID, messageID, userID, data)
 	} else {
 		log.Printf("REFERRAL_MANAGER: ❌ Callback '%s' не является реферальным", data)
 	}

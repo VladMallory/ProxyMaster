@@ -51,7 +51,7 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 
 	// Проверяем, является ли это callback реферальной системы
 	if referralLink.GlobalReferralManager != nil && referralLink.GlobalReferralManager.IsReferralCallback(data) {
-		referralLink.GlobalReferralManager.HandleCallback(chatID, userID, data)
+		referralLink.GlobalReferralManager.HandleCallback(chatID, messageID, userID, data)
 		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
 		return
 	}
@@ -132,6 +132,9 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 		HandleFilterCategory(bot, callback, "trial_used")
 	case data == "filter_inactive":
 		HandleFilterCategory(bot, callback, "inactive")
+	case data == "main_menu":
+		log.Printf("HANDLE_CALLBACK: Вызов editMainMenu для TelegramID=%d", userID)
+		menus.EditMainMenu(bot, chatID, messageID, user)
 	default:
 		log.Printf("HANDLE_CALLBACK: Неизвестный callback для TelegramID=%d, data='%s'", userID, data)
 	}
@@ -333,7 +336,7 @@ func handleRefCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *
 
 	// Используем глобальный менеджер рефералов
 	if referralLink.GlobalReferralManager != nil {
-		referralLink.GlobalReferralManager.SendReferralMenu(chatID, user)
+		referralLink.GlobalReferralManager.EditReferralMenu(chatID, messageID, user)
 	} else {
 		msg := tgbotapi.NewMessage(chatID, "❌ Реферальная система не инициализирована")
 		bot.Send(msg)
