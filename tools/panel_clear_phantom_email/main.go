@@ -17,10 +17,10 @@ import (
 
 // Константы для подключения к панели 3x-ui (из config.go)
 const (
-	PANEL_URL  = ""
-	PANEL_USER = ""
-	PANEL_PASS = ""
-	INBOUND_ID = 3
+	PANEL_URL  = "https://status.moment-was-da.ru:57578/UV7FVRXd61xso1XVRT/"
+	PANEL_USER = "C7QKEujq7qzhtFxz"
+	PANEL_PASS = "cXFMhAHUk7FMEwoD"
+	INBOUND_ID = 8
 
 	// PostgreSQL настройки
 	PG_HOST     = "localhost"
@@ -87,7 +87,7 @@ type User struct {
 }
 
 func main() {
-	log.Println("🧹 Запуск очистки призрачных записей...")
+	log.Println("🧹 Запуск очистки призрачных пользователей из базы данных...")
 
 	// Подключаемся к PostgreSQL
 	db, err := connectToPostgreSQL()
@@ -124,23 +124,23 @@ func main() {
 
 	log.Printf("📊 Найдено клиентов в панели: %d", len(settings.Clients))
 
-	// Находим призрачные записи
-	ghostClients := findGhostClients(users, settings.Clients)
-	log.Printf("👻 Найдено призрачных записей: %d", len(ghostClients))
+	// Находим призрачные записи (пользователи из БД, которых нет в панели)
+	ghostUsers := findGhostClients(users, settings.Clients)
+	log.Printf("👻 Найдено призрачных пользователей: %d", len(ghostUsers))
 
-	if len(ghostClients) == 0 {
-		log.Println("✅ Призрачных записей не найдено!")
+	if len(ghostUsers) == 0 {
+		log.Println("✅ Призрачных пользователей не найдено!")
 		return
 	}
 
 	// Показываем призрачные записи
-	for _, client := range ghostClients {
-		log.Printf("👻 Призрачная запись: Email=%s, SubID=%s, Enable=%v",
-			client.Email, client.SubID, client.Enable)
+	for _, user := range ghostUsers {
+		log.Printf("👻 Призрачный пользователь: ID=%d, Username=%s, ClientID=%s, SubID=%s",
+			user.TelegramID, user.Username, user.ClientID, user.SubID)
 	}
 
 	// Спрашиваем подтверждение
-	fmt.Print("\n❓ Удалить призрачные записи? (y/N): ")
+	fmt.Print("\n❓ Удалить призрачных пользователей из базы данных? (y/N): ")
 	var input string
 	fmt.Scanln(&input)
 
@@ -149,12 +149,12 @@ func main() {
 		return
 	}
 
-	// Удаляем призрачные записи
-	if err := removeGhostClients(sessionCookie, settings.Clients, ghostClients); err != nil {
-		log.Fatalf("❌ Ошибка удаления призрачных записей: %v", err)
+	// Удаляем призрачных пользователей из базы данных
+	if err := removeGhostUsers(db, ghostUsers); err != nil {
+		log.Fatalf("❌ Ошибка удаления призрачных пользователей: %v", err)
 	}
 
-	log.Println("✅ Призрачные записи успешно удалены!")
+	log.Printf("✅ Призрачные пользователи успешно удалены из базы данных! (%d записей)", len(ghostUsers))
 }
 
 // connectToPostgreSQL подключается к PostgreSQL
@@ -338,100 +338,68 @@ func getInboundFromPanel(sessionCookie string) (*Inbound, error) {
 	return &inboundResp.Obj, nil
 }
 
-// findGhostClients находит призрачные записи
-func findGhostClients(users []User, clients []Client) []Client {
-	var ghostClients []Client
+// findGhostClients находит призрачные записи (пользователи из БД, которых нет в панели)
+func findGhostClients(users []User, clients []Client) []User {
+	var ghostUsers []User
 
-	// Создаем карту пользователей для быстрого поиска
-	userMap := make(map[string]User)
-	for _, user := range users {
-		userMap[user.ClientID] = user
-		userMap[user.SubID] = user
-	}
-
-	// Проверяем каждого клиента в панели
+	// Создаем карту клиентов из панели для быстрого поиска
+	clientMap := make(map[string]bool)
+	subIDMap := make(map[string]bool)
 	for _, client := range clients {
-		// Проверяем, есть ли этот клиент в базе данных
+		clientMap[client.ID] = true
+		subIDMap[client.SubID] = true
+	}
+
+	// Проверяем каждого пользователя из базы данных
+	for _, user := range users {
+		// Проверяем, есть ли этот пользователь в панели
 		found := false
-		for _, user := range users {
-			if user.ClientID == client.ID || user.SubID == client.SubID {
-				found = true
-				break
-			}
+		if clientMap[user.ClientID] || subIDMap[user.SubID] {
+			found = true
 		}
 
-		// Если клиент не найден в базе данных, это призрачная запись
+		// Если пользователь не найден в панели, это призрачная запись
 		if !found {
-			ghostClients = append(ghostClients, client)
+			ghostUsers = append(ghostUsers, user)
 		}
 	}
 
-	return ghostClients
+	return ghostUsers
 }
 
-// removeGhostClients удаляет призрачные записи из панели
-func removeGhostClients(sessionCookie string, allClients []Client, ghostClients []Client) error {
-	// Создаем карту призрачных клиентов для быстрого поиска
-	ghostMap := make(map[string]bool)
-	for _, client := range ghostClients {
-		ghostMap[client.ID] = true
+// removeGhostUsers удаляет призрачных пользователей из базы данных
+func removeGhostUsers(db *sql.DB, ghostUsers []User) error {
+	if len(ghostUsers) == 0 {
+		return nil
 	}
 
-	// Фильтруем клиентов, оставляя только не-призрачные
-	var filteredClients []Client
-	for _, client := range allClients {
-		if !ghostMap[client.ID] {
-			filteredClients = append(filteredClients, client)
+	// Начинаем транзакцию
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("ошибка начала транзакции: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Удаляем каждого призрачного пользователя
+	for _, user := range ghostUsers {
+		// Сначала обновляем статус активной конфигурации
+		_, err = tx.Exec(`
+			UPDATE users 
+			SET has_active_config = false, 
+			    client_id = NULL, 
+			    sub_id = NULL 
+			WHERE telegram_id = $1`, user.TelegramID)
+		if err != nil {
+			return fmt.Errorf("ошибка обновления пользователя %d: %v", user.TelegramID, err)
 		}
+
+		log.Printf("🗑️  Удален призрачный пользователь: ID=%d, Username=%s, ClientID=%s, SubID=%s",
+			user.TelegramID, user.Username, user.ClientID, user.SubID)
 	}
 
-	// Создаем новые настройки
-	newSettings := Settings{
-		Clients: filteredClients,
-	}
-
-	settingsJSON, err := json.Marshal(newSettings)
-	if err != nil {
-		return err
-	}
-
-	// Обновляем inbound
-	updateData := map[string]interface{}{
-		"id":       INBOUND_ID,
-		"settings": string(settingsJSON),
-	}
-
-	jsonData, err := json.Marshal(updateData)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%spanel/api/inbounds/update/%d", PANEL_URL, INBOUND_ID), bytes.NewBuffer(jsonData))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Cookie", sessionCookie)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var updateResp UpdateResponse
-	if err := json.Unmarshal(body, &updateResp); err != nil {
-		return err
-	}
-
-	if !updateResp.Success {
-		return fmt.Errorf("ошибка обновления inbound: %s", updateResp.Msg)
+	// Подтверждаем транзакцию
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("ошибка подтверждения транзакции: %v", err)
 	}
 
 	return nil
