@@ -51,11 +51,11 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 		expiryDate := common.FormatRussianDateTimeFromUnix(user.ExpiryTime)
 
 		// Получаем информацию о лимитах трафика
-		trafficInfo := common.GetTrafficConfigDescription()
+		// не используется, что не вгонять клиентов в бесконечные мысли, а кончился ли трафик
+		// trafficInfo := common.GetTrafficConfigDescription()
 
 		text := fmt.Sprintf("🔐 Ваш конфиг активен!\n\n"+
 			"📅 Активен до: %s\n"+
-			"📊 Лимиты трафика: %s\n"+
 			"🔗 Ссылка на подписку:\n`%s`\n\n"+
 			"💡 Нажмите 'Подключить (%s)' для автоматического импорта\n\n"+
 			"📱 Приложения для самостоятельного импорта:\n"+
@@ -66,7 +66,7 @@ func EditVPN(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.Use
 			"• Роутеры: xkeen (Keenetic), OpenWrt\n"+
 			"• ТВ: v2raytun, Happ\n\n"+
 			"Если у вас возникли вопросы, вы можете обратиться за помощью к нашей поддержке.",
-			expiryDate, trafficInfo, subscriptionURL, common.GetAppName())
+			expiryDate, subscriptionURL, common.GetAppName())
 
 		log.Printf("EDIT_VPN: Текст для активного конфига для TelegramID=%d: %s", user.TelegramID, text)
 		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
