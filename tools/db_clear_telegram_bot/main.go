@@ -112,41 +112,52 @@ func DisconnectPostgreSQL() {
 
 // ClearAllData удаляет все данные из всех таблиц
 func ClearAllData() error {
+	log.Printf("CLEAR_ALL_DATA: Начало полной очистки базы данных")
+
 	// Список всех таблиц в правильном порядке (сначала зависимые, потом основные)
+	// Порядок важен для соблюдения внешних ключей
 	tables := []string{
 		"referral_bonuses",     // Зависит от users
 		"referral_transitions", // Зависит от users
-		"promo_usage",          // Зависит от users
-		"promo_codes",          // Зависит от users
+		"promo_usage",          // Зависит от promo_codes и users
+		"promo_codes",          // Зависит от users (created_by)
 		"ip_violations",        // Зависит от users
 		"ip_connections",       // Зависит от users
 		"users",                // Основная таблица
+		"traffic_configs",      // Настройки трафика (очищаем, но потом восстанавливаем)
 	}
 
 	totalDeleted := 0
+	clearedTables := 0
+
 	for _, tableName := range tables {
 		query := fmt.Sprintf("DELETE FROM %s", tableName)
 		result, err := db.Exec(query)
 		if err != nil {
-			log.Printf("Ошибка очистки таблицы %s: %v", tableName, err)
+			log.Printf("CLEAR_ALL_DATA: Ошибка очистки таблицы %s: %v", tableName, err)
 			continue
 		}
 		affected, _ := result.RowsAffected()
-		log.Printf("Очищена таблица %s: удалено %d записей", tableName, affected)
+		log.Printf("CLEAR_ALL_DATA: Очищена таблица %s: удалено %d записей", tableName, affected)
 		totalDeleted += int(affected)
+		clearedTables++
 	}
 
 	// Восстанавливаем конфигурацию по умолчанию
+	log.Printf("CLEAR_ALL_DATA: Восстанавливаем конфигурацию по умолчанию")
 	query := `
 		INSERT INTO traffic_configs (id, enabled, daily_limit_gb, weekly_limit_gb, monthly_limit_gb, limit_gb, reset_days)
 		VALUES ('default', true, 0, 0, 0, 0, 30)
 		ON CONFLICT (id) DO NOTHING`
 	_, err := db.Exec(query)
 	if err != nil {
-		log.Printf("Ошибка восстановления конфигурации по умолчанию: %v", err)
+		log.Printf("CLEAR_ALL_DATA: Ошибка восстановления конфигурации по умолчанию: %v", err)
+	} else {
+		log.Printf("CLEAR_ALL_DATA: Конфигурация по умолчанию восстановлена")
 	}
 
-	log.Printf("Всего удалено записей: %d", totalDeleted)
+	log.Printf("CLEAR_ALL_DATA: ✅ Полная очистка завершена")
+	log.Printf("CLEAR_ALL_DATA: Очищено таблиц: %d, удалено записей: %d", clearedTables, totalDeleted)
 	return nil
 }
 
@@ -154,14 +165,14 @@ func ClearAllData() error {
 func ClearAllDataWithPanel() error {
 	log.Printf("CLEAR_ALL_DATA_WITH_PANEL: Начало полной очистки базы данных и панели 3x-ui")
 
-	// Сначала очищаем базу данных
+	// Сначала очищаем базу данных (теперь очищает ВСЕ таблицы)
 	err := ClearAllData()
 	if err != nil {
 		log.Printf("CLEAR_ALL_DATA_WITH_PANEL: Ошибка очистки базы данных: %v", err)
 		return fmt.Errorf("ошибка очистки базы данных: %v", err)
 	}
 
-	log.Printf("CLEAR_ALL_DATA_WITH_PANEL: База данных очищена, теперь очищаем панель 3x-ui")
+	log.Printf("CLEAR_ALL_DATA_WITH_PANEL: База данных полностью очищена, теперь очищаем панель 3x-ui")
 
 	// Теперь очищаем панель 3x-ui
 	err = clearPanelClients()
@@ -173,7 +184,7 @@ func ClearAllDataWithPanel() error {
 		log.Printf("CLEAR_ALL_DATA_WITH_PANEL: Панель 3x-ui успешно очищена")
 	}
 
-	log.Printf("CLEAR_ALL_DATA_WITH_PANEL: ✅ Полная очистка завершена")
+	log.Printf("CLEAR_ALL_DATA_WITH_PANEL: ✅ Полная очистка базы данных и панели завершена")
 	return nil
 }
 
@@ -441,8 +452,8 @@ func main() {
 		fmt.Println("3. Сбросить флаг пробного периода у конкретного пользователя")
 		fmt.Println("4. Удалить конкретного пользователя")
 		fmt.Println("5. Удалить всех пользователей")
-		fmt.Println("6. Очистить всю базу данных")
-		fmt.Println("7. Очистить базу данных И панель 3x-ui")
+		fmt.Println("6. Очистить всю базу данных (ВСЕ таблицы)")
+		fmt.Println("7. Очистить базу данных И панель 3x-ui (ВСЕ таблицы)")
 		fmt.Println("0. Выход")
 
 		choice := readUserInput("Ваш выбор: ")
@@ -464,24 +475,24 @@ func main() {
 			fmt.Println("Функция удаления всех пользователей не реализована в упрощенной версии")
 
 		case "6":
-			confirm := readUserInput("Вы уверены, что хотите очистить ВСЮ базу данных? (yes/no): ")
+			confirm := readUserInput("Вы уверены, что хотите очистить ВСЮ базу данных (ВСЕ таблицы: users, promo_codes, promo_usage, referral_bonuses, referral_transitions, ip_violations, ip_connections, traffic_configs)? (yes/no): ")
 			if strings.ToLower(confirm) == "yes" {
 				if err := ClearAllData(); err != nil {
 					fmt.Printf("Ошибка: %v\n", err)
 				} else {
-					fmt.Println("✅ База данных очищена")
+					fmt.Println("✅ Вся база данных очищена (все таблицы)")
 				}
 			} else {
 				fmt.Println("Операция отменена")
 			}
 
 		case "7":
-			confirm := readUserInput("Вы уверены, что хотите очистить ВСЮ базу данных И панель 3x-ui? (yes/no): ")
+			confirm := readUserInput("Вы уверены, что хотите очистить ВСЮ базу данных (ВСЕ таблицы) И панель 3x-ui? (yes/no): ")
 			if strings.ToLower(confirm) == "yes" {
 				if err := ClearAllDataWithPanel(); err != nil {
 					fmt.Printf("Ошибка: %v\n", err)
 				} else {
-					fmt.Println("✅ База данных и панель 3x-ui очищены")
+					fmt.Println("✅ Вся база данных и панель 3x-ui очищены")
 				}
 			} else {
 				fmt.Println("Операция отменена")
