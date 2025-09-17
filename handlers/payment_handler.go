@@ -6,6 +6,7 @@ import (
 
 	"bot/common"
 	"bot/payments"
+	"bot/powerOff"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -129,6 +130,13 @@ func ProcessPaymentCallback(bot *tgbotapi.BotAPI, chatID int64, messageID int, u
 // ProcessTopup обрабатывает пополнение баланса через новую платежную систему
 func ProcessTopup(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *common.User, amount int) {
 	log.Printf("PROCESS_TOPUP: Начало обработки пополнения для TelegramID=%d, amount=%d", user.TelegramID, amount)
+
+	// Проверяем, заблокированы ли платежи (система выключения)
+	if allowed, _ := powerOff.CheckPaymentAllowedGlobal(); !allowed {
+		log.Printf("PROCESS_TOPUP: Платеж заблокирован для пользователя %d", user.TelegramID)
+		powerOff.SendPaymentBlockedMessageGlobal(bot, chatID, messageID)
+		return
+	}
 
 	// Удаляем предыдущее сообщение
 	deleteMsg := tgbotapi.NewDeleteMessage(chatID, messageID)

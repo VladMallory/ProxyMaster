@@ -10,6 +10,7 @@ import (
 	"bot/common"
 	"bot/menus"
 	"bot/payments/promo"
+	"bot/powerOff"
 	"bot/referralLink"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -179,6 +180,8 @@ func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common
 		handleDebugCommand(bot, message, user)
 	case "backup":
 		handleBackupCommand(bot, message)
+	case "poweroff":
+		powerOff.HandlePoweroffCommand(bot, message)
 	case "traffic":
 		handleTrafficCommand(bot, message)
 	case "trial":

@@ -9,6 +9,7 @@ import (
 	"bot/menus"
 	"bot/payments"
 	"bot/payments/promo"
+	"bot/powerOff"
 	"bot/referralLink"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -53,6 +54,12 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 	if referralLink.GlobalReferralManager != nil && referralLink.GlobalReferralManager.IsReferralCallback(data) {
 		referralLink.GlobalReferralManager.HandleCallback(chatID, messageID, userID, data)
 		bot.Request(tgbotapi.NewCallback(callback.ID, ""))
+		return
+	}
+
+	// Проверяем, является ли это callback системы выключения
+	if powerOff.IsPoweroffCallback(data) {
+		powerOff.HandlePoweroffCallback(bot, callback)
 		return
 	}
 

@@ -10,6 +10,7 @@ import (
 	"bot/common"
 	"bot/payments"
 	"bot/payments/promo"
+	"bot/powerOff"
 	"bot/referralLink"
 	"bot/services"
 	"bot/telegram_bot"
@@ -147,6 +148,15 @@ func StartBot(token string) {
 				// Здесь будет вызов проверки необработанных платежей
 			}()
 		}
+	}
+
+	// Инициализируем систему безопасного выключения
+	log.Printf("APP: Инициализация системы безопасного выключения")
+	if err := powerOff.InitializePowerOffSystem(); err != nil {
+		log.Printf("APP: Ошибка инициализации системы выключения: %v", err)
+		log.Printf("APP: Система выключения будет недоступна")
+	} else {
+		log.Printf("APP: Система безопасного выключения успешно инициализирована")
 	}
 
 	// Инициализируем систему промокодов (независимо от платежной системы)

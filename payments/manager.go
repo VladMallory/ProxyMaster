@@ -273,3 +273,8 @@ func (pm *PaymentManager) CheckPaymentStatus(method paymentCommon.PaymentMethod,
 
 	return paymentInfo, nil
 }
+
+// GetOnDemandService возвращает сервис обработки платежей по требованию
+func (pm *PaymentManager) GetOnDemandService() *OnDemandPaymentService {
+	return pm.onDemandService
+}

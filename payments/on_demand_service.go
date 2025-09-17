@@ -143,6 +143,11 @@ func (odps *OnDemandPaymentService) checkAndProcessPayment(paymentID string, use
 	return false
 }
 
+// GetPendingPayments возвращает список необработанных платежей
+func (odps *OnDemandPaymentService) GetPendingPayments() ([]PaymentLogEntry, error) {
+	return odps.paymentLogger.GetPendingPayments()
+}
+
 // CheckPendingPayments проверяет все необработанные платежи (вызывается периодически)
 func (odps *OnDemandPaymentService) CheckPendingPayments() {
 	pendingPayments, err := odps.paymentLogger.GetPendingPayments()
