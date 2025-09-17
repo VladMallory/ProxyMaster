@@ -1,0 +1,8 @@
+IP_BAN: 2025/09/17 17:18:04 ip_ban_logger.go:36: [INFO] Запуск IP Ban сервиса...
+IP_BAN: 2025/09/17 17:18:04 ip_ban_logger.go:36: [INFO] Накопитель логов запущен
+IP_BAN: 2025/09/17 17:18:09 ip_ban_logger.go:36: [INFO] Бот получен из глобальной переменной
+IP_BAN: 2025/09/17 17:18:09 ip_ban_logger.go:36: [INFO] IP Ban сервис успешно запущен
+IP_BAN: 2025/09/17 17:20:20 ip_ban_logger.go:36: [INFO] Запуск IP Ban сервиса...
+IP_BAN: 2025/09/17 17:20:20 ip_ban_logger.go:36: [INFO] Накопитель логов запущен
+IP_BAN: 2025/09/17 17:20:25 ip_ban_logger.go:36: [INFO] Бот получен из глобальной переменной
+IP_BAN: 2025/09/17 17:20:25 ip_ban_logger.go:36: [INFO] IP Ban сервис успешно запущен
