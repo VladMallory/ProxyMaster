@@ -1,0 +1,278 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+	mongoClient *mongo.Client
+	database    *mongo.Database
+	users       *mongo.Collection
+)
+
+// InitMongoDB инициализирует соединение с MongoDB
+func InitMongoDB() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MONGO_URI))
+	if err != nil {
+		return fmt.Errorf("ошибка подключения к MongoDB: %v", err)
+	}
+
+	if err = client.Ping(ctx, nil); err != nil {
+		return fmt.Errorf("ошибка проверки соединения с MongoDB: %v", err)
+	}
+
+	mongoClient = client
+	database = client.Database(MONGO_DB_NAME)
+	users = database.Collection(USERS_COLLECTION)
+
+	// Создаем индекс по telegram_id
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{Key: "telegram_id", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+
+	if _, err = users.Indexes().CreateOne(ctx, indexModel); err != nil {
+		log.Printf("Предупреждение: не удалось создать индекс: %v", err)
+	}
+
+	log.Println("Успешно подключено к MongoDB")
+	return nil
+}
+
+// GetUserByTelegramID получает пользователя по Telegram ID
+func GetUserByTelegramID(telegramID int64) (*User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var user User
+	err := users.FindOne(ctx, bson.M{"telegram_id": telegramID}).Decode(&user)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	return &user, err
+}
+
+// CreateUser создает нового пользователя
+func CreateUser(telegramID int64, username, firstName, lastName string) (*User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user := &User{
+		TelegramID:      telegramID,
+		Username:        username,
+		FirstName:       firstName,
+		LastName:        lastName,
+		Balance:         0,
+		TotalPaid:       0,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		HasActiveConfig: false,
+		ConfigsCount:    0,
+	}
+
+	result, err := users.InsertOne(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	user.ID = result.InsertedID.(primitive.ObjectID)
+	log.Printf("Создан новый пользователь: %s (ID: %d)", firstName, telegramID)
+	return user, nil
+}
+
+// GetOrCreateUser получает пользователя или создаёт нового
+func GetOrCreateUser(telegramID int64, username, firstName, lastName string) (*User, error) {
+	log.Printf("GET_OR_CREATE_USER: Поиск пользователя TelegramID=%d", telegramID)
+	user, err := GetUserByTelegramID(telegramID)
+	if err != nil {
+		log.Printf("GET_OR_CREATE_USER: Ошибка получения пользователя TelegramID=%d: %v", telegramID, err)
+		return nil, err
+	}
+	if user != nil {
+		log.Printf("GET_OR_CREATE_USER: Пользователь найден: TelegramID=%d, Username=%s", telegramID, user.Username)
+		return user, nil
+	}
+
+	log.Printf("GET_OR_CREATE_USER: Пользователь не найден, создание нового TelegramID=%d", telegramID)
+	return CreateUser(telegramID, username, firstName, lastName)
+}
+
+// UpdateUser обновляет данные пользователя
+func UpdateUser(user *User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	user.UpdatedAt = time.Now()
+	filter := bson.M{"telegram_id": user.TelegramID}
+	update := bson.M{"$set": user}
+
+	_, err := users.UpdateOne(ctx, filter, update)
+	return err
+}
+
+// AddBalance добавляет средства на баланс
+func AddBalance(telegramID int64, amount float64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"telegram_id": telegramID}
+	update := bson.M{
+		"$inc": bson.M{
+			"balance":    amount,
+			"total_paid": amount,
+		},
+		"$set": bson.M{
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := users.UpdateOne(ctx, filter, update)
+	return err
+}
+
+// DisconnectMongoDB закрывает соединение с MongoDB
+func DisconnectMongoDB() {
+	if mongoClient != nil {
+		if err := mongoClient.Disconnect(context.Background()); err != nil {
+			log.Printf("Ошибка отключения от MongoDB: %v", err)
+		}
+	}
+}
+
+// ResetAllTrialFlags сбрасывает флаг HasUsedTrial у всех пользователей
+func ResetAllTrialFlags() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{} // Все пользователи
+	update := bson.M{
+		"$set": bson.M{
+			"has_used_trial": false,
+			"updated_at":     time.Now(),
+		},
+	}
+
+	result, err := users.UpdateMany(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("ошибка сброса флагов пробных периодов: %v", err)
+	}
+
+	log.Printf("Сброшены флаги пробных периодов для %d пользователей", result.ModifiedCount)
+	return nil
+}
+
+// ResetUserTrialFlag сбрасывает флаг HasUsedTrial у конкретного пользователя
+func ResetUserTrialFlag(telegramID int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"telegram_id": telegramID}
+	update := bson.M{
+		"$set": bson.M{
+			"has_used_trial": false,
+			"updated_at":     time.Now(),
+		},
+	}
+
+	result, err := users.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("ошибка сброса флага пробного периода для пользователя %d: %v", telegramID, err)
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("пользователь с Telegram ID %d не найден", telegramID)
+	}
+
+	log.Printf("Сброшен флаг пробного периода для пользователя %d", telegramID)
+	return nil
+}
+
+// DeleteUserByTelegramID удаляет пользователя по Telegram ID
+func DeleteUserByTelegramID(telegramID int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"telegram_id": telegramID}
+	result, err := users.DeleteOne(ctx, filter)
+	if err != nil {
+		return fmt.Errorf("ошибка удаления пользователя %d: %v", telegramID, err)
+	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("пользователь с Telegram ID %d не найден", telegramID)
+	}
+
+	log.Printf("Удален пользователь с Telegram ID %d", telegramID)
+	return nil
+}
+
+// GetAllUsers возвращает всех пользователей (для админа)
+func GetAllUsers() ([]User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var usersList []User
+	cursor, err := users.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения списка пользователей: %v", err)
+	}
+	defer cursor.Close(ctx)
+
+	if err = cursor.All(ctx, &usersList); err != nil {
+		return nil, fmt.Errorf("ошибка чтения списка пользователей: %v", err)
+	}
+
+	return usersList, nil
+}
+
+// ClearAllUsers удаляет всех пользователей из базы данных
+func ClearAllUsers() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := users.DeleteMany(ctx, bson.M{})
+	if err != nil {
+		return fmt.Errorf("ошибка очистки базы данных: %v", err)
+	}
+
+	log.Printf("Удалено пользователей: %d", result.DeletedCount)
+	return nil
+}
+
+// ClearDatabase полностью очищает всю базу данных
+func ClearDatabase() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Получаем список всех коллекций
+	collections, err := database.ListCollectionNames(ctx, bson.M{})
+	if err != nil {
+		return fmt.Errorf("ошибка получения списка коллекций: %v", err)
+	}
+
+	totalDeleted := 0
+	for _, collectionName := range collections {
+		collection := database.Collection(collectionName)
+		result, err := collection.DeleteMany(ctx, bson.M{})
+		if err != nil {
+			log.Printf("Ошибка очистки коллекции %s: %v", collectionName, err)
+			continue
+		}
+		log.Printf("Очищена коллекция %s: удалено %d документов", collectionName, result.DeletedCount)
+		totalDeleted += int(result.DeletedCount)
+	}
+
+	log.Printf("База данных полностью очищена. Всего удалено документов: %d", totalDeleted)
+	return nil
+}
