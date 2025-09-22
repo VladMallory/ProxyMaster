@@ -153,7 +153,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
 		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
-		text += "🚀 Для того чтобы конфиг начал работать, выполните 2 простых шага:\n\n"
+		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
 		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
 		text += fmt.Sprintf("2️⃣ После установки нажмите 'Подключить (%s)' для настройки", common.GetAppName())
 	} else {
@@ -329,7 +329,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
 		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
-		text += "🚀 Для того чтобы конфиг начал работать, выполните 2 простых шага:\n\n"
+		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
 		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
 		text += fmt.Sprintf("2️⃣ После установки нажмите 'Подключить (%s)' для настройки", common.GetAppName())
 	} else {
