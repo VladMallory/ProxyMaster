@@ -785,30 +785,6 @@ func restoreFromBackup(backupPath string) error {
 	return nil
 }
 
-// copyLatestBackup копирует бэкап в папку latest
-func copyLatestBackup(sourceDir string) error {
-	latestDir := "./backups/latest"
-
-	// Удаляем существующую папку latest, если она есть
-	if err := os.RemoveAll(latestDir); err != nil {
-		return fmt.Errorf("ошибка удаления старого latest: %v", err)
-	}
-
-	// Создаем папку latest
-	if err := os.MkdirAll(latestDir, 0o755); err != nil {
-		return fmt.Errorf("ошибка создания папки latest: %v", err)
-	}
-
-	// Копируем содержимое бэкапа
-	cmd := exec.Command("cp", "-r", filepath.Join(sourceDir, MONGO_DB_NAME), latestDir)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("ошибка копирования бэкапа: %v", err)
-	}
-
-	log.Printf("COPY_LATEST_BACKUP: Последний бэкап скопирован в %s", latestDir)
-	return nil
-}
-
 // GetUsersStatistics получает статистику пользователей
 func GetUsersStatistics() (*UsersStatistics, error) {
 	log.Printf("GET_USERS_STATISTICS: Получение статистики пользователей")

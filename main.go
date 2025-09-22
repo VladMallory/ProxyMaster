@@ -70,6 +70,9 @@ func main() {
 		}
 	}()
 
+	// Останавливаем проверяльщик реферальных кодов при завершении программы
+	defer common.StopReferralChecker()
+
 	// Запускаем IP Ban сервис если включен (в отдельной горутине)
 	if common.IP_BAN_ENABLED {
 		go startIPBanService()
@@ -88,6 +91,11 @@ func main() {
 	// Запускаем проверку состояния reset если включена (в отдельной горутине)
 	if common.RESET_STATUS_CHECK_ENABLED {
 		go startResetStatusCheckerService()
+	}
+
+	// Запускаем автоматическую проверку реферальных кодов если включена (в отдельной горутине)
+	if common.REFERRAL_CHECK_ENABLED {
+		go startReferralCheckerService()
 	}
 
 	// Запускаем Telegram бота (блокирующая функция)
@@ -259,4 +267,17 @@ func SwitchToAutoBillingMode() {
 	// Запускаем автосписание заново
 	go startAutoBillingService()
 	log.Printf("MAIN: Переключение на режим автосписания завершено")
+}
+
+// startReferralCheckerService запускает сервис проверки реферальных кодов
+func startReferralCheckerService() {
+	log.Printf("MAIN: Запуск сервиса проверки реферальных кодов...")
+
+	// Инициализируем проверяльщик реферальных кодов
+	if err := common.InitReferralChecker(common.GetDB()); err != nil {
+		log.Printf("MAIN: ❌ Ошибка инициализации проверяльщика реферальных кодов: %v", err)
+		return
+	}
+
+	log.Printf("MAIN: ✅ Сервис проверки реферальных кодов успешно запущен")
 }

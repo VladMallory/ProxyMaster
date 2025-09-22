@@ -182,18 +182,34 @@ func (tm *TrialPeriodManager) processReferralCode(bot *tgbotapi.BotAPI, user *Us
 	}
 	log.Printf("TRIAL: ✅ GlobalReferralManager инициализирован")
 
-	// Сначала обрабатываем переход (это определит referrerID внутри)
+	// ИСПРАВЛЕНИЕ: Сначала находим пригласившего по реферальному коду
+	log.Printf("TRIAL: 🔍 Поиск пригласившего по коду '%s'...", referralCode)
+	referrer, err := GlobalReferralManager.GetReferrerByCode(referralCode)
+	if err != nil {
+		log.Printf("TRIAL: ❌ Ошибка поиска пригласившего по коду '%s': %v", referralCode, err)
+		return
+	}
+	log.Printf("TRIAL: ✅ Пригласивший найден: ID=%d, Name=%s", referrer.TelegramID, referrer.FirstName)
+
+	// Проверяем, что пользователь не приглашает сам себя
+	if referrer.TelegramID == user.TelegramID {
+		log.Printf("TRIAL: ❌ Пользователь %d пытается пригласить сам себя", user.TelegramID)
+		return
+	}
+	log.Printf("TRIAL: ✅ Проверка самоприглашения пройдена")
+
+	// Обрабатываем реферальный переход с правильным referrerID
 	log.Printf("TRIAL: 🔄 Обработка реферального перехода...")
-	err := GlobalReferralManager.ProcessReferralTransition(0, user.TelegramID, referralCode)
+	err = GlobalReferralManager.ProcessReferralTransition(referrer.TelegramID, user.TelegramID, referralCode)
 	if err != nil {
 		log.Printf("TRIAL: ❌ Ошибка обработки реферального перехода: %v", err)
 		return
 	}
 	log.Printf("TRIAL: ✅ Реферальный переход успешно обработан")
 
-	// Затем начисляем бонусы
+	// Начисляем бонусы с правильным referrerID
 	log.Printf("TRIAL: 💰 Начисление реферальных бонусов...")
-	err = GlobalReferralManager.AwardReferralBonuses(0, user.TelegramID, referralCode)
+	err = GlobalReferralManager.AwardReferralBonuses(referrer.TelegramID, user.TelegramID, referralCode)
 	if err != nil {
 		log.Printf("TRIAL: ❌ Ошибка начисления реферальных бонусов: %v", err)
 	} else {

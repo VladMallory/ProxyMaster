@@ -12,21 +12,9 @@ echo "📊 Бэкапы в backupdb:"
 ls -la backups/backupdb/ 2>/dev/null || echo "❌ Папка backupdb не найдена"
 
 echo ""
-echo "⚡ Последний бэкап (latest):"
-ls -la backups/latest/ 2>/dev/null || echo "❌ Папка latest не найдена"
-
-echo ""
 echo "📈 Статистика бэкапов:"
 backup_count=$(ls -1 backups/backupdb/ 2>/dev/null | wc -l)
 echo "   Количество бэкапов: $backup_count (хранятся бессрочно)"
-
-if [ -d "backups/latest/vpn_bot" ]; then
-    echo "   ✅ Latest бэкап существует"
-    latest_size=$(du -sh backups/latest/ 2>/dev/null | cut -f1)
-    echo "   📦 Размер latest бэкапа: $latest_size"
-else
-    echo "   ❌ Latest бэкап отсутствует"
-fi
 
 echo ""
 echo "🕐 Последние изменения:"

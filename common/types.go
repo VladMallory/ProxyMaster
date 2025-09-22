@@ -6,6 +6,12 @@ import "time"
 type ReferralManagerInterface interface {
 	ProcessReferralTransition(referrerID, referredID int64, referralCode string) error
 	AwardReferralBonuses(referrerID, referredID int64, referralCode string) error
+	GetReferrerByCode(referralCode string) (*User, error)
+}
+
+// ReferralCodeGeneratorInterface интерфейс для генерации реферальных кодов
+type ReferralCodeGeneratorInterface interface {
+	GenerateReferralCode(telegramID int64) (string, error)
 }
 
 // User представляет пользователя бота

@@ -708,15 +708,8 @@ func RestorePostgreSQLPG() error {
 	log.Printf("RESTORE_POSTGRESQL: НАЧАЛО ВОССТАНОВЛЕНИЯ БД ИЗ БЭКАПА")
 	log.Printf("RESTORE_POSTGRESQL: ========================================")
 
-	// Сначала пробуем восстановить из latest
-	latestBackupFile := "./backups/latest/vpn_bot_backup.sql"
-	if _, err := os.Stat(latestBackupFile); err == nil {
-		log.Printf("RESTORE_POSTGRESQL: ✅ Найден latest бэкап, восстанавливаем из %s", latestBackupFile)
-		return restoreFromSQLFile(latestBackupFile)
-	}
-
-	// Если latest нет, ищем последний бэкап в backupdb
-	log.Printf("RESTORE_POSTGRESQL: ❌ Latest бэкап не найден, ищем в backupdb...")
+	// Ищем последний бэкап в backupdb
+	log.Printf("RESTORE_POSTGRESQL: Поиск последнего бэкапа в backupdb...")
 	backupDir := "./backups/backupdb"
 	entries, err := os.ReadDir(backupDir)
 	if err != nil {

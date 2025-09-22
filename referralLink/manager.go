@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	"bot/common"
 
@@ -213,6 +214,21 @@ func (rm *ReferralManager) GetReferralStats(telegramID int64) (*ReferralStats, e
 		return &ReferralStats{}, nil
 	}
 	return rm.service.GetReferralStats(telegramID)
+}
+
+// GetReferrerByCode получает информацию о пригласившем по реферальному коду
+func (rm *ReferralManager) GetReferrerByCode(referralCode string) (*common.User, error) {
+	if !common.REFERRAL_SYSTEM_ENABLED {
+		return nil, fmt.Errorf("реферальная система отключена")
+	}
+
+	if rm.service == nil {
+		return nil, fmt.Errorf("сервис рефералов не инициализирован")
+	}
+
+	// Убираем префикс "ref_" если он есть
+	cleanCode := strings.TrimPrefix(referralCode, "ref_")
+	return rm.service.GetReferrerByCode(cleanCode)
 }
 
 // EditReferralMenu редактирует реферальное меню

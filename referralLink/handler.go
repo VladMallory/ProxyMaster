@@ -1,12 +1,11 @@
 package referralLink
 
 import (
+	"bot/common"
 	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
-
-	"bot/common"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
