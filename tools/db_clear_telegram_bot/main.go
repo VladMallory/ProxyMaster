@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"bot/common"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -192,28 +194,21 @@ func ClearAllDataWithPanel() error {
 func clearPanelClients() error {
 	log.Printf("CLEAR_PANEL_CLIENTS: Начало очистки панели 3x-ui")
 
-	// Константы для подключения к панели 3x-ui
-	const (
-		PANEL_URL  = "https://shadowfade.ru:24413/YMNUhU6HfF9PVVol2s/"
-		PANEL_USER = "PKkxfWQGatttjacjVcFg7A6dKAHowxNmyCtE7PRafarnHtFanN"
-		PANEL_PASS = "toJFL4atmG7xwuvXkXepjVgyMHJMK9znbNWmoM7337jCN84PVE"
-	)
-
 	// Авторизуемся в панели
-	sessionCookie, err := loginToPanel(PANEL_URL, PANEL_USER, PANEL_PASS)
+	sessionCookie, err := loginToPanel(common.PANEL_URL, common.PANEL_USER, common.PANEL_PASS)
 	if err != nil {
 		return fmt.Errorf("ошибка авторизации в панели: %v", err)
 	}
 
 	// Получаем список всех inbound'ов
-	inbounds, err := getAllInboundsFromPanel(sessionCookie, PANEL_URL)
+	inbounds, err := getAllInboundsFromPanel(sessionCookie, common.PANEL_URL)
 	if err != nil {
 		return fmt.Errorf("ошибка получения списка inbound'ов: %v", err)
 	}
 
 	// Очищаем клиентов из каждого inbound'а
 	for _, inbound := range inbounds {
-		err = clearInboundClients(sessionCookie, PANEL_URL, inbound.ID)
+		err = clearInboundClients(sessionCookie, common.PANEL_URL, inbound.ID)
 		if err != nil {
 			log.Printf("CLEAR_PANEL_CLIENTS: Ошибка очистки inbound %d: %v", inbound.ID, err)
 			continue
@@ -511,7 +506,7 @@ func main() {
 // showAllUsers показывает всех пользователей из базы данных
 func showAllUsers() {
 	fmt.Println("\n=== ПОЛЬЗОВАТЕЛИ ===")
-	
+
 	query := `
 		SELECT id, telegram_id, username, first_name, last_name, balance, 
 		       total_paid, created_at, updated_at, has_active_config, 
@@ -520,19 +515,19 @@ func showAllUsers() {
 		FROM users 
 		ORDER BY created_at DESC
 	`
-	
+
 	rows, err := db.Query(query)
 	if err != nil {
 		fmt.Printf("Ошибка получения пользователей: %v\n", err)
 		return
 	}
 	defer rows.Close()
-	
+
 	fmt.Printf("%-4s %-12s %-15s %-20s %-15s %-8s %-10s %-12s %-12s %-12s %-12s\n",
-		"ID", "TelegramID", "Username", "First Name", "Last Name", "Balance", 
+		"ID", "TelegramID", "Username", "First Name", "Last Name", "Balance",
 		"TotalPaid", "HasConfig", "ClientID", "SubID", "CreatedAt")
 	fmt.Println(strings.Repeat("-", 150))
-	
+
 	count := 0
 	for rows.Next() {
 		var user User
@@ -540,7 +535,7 @@ func showAllUsers() {
 		var configCreatedAt sql.NullTime
 		var clientID, email, subID sql.NullString
 		var expiryTime sql.NullInt64
-		
+
 		err := rows.Scan(
 			&user.ID, &user.TelegramID, &user.Username, &user.FirstName, &user.LastName,
 			&user.Balance, &user.TotalPaid, &createdAt, &updatedAt, &user.HasActiveConfig,
@@ -551,13 +546,13 @@ func showAllUsers() {
 			fmt.Printf("Ошибка сканирования пользователя: %v\n", err)
 			continue
 		}
-		
+
 		user.CreatedAt = createdAt
 		user.UpdatedAt = updatedAt
 		if configCreatedAt.Valid {
 			user.ConfigCreatedAt = configCreatedAt.Time
 		}
-		
+
 		if clientID.Valid {
 			user.ClientID = clientID.String
 		}
@@ -570,35 +565,35 @@ func showAllUsers() {
 		if expiryTime.Valid {
 			user.ExpiryTime = expiryTime.Int64
 		}
-		
+
 		hasConfig := "❌"
 		if user.HasActiveConfig {
 			hasConfig = "✅"
 		}
-		
+
 		clientIDStr := user.ClientID
 		if len(clientIDStr) > 8 {
 			clientIDStr = clientIDStr[:8] + "..."
 		}
-		
+
 		subIDStr := user.SubID
 		if len(subIDStr) > 8 {
 			subIDStr = subIDStr[:8] + "..."
 		}
-		
+
 		fmt.Printf("%-4d %-12d %-15s %-20s %-15s %-8.2f %-10.2f %-12s %-12s %-12s %-12s\n",
 			user.ID, user.TelegramID, user.Username, user.FirstName, user.LastName,
 			user.Balance, user.TotalPaid, hasConfig, clientIDStr, subIDStr,
 			user.CreatedAt.Format("2006-01-02"))
-		
+
 		count++
 	}
-	
+
 	if err = rows.Err(); err != nil {
 		fmt.Printf("Ошибка итерации по пользователям: %v\n", err)
 		return
 	}
-	
+
 	fmt.Printf("\nВсего пользователей: %d\n", count)
 }
 
@@ -606,7 +601,7 @@ func showAllUsers() {
 func deleteUserByID() {
 	// Сначала показываем всех пользователей
 	showAllUsers()
-	
+
 	fmt.Print("\nВведите ID пользователя для удаления: ")
 	var userID int64
 	_, err := fmt.Scanf("%d", &userID)
@@ -614,7 +609,7 @@ func deleteUserByID() {
 		fmt.Printf("Ошибка ввода ID: %v\n", err)
 		return
 	}
-	
+
 	// Проверяем, существует ли пользователь
 	var exists bool
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)"
@@ -623,12 +618,12 @@ func deleteUserByID() {
 		fmt.Printf("Ошибка проверки существования пользователя: %v\n", err)
 		return
 	}
-	
+
 	if !exists {
 		fmt.Printf("Пользователь с ID %d не найден\n", userID)
 		return
 	}
-	
+
 	// Получаем информацию о пользователе
 	var user User
 	query = `
@@ -636,7 +631,7 @@ func deleteUserByID() {
 		       has_active_config, client_id, email, sub_id
 		FROM users WHERE id = $1
 	`
-	
+
 	var clientID, email, subID sql.NullString
 	err = db.QueryRow(query, userID).Scan(
 		&user.ID, &user.TelegramID, &user.Username, &user.FirstName, &user.LastName,
@@ -646,7 +641,7 @@ func deleteUserByID() {
 		fmt.Printf("Ошибка получения информации о пользователе: %v\n", err)
 		return
 	}
-	
+
 	if clientID.Valid {
 		user.ClientID = clientID.String
 	}
@@ -656,7 +651,7 @@ func deleteUserByID() {
 	if subID.Valid {
 		user.SubID = subID.String
 	}
-	
+
 	// Показываем информацию о пользователе
 	fmt.Printf("\n=== ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ ===\n")
 	fmt.Printf("ID: %d\n", user.ID)
@@ -669,14 +664,14 @@ func deleteUserByID() {
 	fmt.Printf("Client ID: %s\n", user.ClientID)
 	fmt.Printf("Email: %s\n", user.Email)
 	fmt.Printf("Sub ID: %s\n", user.SubID)
-	
+
 	// Спрашиваем подтверждение
 	confirm := readUserInput(fmt.Sprintf("\nВы уверены, что хотите удалить пользователя %s (ID: %d)? (yes/no): ", user.Username, userID))
 	if strings.ToLower(confirm) != "yes" {
 		fmt.Println("Удаление отменено")
 		return
 	}
-	
+
 	// Удаляем пользователя
 	query = "DELETE FROM users WHERE id = $1"
 	result, err := db.Exec(query, userID)
@@ -684,13 +679,13 @@ func deleteUserByID() {
 		fmt.Printf("Ошибка удаления пользователя: %v\n", err)
 		return
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		fmt.Printf("Ошибка получения количества удаленных строк: %v\n", err)
 		return
 	}
-	
+
 	if rowsAffected > 0 {
 		fmt.Printf("✅ Пользователь %s (ID: %d) успешно удален из базы данных\n", user.Username, userID)
 	} else {

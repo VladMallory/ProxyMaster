@@ -102,13 +102,13 @@ func (cli *BalanceCLI) showUserInfo() {
 	fmt.Printf("📝 Имя: %s %s\n", userInfo.FirstName, userInfo.LastName)
 	fmt.Printf("💰 Баланс: %.2f₽\n", userInfo.Balance)
 	fmt.Printf("💳 Всего оплачено: %.2f₽\n", userInfo.TotalPaid)
-	
+
 	hasConfig := "❌"
 	if userInfo.HasActiveConfig {
 		hasConfig = "✅"
 	}
 	fmt.Printf("🔧 Активный конфиг: %s\n", hasConfig)
-	
+
 	if userInfo.ClientID != "" {
 		fmt.Printf("🆔 Client ID: %s\n", userInfo.ClientID)
 	}
@@ -122,7 +122,7 @@ func (cli *BalanceCLI) showUserInfo() {
 		expiryTime := time.UnixMilli(userInfo.ExpiryTime).Format("2006-01-02 15:04:05")
 		fmt.Printf("⏰ Истекает: %s\n", expiryTime)
 	}
-	
+
 	fmt.Printf("📅 Регистрация: %s\n", userInfo.CreatedAt.Format("2006-01-02 15:04:05"))
 }
 
@@ -255,7 +255,7 @@ func (cli *BalanceCLI) setBalance() {
 
 	fmt.Printf("💰 Текущий баланс: %.2f₽\n", currentBalance)
 	fmt.Printf("🔄 Новый баланс: %.2f₽\n", amount)
-	
+
 	diff := amount - currentBalance
 	if diff > 0 {
 		fmt.Printf("➕ Изменение: +%.2f₽\n", diff)
@@ -321,14 +321,14 @@ func (cli *BalanceCLI) showBalanceHistory() {
 		if h.Amount > 0 {
 			amountStr = "+" + amountStr
 		}
-		
+
 		dateStr := h.CreatedAt.Format("2006-01-02 15:04")
 		description := h.Description
 		if len(description) > 30 {
 			description = description[:27] + "..."
 		}
 
-		fmt.Printf("%-20s %-10s %-15s %-30s %-20s\n", 
+		fmt.Printf("%-20s %-10s %-15s %-30s %-20s\n",
 			dateStr, amountStr, h.OperationType, description, "balance_change")
 	}
 }

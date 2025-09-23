@@ -7,10 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-)
 
-const (
-	PaymentLogFile = "/root/bot/payments/pay.log"
+	"bot/common"
 )
 
 // PaymentLogEntry представляет запись о платеже в логе
@@ -27,17 +25,35 @@ type PaymentLogEntry struct {
 // PaymentLogger управляет логированием платежей
 type PaymentLogger struct {
 	logFile string
+	enabled bool
 }
 
 // NewPaymentLogger создает новый логгер платежей
 func NewPaymentLogger() *PaymentLogger {
-	return &PaymentLogger{
-		logFile: PaymentLogFile,
+	logger := &PaymentLogger{
+		logFile: common.PAYMENT_LOG_PATH,
+		enabled: common.PAYMENT_LOG_ENABLED,
 	}
+
+	// Обновляем настройки из конфига
+	logger.updateFromConfig()
+
+	return logger
+}
+
+// updateFromConfig обновляет настройки логгера из конфига
+func (pl *PaymentLogger) updateFromConfig() {
+	pl.logFile = common.PAYMENT_LOG_PATH
+	pl.enabled = common.PAYMENT_LOG_ENABLED
 }
 
 // LogPayment записывает информацию о платеже в лог
 func (pl *PaymentLogger) LogPayment(paymentID string, userID int64, amount float64, status string) error {
+	// Проверяем, включено ли логирование
+	if !pl.enabled {
+		return nil
+	}
+
 	// Создаем директорию если не существует
 	dir := filepath.Dir(pl.logFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -76,6 +92,11 @@ func (pl *PaymentLogger) LogPayment(paymentID string, userID int64, amount float
 
 // UpdatePaymentStatus обновляет статус платежа в логе
 func (pl *PaymentLogger) UpdatePaymentStatus(paymentID string, status string, processed bool) error {
+	// Проверяем, включено ли логирование
+	if !pl.enabled {
+		return nil
+	}
+
 	entries, err := pl.readAllEntries()
 	if err != nil {
 		return err
@@ -94,8 +115,33 @@ func (pl *PaymentLogger) UpdatePaymentStatus(paymentID string, status string, pr
 	return pl.writeAllEntries(entries)
 }
 
+// SetLogFile устанавливает новый путь к файлу лога
+func (pl *PaymentLogger) SetLogFile(logFile string) {
+	pl.logFile = logFile
+}
+
+// SetEnabled включает или выключает логирование
+func (pl *PaymentLogger) SetEnabled(enabled bool) {
+	pl.enabled = enabled
+}
+
+// GetLogFile возвращает текущий путь к файлу лога
+func (pl *PaymentLogger) GetLogFile() string {
+	return pl.logFile
+}
+
+// IsEnabled возвращает статус включения логирования
+func (pl *PaymentLogger) IsEnabled() bool {
+	return pl.enabled
+}
+
 // GetPendingPayments возвращает список необработанных платежей
 func (pl *PaymentLogger) GetPendingPayments() ([]PaymentLogEntry, error) {
+	// Проверяем, включено ли логирование
+	if !pl.enabled {
+		return []PaymentLogEntry{}, nil
+	}
+
 	entries, err := pl.readAllEntries()
 	if err != nil {
 		return nil, err

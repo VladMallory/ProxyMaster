@@ -13,14 +13,12 @@ import (
 // OnDemandPaymentService обрабатывает платежи по требованию
 type OnDemandPaymentService struct {
 	paymentManager *PaymentManager
-	paymentLogger  *PaymentLogger
 }
 
 // NewOnDemandPaymentService создает новый сервис обработки платежей по требованию
 func NewOnDemandPaymentService(paymentManager *PaymentManager) *OnDemandPaymentService {
 	return &OnDemandPaymentService{
 		paymentManager: paymentManager,
-		paymentLogger:  NewPaymentLogger(),
 	}
 }
 
@@ -30,7 +28,7 @@ func (odps *OnDemandPaymentService) StartPaymentMonitoring(paymentID string, use
 	log.Printf("PAYMENT_ON_DEMAND: Запуск мониторинга платежа %s для пользователя %d", paymentID, userID)
 
 	// Логируем создание платежа
-	if err := odps.paymentLogger.LogPayment(paymentID, userID, amount, "pending"); err != nil {
+	if err := GetGlobalPaymentLogger().LogPayment(paymentID, userID, amount, "pending"); err != nil {
 		log.Printf("PAYMENT_ON_DEMAND: Ошибка логирования платежа %s: %v", paymentID, err)
 	}
 
@@ -68,7 +66,7 @@ func (odps *OnDemandPaymentService) monitorPayment(paymentID string, userID int6
 		case <-timeout.C:
 			log.Printf("PAYMENT_ON_DEMAND: Таймаут мониторинга платежа %s (10 минут)", paymentID)
 			// Обновляем статус в логе
-			odps.paymentLogger.UpdatePaymentStatus(paymentID, "timeout", false)
+			GetGlobalPaymentLogger().UpdatePaymentStatus(paymentID, "timeout", false)
 			return
 		}
 	}
@@ -98,7 +96,7 @@ func (odps *OnDemandPaymentService) checkAndProcessPayment(paymentID string, use
 		err = common.AddBalance(userID, paymentInfo.Amount)
 		if err != nil {
 			log.Printf("PAYMENT_ON_DEMAND: Ошибка зачисления средств для платежа %s: %v", paymentID, err)
-			odps.paymentLogger.UpdatePaymentStatus(paymentID, "error_balance", false)
+			GetGlobalPaymentLogger().UpdatePaymentStatus(paymentID, "error_balance", false)
 			return false
 		}
 
@@ -109,7 +107,7 @@ func (odps *OnDemandPaymentService) checkAndProcessPayment(paymentID string, use
 		}
 
 		// Обновляем статус в логе
-		odps.paymentLogger.UpdatePaymentStatus(paymentID, "succeeded", true)
+		GetGlobalPaymentLogger().UpdatePaymentStatus(paymentID, "succeeded", true)
 
 		// Отправляем уведомление пользователю
 		if common.GlobalBot != nil {
@@ -135,7 +133,7 @@ func (odps *OnDemandPaymentService) checkAndProcessPayment(paymentID string, use
 	// Если платеж отменен или завершился с ошибкой
 	if paymentInfo.Status == paymentCommon.PaymentStatusCanceled {
 		log.Printf("PAYMENT_ON_DEMAND: Платеж %s отменен", paymentID)
-		odps.paymentLogger.UpdatePaymentStatus(paymentID, "canceled", true)
+		GetGlobalPaymentLogger().UpdatePaymentStatus(paymentID, "canceled", true)
 		return true
 	}
 
@@ -145,12 +143,12 @@ func (odps *OnDemandPaymentService) checkAndProcessPayment(paymentID string, use
 
 // GetPendingPayments возвращает список необработанных платежей
 func (odps *OnDemandPaymentService) GetPendingPayments() ([]PaymentLogEntry, error) {
-	return odps.paymentLogger.GetPendingPayments()
+	return GetGlobalPaymentLogger().GetPendingPayments()
 }
 
 // CheckPendingPayments проверяет все необработанные платежи (вызывается периодически)
 func (odps *OnDemandPaymentService) CheckPendingPayments() {
-	pendingPayments, err := odps.paymentLogger.GetPendingPayments()
+	pendingPayments, err := GetGlobalPaymentLogger().GetPendingPayments()
 	if err != nil {
 		log.Printf("PAYMENT_ON_DEMAND: Ошибка получения необработанных платежей: %v", err)
 		return

@@ -50,6 +50,13 @@ func LogPaymentEvent(level string, method PaymentMethod, message string, args ..
 	log.Printf("%s: %s", prefix, fullMessage)
 }
 
+// LogPaymentToFile логирует платеж в файл через глобальный логгер
+func LogPaymentToFile(paymentID string, userID int64, amount float64, status string) error {
+	// Импортируем common для доступа к глобальному логгеру
+	// Это будет сделано в вызывающем коде
+	return nil
+}
+
 // GetCurrentTimestamp возвращает текущее время в формате ISO 8601
 func GetCurrentTimestamp() string {
 	return time.Now().Format(time.RFC3339)

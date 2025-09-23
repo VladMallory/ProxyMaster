@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"balance_client"
+	"bot/common"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -29,14 +30,6 @@ const (
 	PG_USER     = "vpn_bot_user"
 	PG_PASSWORD = "your_secure_password"
 	PG_DBNAME   = "vpn_bot"
-)
-
-// Константы для панели 3x-ui
-const (
-	PANEL_URL  = "https://shadowfade.ru:24413/YMNUhU6HfF9PVVol2s/"
-	PANEL_USER = "PKkxfWQGatttjacjVcFg7A6dKAHowxNmyCtE7PRafarnHtFanN"
-	PANEL_PASS = "toJFL4atmG7xwuvXkXepjVgyMHJMK9znbNWmoM7337jCN84PVE"
-	INBOUND_ID = 2
 )
 
 // User структура пользователя
@@ -132,8 +125,8 @@ func DisconnectPostgreSQL() {
 // loginToPanel авторизуется в панели 3x-ui
 func loginToPanel() (string, error) {
 	loginData := map[string]string{
-		"username": PANEL_USER,
-		"password": PANEL_PASS,
+		"username": common.PANEL_USER,
+		"password": common.PANEL_PASS,
 	}
 
 	jsonData, err := json.Marshal(loginData)
@@ -141,7 +134,7 @@ func loginToPanel() (string, error) {
 		return "", fmt.Errorf("ошибка сериализации данных авторизации: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", PANEL_URL+"login", strings.NewReader(string(jsonData)))
+	req, err := http.NewRequest("POST", common.PANEL_URL+"login", strings.NewReader(string(jsonData)))
 	if err != nil {
 		return "", fmt.Errorf("ошибка создания запроса авторизации: %v", err)
 	}
@@ -190,7 +183,7 @@ func loginToPanel() (string, error) {
 
 // getInbound получает inbound из панели
 func getInbound(sessionCookie string) (*Inbound, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", PANEL_URL, INBOUND_ID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", common.PANEL_URL, common.INBOUND_ID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
 	}
@@ -235,7 +228,7 @@ func updateInbound(sessionCookie string, inbound Inbound) error {
 		return fmt.Errorf("ошибка сериализации inbound: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%spanel/api/inbounds/update/%d", PANEL_URL, INBOUND_ID), strings.NewReader(string(updateData)))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%spanel/api/inbounds/update/%d", common.PANEL_URL, common.INBOUND_ID), strings.NewReader(string(updateData)))
 	if err != nil {
 		return fmt.Errorf("ошибка создания запроса обновления: %v", err)
 	}
@@ -283,12 +276,12 @@ func findClientByTelegramID(clients []Client, telegramID int64) *Client {
 
 // showUsers показывает всех пользователей из базы данных, отсортированных по TelegramID
 func showUsers() error {
-	// SQL запрос для получения пользователей с лимитом 50 записей
+	// SQL запрос для получения пользователей с лимитом 500 записей
 	query := `
 		SELECT telegram_id, username, first_name, last_name, balance, has_active_config, 
 		       client_id, sub_id, email, expiry_time, created_at
 		FROM users 
-		LIMIT 50`
+		LIMIT 500`
 
 	rows, err := db.Query(query)
 	if err != nil {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-
-	_ "github.com/lib/pq"
 )
 
 // BalanceManager управляет балансом клиентов
@@ -23,7 +21,7 @@ func NewBalanceManager(db *sql.DB) *BalanceManager {
 func (bm *BalanceManager) GetUserBalance(telegramID int64) (float64, error) {
 	query := `SELECT balance FROM users WHERE telegram_id = $1`
 	var balance float64
-	
+
 	err := bm.db.QueryRow(query, telegramID).Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -31,7 +29,7 @@ func (bm *BalanceManager) GetUserBalance(telegramID int64) (float64, error) {
 		}
 		return 0, fmt.Errorf("ошибка получения баланса: %v", err)
 	}
-	
+
 	return balance, nil
 }
 
@@ -214,7 +212,7 @@ func (bm *BalanceManager) GetBalanceHistory(telegramID int64, limit int) ([]Bala
 			WHERE table_schema = 'public' 
 			AND table_name = 'balance_history'
 		)`
-	
+
 	var tableExists bool
 	err := bm.db.QueryRow(checkQuery).Scan(&tableExists)
 	if err != nil {
@@ -270,7 +268,7 @@ func (bm *BalanceManager) LogBalanceChange(telegramID int64, amount float64, ope
 			WHERE table_schema = 'public' 
 			AND table_name = 'balance_history'
 		)`
-	
+
 	var tableExists bool
 	err := bm.db.QueryRow(checkQuery).Scan(&tableExists)
 	if err != nil {

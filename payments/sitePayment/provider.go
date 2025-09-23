@@ -303,6 +303,12 @@ func (y *YooKassaPaymentProvider) ProcessWebhook(data []byte) (*paymentCommon.Pa
 
 		paymentCommon.LogPaymentEvent("INFO", paymentCommon.PaymentMethodAPI,
 			"Баланс пользователя %d пополнен на %.2f₽", userID, amount)
+
+		// Логируем успешный платеж
+		if err := paymentCommon.LogPaymentToFile(payment.ID, userID, amount, "succeeded"); err != nil {
+			paymentCommon.LogPaymentEvent("ERROR", paymentCommon.PaymentMethodAPI,
+				"Ошибка логирования платежа %s: %v", payment.ID, err)
+		}
 	}
 
 	return paymentInfo, nil

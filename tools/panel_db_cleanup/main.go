@@ -12,17 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"bot/common"
+
 	_ "github.com/lib/pq"
 )
 
-// Константы для подключения к панели 3x-ui
+// PostgreSQL настройки для панели 3x-ui
 const (
-	PANEL_URL  = "https://shadowfade.ru:24413/YMNUhU6HfF9PVVol2s/"
-	PANEL_USER = "PKkxfWQGatttjacjVcFg7A6dKAHowxNmyCtE7PRafarnHtFanN"
-	PANEL_PASS = "toJFL4atmG7xwuvXkXepjVgyMHJMK9znbNWmoM7337jCN84PVE"
-	INBOUND_ID = 1
-
-	// PostgreSQL настройки для панели 3x-ui
 	PANEL_PG_HOST     = "localhost"
 	PANEL_PG_PORT     = "5432"
 	PANEL_PG_USER     = "root"
@@ -72,16 +68,16 @@ type InboundResponse struct {
 
 // Структура для записи в client_traffics
 type ClientTraffic struct {
-	ID       int    `db:"id"`
-	Email    string `db:"email"`
-	Up       int64  `db:"up"`
-	Down     int64  `db:"down"`
-	Total    int64  `db:"total"`
-	Remark   string `db:"remark"`
-	Enable   bool   `db:"enable"`
-	ExpiryTime int64 `db:"expiryTime"`
-	TotalGB  int64  `db:"totalGB"`
-	IP       string `db:"ip"`
+	ID         int    `db:"id"`
+	Email      string `db:"email"`
+	Up         int64  `db:"up"`
+	Down       int64  `db:"down"`
+	Total      int64  `db:"total"`
+	Remark     string `db:"remark"`
+	Enable     bool   `db:"enable"`
+	ExpiryTime int64  `db:"expiryTime"`
+	TotalGB    int64  `db:"totalGB"`
+	IP         string `db:"ip"`
 }
 
 func main() {
@@ -188,8 +184,8 @@ func connectToPanelDB() (*sql.DB, error) {
 // loginToPanel авторизуется в панели 3x-ui
 func loginToPanel() (string, error) {
 	loginData := map[string]string{
-		"username": PANEL_USER,
-		"password": PANEL_PASS,
+		"username": common.PANEL_USER,
+		"password": common.PANEL_PASS,
 	}
 
 	jsonData, err := json.Marshal(loginData)
@@ -197,7 +193,7 @@ func loginToPanel() (string, error) {
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST", PANEL_URL+"login", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", common.PANEL_URL+"login", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", err
 	}
@@ -239,7 +235,7 @@ func loginToPanel() (string, error) {
 
 // getInboundFromPanel получает inbound из панели
 func getInboundFromPanel(sessionCookie string) (*Inbound, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", PANEL_URL, INBOUND_ID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", common.PANEL_URL, common.INBOUND_ID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +302,7 @@ func getClientTraffics(db *sql.DB) ([]ClientTraffic, error) {
 // findDuplicateEmails находит дублирующиеся email в client_traffics
 func findDuplicateEmails(records []ClientTraffic) map[string]int {
 	emailCount := make(map[string]int)
-	
+
 	for _, record := range records {
 		emailCount[record.Email]++
 	}

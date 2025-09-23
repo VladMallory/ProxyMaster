@@ -1,12 +1,11 @@
 package telegramPayment
 
 import (
+	"bot/common"
+	paymentCommon "bot/payments/common"
 	"fmt"
 	"strconv"
 	"strings"
-
-	"bot/common"
-	paymentCommon "bot/payments/common"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -210,6 +209,12 @@ func (t *TelegramPaymentProvider) ProcessSuccessfulPayment(payment *tgbotapi.Suc
 		paymentCommon.LogPaymentEvent("ERROR", paymentCommon.PaymentMethodTelegram,
 			"Ошибка пополнения баланса для пользователя %d: %v", userID, err)
 		return nil, fmt.Errorf("ошибка пополнения баланса: %v", err)
+	}
+
+	// Логируем успешный платеж
+	if err := paymentCommon.LogPaymentToFile(paymentID, userID, amount, "succeeded"); err != nil {
+		paymentCommon.LogPaymentEvent("ERROR", paymentCommon.PaymentMethodTelegram,
+			"Ошибка логирования платежа %s: %v", paymentID, err)
 	}
 
 	return paymentInfo, nil

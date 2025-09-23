@@ -7,6 +7,7 @@ import (
 
 	"bot/app"
 	"bot/common"
+	"bot/payments"
 	"bot/services"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -21,6 +22,9 @@ func main() {
 
 	// Инициализируем глобальные переменные
 	common.InitGlobals()
+
+	// Инициализируем глобальный логгер платежей
+	payments.InitGlobalPaymentLogger()
 
 	// Инициализируем логгер консоли (должен быть первым, чтобы перехватывать весь вывод)
 	if err := common.InitConsoleLogger(); err != nil {

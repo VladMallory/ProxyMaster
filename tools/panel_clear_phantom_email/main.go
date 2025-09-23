@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bot/common"
 	"bytes"
 	"crypto/tls"
 	"database/sql"
@@ -15,14 +16,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Константы для подключения к панели 3x-ui (из config.go)
+// PostgreSQL настройки
 const (
-	PANEL_URL  = "https://shadowfade.ru:24413/YMNUhU6HfF9PVVol2s/"
-	PANEL_USER = "PKkxfWQGatttjacjVcFg7A6dKAHowxNmyCtE7PRafarnHtFanN"
-	PANEL_PASS = "toJFL4atmG7xwuvXkXepjVgyMHJMK9znbNWmoM7337jCN84PVE"
-	INBOUND_ID = 1
-
-	// PostgreSQL настройки
 	PG_HOST     = "localhost"
 	PG_PORT     = "5432"
 	PG_USER     = "vpn_bot_user"
@@ -217,8 +212,8 @@ func getUsersFromDB(db *sql.DB) ([]User, error) {
 // loginToPanel авторизуется в панели 3x-ui
 func loginToPanel() (string, error) {
 	loginData := map[string]string{
-		"username": PANEL_USER,
-		"password": PANEL_PASS,
+		"username": common.PANEL_USER,
+		"password": common.PANEL_PASS,
 	}
 
 	jsonData, err := json.Marshal(loginData)
@@ -226,10 +221,10 @@ func loginToPanel() (string, error) {
 		return "", err
 	}
 
-	log.Printf("🔐 Попытка авторизации в панели: %s", PANEL_URL+"login")
+	log.Printf("🔐 Попытка авторизации в панели: %s", common.PANEL_URL+"login")
 	log.Printf("🔐 Данные авторизации: %s", string(jsonData))
 
-	req, err := http.NewRequest("POST", PANEL_URL+"login", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", common.PANEL_URL+"login", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", err
 	}
@@ -308,7 +303,7 @@ func loginToPanel() (string, error) {
 
 // getInboundFromPanel получает inbound из панели
 func getInboundFromPanel(sessionCookie string) (*Inbound, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", PANEL_URL, INBOUND_ID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", common.PANEL_URL, common.INBOUND_ID), nil)
 	if err != nil {
 		return nil, err
 	}
