@@ -210,6 +210,8 @@ func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common
 		handleClearUsersCommand(bot, message)
 	case "check_reset":
 		handleCheckResetCommand(bot, message)
+	case "clear_nil_config":
+		handleClearNilConfigCommand(bot, message)
 	case "confirm_clear_users":
 		handleConfirmClearUsersCommand(bot, message)
 	case "clear_database":
@@ -783,6 +785,48 @@ func handleCheckResetCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		msg := tgbotapi.NewMessage(message.Chat.ID, "✅ Проверка состояния reset завершена. Результаты в логах.")
 		if _, err := bot.Send(msg); err != nil {
 			log.Printf("HANDLE_CHECK_RESET_COMMAND: Ошибка отправки сообщения о завершении: %v", err)
+		}
+	}()
+}
+
+// handleClearNilConfigCommand обрабатывает команду /clear_nil_config для очистки сиротских записей
+func handleClearNilConfigCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_CLEAR_NIL_CONFIG: Выполнение команды /clear_nil_config для TelegramID=%d", message.From.ID)
+
+	// Проверяем, что пользователь - админ
+	if message.From.ID != common.ADMIN_ID {
+		log.Printf("HANDLE_CLEAR_NIL_CONFIG: Пользователь TelegramID=%d не является админом", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_CLEAR_NIL_CONFIG: Ошибка отправки сообщения о запрете: %v", err)
+		}
+		return
+	}
+
+	// Отправляем сообщение о начале очистки
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🔧 Запуск очистки сиротских записей из базы данных панели...")
+	if _, err := bot.Send(msg); err != nil {
+		log.Printf("HANDLE_CLEAR_NIL_CONFIG: Ошибка отправки сообщения: %v", err)
+		return
+	}
+
+	// Запускаем очистку в отдельной горутине
+	go func() {
+		// Выполняем очистку сиротских записей
+		cleanedCount, err := clearOrphanedRecords(bot, message.Chat.ID)
+		if err != nil {
+			log.Printf("HANDLE_CLEAR_NIL_CONFIG: Ошибка очистки: %v", err)
+			msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("❌ Ошибка очистки: %v", err))
+			if _, err := bot.Send(msg); err != nil {
+				log.Printf("HANDLE_CLEAR_NIL_CONFIG: Ошибка отправки сообщения об ошибке: %v", err)
+			}
+			return
+		}
+
+		// Отправляем сообщение о завершении
+		msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("✅ Очистка завершена! Удалено сиротских записей: %d", cleanedCount))
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_CLEAR_NIL_CONFIG: Ошибка отправки сообщения о завершении: %v", err)
 		}
 	}()
 }
