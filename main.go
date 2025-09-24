@@ -16,6 +16,7 @@ import (
 // Глобальные переменные для сервисов
 var globalAutoBillingService *services.AutoBillingService
 var globalResetStatusChecker *services.ResetStatusChecker
+var globalUniversalReminderService *services.UniversalReminderService
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -100,6 +101,11 @@ func main() {
 	// Запускаем автоматическую проверку реферальных кодов если включена (в отдельной горутине)
 	if common.REFERRAL_CHECK_ENABLED {
 		go startReferralCheckerService()
+	}
+
+	// Запускаем сервис универсальных напоминаний если включен (в отдельной горутине)
+	if common.UNIVERSAL_REMINDER_ENABLED {
+		go startUniversalReminderService()
 	}
 
 	// Запускаем Telegram бота (блокирующая функция)
@@ -284,4 +290,29 @@ func startReferralCheckerService() {
 	}
 
 	log.Printf("MAIN: ✅ Сервис проверки реферальных кодов успешно запущен")
+}
+
+// startUniversalReminderService запускает сервис универсальных напоминаний
+func startUniversalReminderService() {
+	log.Printf("UNIVERSAL_REMINDER: Запуск сервиса универсальных напоминаний...")
+
+	// Ждем инициализации бота
+	time.Sleep(5 * time.Second)
+
+	// Получаем бот из глобальной переменной
+	var bot *tgbotapi.BotAPI
+	if common.GlobalBot != nil {
+		bot = common.GlobalBot
+		log.Printf("UNIVERSAL_REMINDER: Бот получен из глобальной переменной")
+	} else {
+		log.Printf("UNIVERSAL_REMINDER: Бот не инициализирован, уведомления отключены")
+	}
+
+	// Создаем сервис универсальных напоминаний
+	globalUniversalReminderService = services.NewUniversalReminderService(bot)
+
+	// Запускаем сервис
+	globalUniversalReminderService.Start()
+
+	log.Printf("UNIVERSAL_REMINDER: Сервис универсальных напоминаний успешно запущен")
 }

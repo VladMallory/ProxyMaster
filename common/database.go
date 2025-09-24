@@ -929,6 +929,33 @@ func SendBalanceTopupNotificationToAdmin(user *User, amount float64) {
 	}
 }
 
+// SendReminderNotificationToAdmin отправляет уведомление администратору о отправленном напоминании
+func SendReminderNotificationToAdmin(user *User, daysLeft, hoursLeft int) {
+	if !ADMIN_NOTIFICATIONS_ENABLED || !ADMIN_REMINDER_ENABLED || GlobalBot == nil {
+		return
+	}
+
+	displayName := getUserDisplayName(user)
+	message := fmt.Sprintf(
+		"⏰ <b>Напоминание о подписке отправлено</b>\n\n"+
+			"👤 Пользователь: %s (ID: %d)\n"+
+			"💰 Баланс: %.2f₽\n"+
+			"📧 Email: %s\n"+
+			"⏳ Осталось: %d дней %d часов\n"+
+			"🕐 Время отправки: %s",
+		displayName, user.TelegramID, user.Balance, user.Email, daysLeft, hoursLeft, time.Now().Format("2006-01-02 15:04:05"))
+
+	msg := tgbotapi.NewMessage(ADMIN_ID, message)
+	msg.ParseMode = tgbotapi.ModeHTML
+
+	_, err := GlobalBot.Send(msg)
+	if err != nil {
+		log.Printf("NOTIFICATION: Ошибка отправки уведомления администратору о напоминании пользователя %d: %v", user.TelegramID, err)
+	} else {
+		log.Printf("NOTIFICATION: Уведомление о напоминании пользователя %d отправлено администратору", user.TelegramID)
+	}
+}
+
 // getUserDisplayName возвращает читаемое имя пользователя
 func getUserDisplayName(user *User) string {
 	if user.FirstName != "" {
