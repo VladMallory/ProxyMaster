@@ -17,6 +17,8 @@ import (
 var globalAutoBillingService *services.AutoBillingService
 var globalResetStatusChecker *services.ResetStatusChecker
 var globalUniversalReminderService *services.UniversalReminderService
+var globalExpiredSubscriptionService *services.ExpiredSubscriptionService
+var globalDisabledConfigService *services.DisabledConfigService
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -106,6 +108,16 @@ func main() {
 	// Запускаем сервис универсальных напоминаний если включен (в отдельной горутине)
 	if common.UNIVERSAL_REMINDER_ENABLED {
 		go startUniversalReminderService()
+	}
+
+	// Запускаем сервис проверки истекших подписок если включен (в отдельной горутине)
+	if common.EXPIRED_SUBSCRIPTION_CHECK_ENABLED {
+		go startExpiredSubscriptionService()
+	}
+
+	// Запускаем сервис проверки отключенных конфигов если включен (в отдельной горутине)
+	if common.DISABLED_CONFIG_CHECK_ENABLED {
+		go startDisabledConfigService()
 	}
 
 	// Запускаем Telegram бота (блокирующая функция)
@@ -315,4 +327,70 @@ func startUniversalReminderService() {
 	globalUniversalReminderService.Start()
 
 	log.Printf("UNIVERSAL_REMINDER: Сервис универсальных напоминаний успешно запущен")
+}
+
+// startExpiredSubscriptionService запускает сервис проверки истекших подписок
+func startExpiredSubscriptionService() {
+	log.Printf("EXPIRED_SUBSCRIPTION: Запуск сервиса проверки истекших подписок...")
+
+	// Ждем инициализации бота
+	time.Sleep(5 * time.Second)
+
+	// Получаем бот из глобальной переменной
+	var bot *tgbotapi.BotAPI
+	if common.GlobalBot != nil {
+		bot = common.GlobalBot
+		log.Printf("EXPIRED_SUBSCRIPTION: Бот получен из глобальной переменной")
+	} else {
+		log.Printf("EXPIRED_SUBSCRIPTION: Бот не инициализирован, уведомления отключены")
+	}
+
+	// Создаем менеджер конфигураций
+	configManager := common.NewConfigManager(
+		common.PANEL_URL,
+		common.PANEL_USER,
+		common.PANEL_PASS,
+		common.INBOUND_ID,
+	)
+
+	// Создаем сервис проверки истекших подписок
+	globalExpiredSubscriptionService = services.NewExpiredSubscriptionService(bot, configManager)
+
+	// Запускаем сервис
+	globalExpiredSubscriptionService.Start()
+
+	log.Printf("EXPIRED_SUBSCRIPTION: Сервис проверки истекших подписок успешно запущен")
+}
+
+// startDisabledConfigService запускает сервис проверки отключенных конфигов
+func startDisabledConfigService() {
+	log.Printf("DISABLED_CONFIG: Запуск сервиса проверки отключенных конфигов...")
+
+	// Ждем инициализации бота
+	time.Sleep(5 * time.Second)
+
+	// Получаем бот из глобальной переменной
+	var bot *tgbotapi.BotAPI
+	if common.GlobalBot != nil {
+		bot = common.GlobalBot
+		log.Printf("DISABLED_CONFIG: Бот получен из глобальной переменной")
+	} else {
+		log.Printf("DISABLED_CONFIG: Бот не инициализирован, уведомления отключены")
+	}
+
+	// Создаем менеджер конфигураций
+	configManager := common.NewConfigManager(
+		common.PANEL_URL,
+		common.PANEL_USER,
+		common.PANEL_PASS,
+		common.INBOUND_ID,
+	)
+
+	// Создаем сервис проверки отключенных конфигов
+	globalDisabledConfigService = services.NewDisabledConfigService(bot, configManager)
+
+	// Запускаем сервис
+	globalDisabledConfigService.Start()
+
+	log.Printf("DISABLED_CONFIG: Сервис проверки отключенных конфигов успешно запущен")
 }

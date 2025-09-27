@@ -62,7 +62,7 @@ func (s PromoCodeStatus) String() string {
 }
 
 // PredefinedAmounts предопределенные суммы для промокодов
-var PredefinedAmounts = []float64{100, 500, 1000, 2000, 5000}
+var PredefinedAmounts = []float64{16, 50, 100, 200, 500, 1000}
 
 // PromoCodeExpirationDays количество дней действия промокода
 const PromoCodeExpirationDays = 14

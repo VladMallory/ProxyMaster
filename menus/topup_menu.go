@@ -12,16 +12,16 @@ func EditTopup(bot *tgbotapi.BotAPI, chatID int64, messageID int) {
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("💰 16₽", "topup:16"),
+			tgbotapi.NewInlineKeyboardButtonData("💰 50₽", "topup:50"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("💰 100₽", "topup:100"),
-			tgbotapi.NewInlineKeyboardButtonData("💰 300₽", "topup:300"),
+			tgbotapi.NewInlineKeyboardButtonData("💰 200₽", "topup:200"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("💰 500₽", "topup:500"),
 			tgbotapi.NewInlineKeyboardButtonData("💰 1000₽", "topup:1000"),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("💰 2000₽", "topup:2000"),
-			tgbotapi.NewInlineKeyboardButtonData("💰 5000₽", "topup:5000"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
