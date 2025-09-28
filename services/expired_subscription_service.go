@@ -1,8 +1,10 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"bot/common"
@@ -93,8 +95,12 @@ func (ess *ExpiredSubscriptionService) checkExpiredSubscriptions() {
 		}
 	}
 
-	if expiredCount > 0 {
-		log.Printf("EXPIRED_SUBSCRIPTION: Проверка завершена. Найдено истекших подписок: %d, отключено конфигов: %d",
+	// ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Ищем рассинхронизацию с панелью управления
+	panelDisabledCount := ess.checkPanelSyncAndDisableExpired()
+	disabledCount += panelDisabledCount
+
+	if expiredCount > 0 || panelDisabledCount > 0 {
+		log.Printf("EXPIRED_SUBSCRIPTION: Проверка завершена. Найдено истекших подписок: %d, отключено конфигов: %d (включая рассинхронизацию с панелью)",
 			expiredCount, disabledCount)
 	} else {
 		log.Printf("EXPIRED_SUBSCRIPTION: Проверка завершена. Истекших подписок не найдено")
@@ -211,6 +217,109 @@ func (ess *ExpiredSubscriptionService) sendAdminNotification(user *common.User) 
 		log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отправки уведомления администратору: %v", err)
 	} else {
 		log.Printf("EXPIRED_SUBSCRIPTION: Уведомление об отключении конфига отправлено администратору")
+	}
+}
+
+// checkPanelSyncAndDisableExpired проверяет рассинхронизацию с панелью управления и отключает истекшие конфиги
+func (ess *ExpiredSubscriptionService) checkPanelSyncAndDisableExpired() int {
+	log.Printf("EXPIRED_SUBSCRIPTION: Проверка рассинхронизации с панелью управления...")
+
+	// Авторизуемся в панели
+	sessionCookie, err := common.Login()
+	if err != nil {
+		log.Printf("EXPIRED_SUBSCRIPTION: Ошибка авторизации в панели для проверки синхронизации: %v", err)
+		return 0
+	}
+
+	// Получаем inbound
+	targetInbound, err := common.GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("EXPIRED_SUBSCRIPTION: Ошибка получения inbound для проверки синхронизации: %v", err)
+		return 0
+	}
+
+	if targetInbound == nil {
+		log.Printf("EXPIRED_SUBSCRIPTION: Inbound с ID %d не найден для проверки синхронизации", common.INBOUND_ID)
+		return 0
+	}
+
+	// Парсим settings
+	var settings common.Settings
+	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+		log.Printf("EXPIRED_SUBSCRIPTION: Ошибка парсинга settings для проверки синхронизации: %v", err)
+		return 0
+	}
+
+	now := time.Now()
+	disabledCount := 0
+
+	// Проверяем всех клиентов в панели
+	for _, client := range settings.Clients {
+		// Ищем пользователя в базе данных по email (который равен telegram_id)
+		telegramID, err := strconv.ParseInt(client.Email, 10, 64)
+		if err != nil {
+			continue // Пропускаем клиентов с нечисловыми email
+		}
+
+		user, err := common.GetUserByTelegramID(telegramID)
+		if err != nil || user == nil {
+			continue // Пользователь не найден в базе данных
+		}
+
+		// Проверяем рассинхронизацию: конфиг активен в панели, но отключен в БД
+		if client.Enable && !user.HasActiveConfig {
+			// Проверяем, истекла ли подписка по времени
+			if client.ExpiryTime > 0 && client.ExpiryTime <= now.UnixMilli() {
+				log.Printf("EXPIRED_SUBSCRIPTION: Найдена рассинхронизация для пользователя %d (email: %s) - конфиг активен в панели, но подписка истекла",
+					user.TelegramID, client.Email)
+
+				// Отключаем конфиг в панели
+				if err := ess.configManager.DisableConfig(client.Email); err != nil {
+					log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отключения конфига в панели для пользователя %d: %v",
+						user.TelegramID, err)
+				} else {
+					disabledCount++
+					log.Printf("EXPIRED_SUBSCRIPTION: Конфиг в панели успешно отключен для пользователя %d (исправлена рассинхронизация)",
+						user.TelegramID)
+
+					// Отправляем уведомление администратору о исправлении рассинхронизации
+					if common.ADMIN_NOTIFICATIONS_ENABLED && common.ADMIN_CONFIG_BLOCKING_ENABLED {
+						ess.sendPanelSyncNotification(user, client.ExpiryTime)
+					}
+				}
+			}
+		}
+	}
+
+	if disabledCount > 0 {
+		log.Printf("EXPIRED_SUBSCRIPTION: Исправлено рассинхронизаций с панелью управления: %d", disabledCount)
+	} else {
+		log.Printf("EXPIRED_SUBSCRIPTION: Рассинхронизаций с панелью управления не найдено")
+	}
+
+	return disabledCount
+}
+
+// sendPanelSyncNotification отправляет уведомление администратору о исправлении рассинхронизации
+func (ess *ExpiredSubscriptionService) sendPanelSyncNotification(user *common.User, expiryTime int64) {
+	expiryTimeStr := time.UnixMilli(expiryTime).Format("2006-01-02 15:04:05")
+
+	message := fmt.Sprintf("🔧 <b>Исправлена рассинхронизация с панелью</b>\n\n"+
+		"📧 Email: %s\n"+
+		"👤 Пользователь: %s (ID: %d)\n"+
+		"⏰ Время истечения: %s\n"+
+		"💰 Баланс: %.2f₽\n\n"+
+		"Конфиг был активен в панели управления, но подписка истекла. Конфиг отключен в панели.",
+		user.Email, user.FirstName, user.TelegramID, expiryTimeStr, user.Balance)
+
+	msg := tgbotapi.NewMessage(common.ADMIN_ID, message)
+	msg.ParseMode = tgbotapi.ModeHTML
+
+	_, err := ess.bot.Send(msg)
+	if err != nil {
+		log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отправки уведомления администратору о рассинхронизации: %v", err)
+	} else {
+		log.Printf("EXPIRED_SUBSCRIPTION: Уведомление об исправлении рассинхронизации отправлено администратору")
 	}
 }
 
