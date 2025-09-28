@@ -32,9 +32,43 @@ sudo apt install -y nginx certbot python3-certbot-nginx curl wget git
 2. **Проверьте доступность домена**:
    ```bash
    ping redirect.yourdomain.com
+   nslookup redirect.yourdomain.com
    ```
 
-### Шаг 3: Установка SSL сертификата
+### Шаг 3: Настройка HTTP (без SSL)
+
+**ВАЖНО**: Сначала настраиваем HTTP, потом получаем SSL сертификат!
+
+```bash
+# Создайте конфигурацию для HTTP (БЕЗ SSL)
+sudo nano /etc/nginx/sites-available/redirect
+```
+
+Вставьте:
+```nginx
+server {
+    listen 80;
+    server_name redirect.yourdomain.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Активируйте конфигурацию:
+```bash
+sudo ln -s /etc/nginx/sites-available/redirect /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Шаг 4: Получение SSL сертификата
 
 ```bash
 # Получение SSL сертификата через Let's Encrypt
@@ -44,14 +78,14 @@ sudo certbot --nginx -d redirect.yourdomain.com --non-interactive --agree-tos --
 sudo certbot certificates
 ```
 
-### Шаг 4: Настройка Nginx
+### Шаг 5: Настройка HTTPS (после получения сертификата)
 
-1. **Создайте конфигурацию для редиректа**:
+1. **Обновите конфигурацию для HTTPS**:
    ```bash
    sudo nano /etc/nginx/sites-available/redirect
    ```
 
-2. **Вставьте следующую конфигурацию**:
+2. **Замените содержимое на HTTPS конфигурацию**:
    ```nginx
    server {
        listen 80;
@@ -90,14 +124,8 @@ sudo certbot certificates
    }
    ```
 
-3. **Активируйте конфигурацию**:
+3. **Проверьте и перезапустите nginx**:
    ```bash
-   # Создайте символическую ссылку
-   sudo ln -s /etc/nginx/sites-available/redirect /etc/nginx/sites-enabled/
-   
-   # Удалите дефолтную конфигурацию (если нужно)
-   sudo rm /etc/nginx/sites-enabled/default
-   
    # Проверьте конфигурацию
    sudo nginx -t
    
@@ -105,7 +133,7 @@ sudo certbot certificates
    sudo systemctl reload nginx
    ```
 
-### Шаг 5: Настройка брандмауэра
+### Шаг 6: Настройка брандмауэра
 
 ```bash
 # Разрешите необходимые порты
@@ -119,7 +147,7 @@ sudo ufw allow 8081/tcp # HTTP сервер бота (только локаль�
 sudo ufw enable
 ```
 
-### Шаг 6: Настройка конфигурации бота
+### Шаг 7: Настройка конфигурации бота
 
 1. **Отредактируйте `common/config.go`**:
    ```go
@@ -134,7 +162,7 @@ sudo ufw enable
    CONFIG_JSON_URL = "https://yourdomain.com:2096/json/"
    ```
 
-### Шаг 7: Создание HTML файлов редиректа
+### Шаг 8: Создание HTML файлов редиректа
 
 Убедитесь, что в проекте есть папка `importRedirect/` с файлами:
 
@@ -142,7 +170,7 @@ sudo ufw enable
 - `redirect_happ_test.html` - для Happ (Android, улучшенная версия)
 - `redirect_v2raytun.html` - для v2raytun
 
-### Шаг 8: Запуск бота
+### Шаг 9: Запуск бота
 
 ```bash
 # Перейдите в папку проекта
@@ -152,7 +180,7 @@ cd /path/to/your/bot
 go run main.go
 ```
 
-### Шаг 9: Проверка работы
+### Шаг 10: Проверка работы
 
 1. **Проверьте HTTP сервер**:
    ```bash

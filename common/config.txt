@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package common
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -70,12 +67,28 @@ var (
 	NOTIFICATION_MESSAGE_3_DAYS string // Сообщение за 3 дня до истечения
 	NOTIFICATION_MESSAGE_7_DAYS string // Сообщение за 7 дней до истечения
 
+	// ========== АВТОМАТИЧЕСКОЕ ОТКЛЮЧЕНИЕ ИСТЕКШИХ ПОДПИСОК ==========
+	EXPIRED_SUBSCRIPTION_CHECK_ENABLED  bool // Включена ли автоматическая проверка истекших подписок
+	EXPIRED_SUBSCRIPTION_CHECK_INTERVAL int  // Интервал проверки истекших подписок (в минутах)
+
+	// ========== АВТОМАТИЧЕСКОЕ ВКЛЮЧЕНИЕ ОТКЛЮЧЕННЫХ КОНФИГОВ ==========
+	DISABLED_CONFIG_CHECK_ENABLED  bool // Включена ли автоматическая проверка отключенных конфигов
+	DISABLED_CONFIG_CHECK_INTERVAL int  // Интервал проверки отключенных конфигов (в минутах)
+
+	// ========== УНИВЕРСАЛЬНЫЕ НАПОМИНАНИЯ О ПОДПИСКЕ ==========
+	UNIVERSAL_REMINDER_ENABLED     bool   // Включены ли универсальные напоминания
+	UNIVERSAL_REMINDER_INTERVAL    int    // Интервал проверки (в минутах, 1440 = 24 часа)
+	UNIVERSAL_REMINDER_DAYS_BEFORE int    // За сколько дней начинать напоминания (по умолчанию 3)
+	UNIVERSAL_REMINDER_MESSAGE     string // Универсальное сообщение с плейсхолдерами
+	UNIVERSAL_REMINDER_LOG_PATH    string // Путь к логу отправленных напоминаний
+
 	// ========== АДМИНИСТРАТИВНЫЕ УВЕДОМЛЕНИЯ ==========
 	ADMIN_NOTIFICATIONS_ENABLED   bool // Включены ли уведомления для админа
 	ADMIN_CONFIG_BLOCKING_ENABLED bool // Уведомления о блокировке конфигов
 	ADMIN_IP_BAN_ENABLED          bool // Уведомления о срабатывании IP ban
 	ADMIN_BALANCE_TOPUP_ENABLED   bool // Уведомления о пополнении баланса
 	ADMIN_REFERRAL_ENABLED        bool // Уведомления о новых рефералах
+	ADMIN_REMINDER_ENABLED        bool // Уведомления о отправленных напоминаниях о подписке
 
 	// ========== СИСТЕМЫ ОЧИСТКИ И ПРОВЕРКИ ==========
 	DUPLICATE_CLEANUP_ENABLED   bool // Включена ли очистка дубликатов
@@ -111,6 +124,8 @@ var (
 	CONSOLE_LOG_PATH    string // Путь к файлу консольных логов
 	USERS_LOG_ENABLED   bool   // Включено ли логирование действий пользователей
 	USERS_LOG_PATH      string // Путь к файлу логов пользователей
+	PAYMENT_LOG_ENABLED bool   // Включено ли логирование платежей
+	PAYMENT_LOG_PATH    string // Путь к файлу логов платежей
 
 	// ========== ГЛОБАЛЬНЫЕ ОБЪЕКТЫ ==========
 	GlobalBot             *tgbotapi.BotAPI         // Глобальный экземпляр бота
@@ -128,18 +143,18 @@ func init() {
 	SUPPORT_LINK = "https://t.me/"
 
 	// ========== НАСТРОЙКИ ПАНЕЛИ УПРАВЛЕНИЯ ==========
-	PANEL_URL = "https://domen.ru:243/asdf/"
-	PANEL_USER = "логин"
-	PANEL_PASS = "пароль"
+	PANEL_URL = ""
+	PANEL_USER = ""
+	PANEL_PASS = ""
 	INBOUND_ID = 1
-	CONFIG_BASE_URL = "https://asd.ru:17/asd/"
-	CONFIG_JSON_URL = "https://asd.ru:87/asd/"
-	REDIRECT_DOMAIN = "im.asd.ru:8443"
+	CONFIG_BASE_URL = "https://domen.ru:123/asd/"
+	CONFIG_JSON_URL = "https://domen.ru:123/asd/"
+	REDIRECT_DOMAIN = "im.domen.443"
 	REDIRECT_IMPORT = "happ"
 
 	// ========== НАСТРОЙКИ ТРАФИКА И ПОДПИСОК ==========
 	PRICE_PER_DAY = 8
-	TRIAL_BALANCE_AMOUNT = 240
+	TRIAL_BALANCE_AMOUNT = 32
 	TRAFFIC_LIMIT_GB = 140
 	TRAFFIC_RESET_ENABLED = true
 	TRAFFIC_RESET_INTERVAL = 10080 // 7 дней в минутах
@@ -148,7 +163,7 @@ func init() {
 
 	// ========== СИСТЕМА IP БАНА ==========
 	IP_BAN_ENABLED = true
-	MAX_IPS_PER_CONFIG = 10
+	MAX_IPS_PER_CONFIG = 20
 	ACCESS_LOG_PATH = "/usr/local/x-ui/access.log"
 	IP_ACCUMULATED_PATH = "/var/log/ip_accumulated.log"
 	IP_BAN_LOG_PATH = "/root/bot/logs/ip_ban.log"
@@ -167,9 +182,9 @@ func init() {
 
 	// ========== РЕФЕРАЛЬНАЯ СИСТЕМА ==========
 	REFERRAL_SYSTEM_ENABLED = true
-	REFERRAL_BONUS_AMOUNT = 1000
-	REFERRAL_WELCOME_BONUS = 500
-	REFERRAL_LINK_BASE_URL = "https://t.me/proxybot?start=ref_"
+	REFERRAL_BONUS_AMOUNT = float64(PRICE_PER_DAY) * 30 * 1  // 1 месяца
+	REFERRAL_WELCOME_BONUS = float64(PRICE_PER_DAY) * 30 * 1 // 1 месяц
+	REFERRAL_LINK_BASE_URL = "https://t.me/bot?start=ref_"
 	REFERRAL_MIN_BALANCE_FOR_REF = 0.0
 	REFERRAL_CHECK_ENABLED = true
 	REFERRAL_CHECK_INTERVAL = 1440 // 24 часа в минутах
@@ -190,12 +205,32 @@ func init() {
 		"Не забудьте пополнить баланс и продлить подписку.\n\n" +
 		"Нажмите /balance для просмотра баланса и продления."
 
+	// ========== АВТОМАТИЧЕСКОЕ ОТКЛЮЧЕНИЕ ИСТЕКШИХ ПОДПИСОК ==========
+	EXPIRED_SUBSCRIPTION_CHECK_ENABLED = true
+	EXPIRED_SUBSCRIPTION_CHECK_INTERVAL = 1440 // интервал проверки
+
+	// ========== АВТОМАТИЧЕСКОЕ ВКЛЮЧЕНИЕ ОТКЛЮЧЕННЫХ КОНФИГОВ ==========
+	DISABLED_CONFIG_CHECK_ENABLED = true
+	DISABLED_CONFIG_CHECK_INTERVAL = 1440 // интервал проверки
+
+	// ========== УНИВЕРСАЛЬНЫЕ НАПОМИНАНИЯ О ПОДПИСКЕ ==========
+	UNIVERSAL_REMINDER_ENABLED = false
+	UNIVERSAL_REMINDER_INTERVAL = 1440 // 24 часа в минутах
+	UNIVERSAL_REMINDER_DAYS_BEFORE = 3 // Начинать напоминания за 3 дня
+	UNIVERSAL_REMINDER_MESSAGE = "⏰ <b>Напоминание о подписке</b>\n\n" +
+		"До окончания вашей подписки осталось: <b>{DAYS} дней {HOURS} часов</b>\n\n" +
+		"Не хотелось бы, чтобы вы потеряли доступ к любимому сервису.\n\n" +
+		"💡 Продлить очень просто: нажмите кнопку `Пополнить` в боте, выберите СБП и удобный для вас банк.\n\n" +
+		"🌟 Спасибо, что остаётесь с нами!"
+	UNIVERSAL_REMINDER_LOG_PATH = "/root/bot/logs/reminders.log"
+
 	// ========== АДМИНИСТРАТИВНЫЕ УВЕДОМЛЕНИЯ ==========
 	ADMIN_NOTIFICATIONS_ENABLED = true
 	ADMIN_CONFIG_BLOCKING_ENABLED = true
 	ADMIN_IP_BAN_ENABLED = true
 	ADMIN_BALANCE_TOPUP_ENABLED = true
 	ADMIN_REFERRAL_ENABLED = true
+	ADMIN_REMINDER_ENABLED = true
 
 	// ========== СИСТЕМЫ ОЧИСТКИ И ПРОВЕРКИ ==========
 	DUPLICATE_CLEANUP_ENABLED = true
@@ -212,7 +247,7 @@ func init() {
 	YUKASSA_SHOP_ID = ""
 	YUKASSA_SECRET_KEY = ""
 	YUKASSA_API_PAYMENTS_ENABLED = true
-	YUKASSA_WEBHOOK_URL = "https://asd.ru:8081/yukassa/webhook"
+	YUKASSA_WEBHOOK_URL = "https://bot.ru:8081/yukassa/webhook"
 
 	// Настройки чеков
 	YUKASSA_RECEIPT_ENABLED = true
@@ -231,4 +266,6 @@ func init() {
 	CONSOLE_LOG_PATH = "/root/bot/logs/console.log"
 	USERS_LOG_ENABLED = true
 	USERS_LOG_PATH = "/root/bot/logs/users.log"
+	PAYMENT_LOG_ENABLED = true
+	PAYMENT_LOG_PATH = "/root/bot/logs/pay.log"
 }
