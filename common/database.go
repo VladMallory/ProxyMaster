@@ -146,6 +146,18 @@ func ProcessPayment(user *User, days int) (string, error) {
 		return "", fmt.Errorf("ошибка создания конфига: %v", err)
 	}
 
+	// Создаем конфиг в дополнительном инбаунде, если он включен
+	if SECONDARY_INBOUND_ENABLED {
+		log.Printf("PROCESS_PAYMENT: Создание конфига в дополнительном инбаунде для TelegramID=%d", user.TelegramID)
+		err = AddSecondaryClient(sessionCookie, user, days)
+		if err != nil {
+			log.Printf("PROCESS_PAYMENT: ⚠️ Ошибка создания конфига в дополнительном инбаунде для TelegramID=%d: %v", user.TelegramID, err)
+			// Не прерываем выполнение, основной конфиг уже создан
+		} else {
+			log.Printf("PROCESS_PAYMENT: ✅ Конфиг в дополнительном инбаунде создан для TelegramID=%d", user.TelegramID)
+		}
+	}
+
 	// Принудительно сбрасываем состояние "исчерпано" после создания/продления
 	log.Printf("PROCESS_PAYMENT: Принудительный сброс состояния 'исчерпано' для TelegramID=%d", user.TelegramID)
 	if err := ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {

@@ -579,11 +579,27 @@ func restartInbound(sessionCookie string, inboundID int) error {
 	return nil
 }
 
-// FindClientByTelegramID находит клиента по префиксу TelegramID
+// FindClientByTelegramID находит клиента по префиксу TelegramID или по TgID
 func FindClientByTelegramID(clients []Client, telegramID int64) *Client {
 	telegramIDStr := fmt.Sprintf("%d", telegramID)
 	for _, client := range clients {
+		// Поиск по email (основной способ)
 		if strings.HasPrefix(client.Email, telegramIDStr+"_") || strings.HasPrefix(client.Email, telegramIDStr+" ") || client.Email == telegramIDStr {
+			return &client
+		}
+
+		// Поиск по TgID (для дополнительного инбаунда)
+		if client.TgID == telegramID {
+			return &client
+		}
+	}
+	return nil
+}
+
+// FindClientByEmail находит клиента по точному email
+func FindClientByEmail(clients []Client, email string) *Client {
+	for _, client := range clients {
+		if client.Email == email {
 			return &client
 		}
 	}
@@ -619,12 +635,6 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 			existingClientByEmail = &client
 			break
 		}
-	}
-
-	// Если клиент уже существует в inbound, не создаем новый
-	if existingClientByEmail != nil {
-		log.Printf("ADD_TRIAL_CLIENT: Клиент с email %s уже существует в inbound, пропускаем создание", email)
-		return nil
 	}
 
 	// Проверяем, существует ли уже клиент с таким TelegramID (по префиксу)
@@ -1107,4 +1117,349 @@ func CleanupPhantomClientsFromDB(telegramID int64) error {
 
 	// Возвращаем ошибку, чтобы система перешла к созданию клиента с альтернативным email
 	return fmt.Errorf("очистка БД панели недоступна через API")
+}
+
+// ============================================================================
+// ФУНКЦИИ ДЛЯ РАБОТЫ С ДОПОЛНИТЕЛЬНЫМ ИНБАУНДОМ
+// ============================================================================
+
+// GetSecondaryInbound получает полный inbound object для дополнительного инбаунда
+func GetSecondaryInbound(sessionCookie string) (*Inbound, error) {
+	if !SECONDARY_INBOUND_ENABLED {
+		return nil, fmt.Errorf("дополнительный инбаунд отключен")
+	}
+
+	log.Printf("GET_SECONDARY_INBOUND: Получение дополнительного inbound, ID=%d", SECONDARY_INBOUND_ID)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", PANEL_URL, SECONDARY_INBOUND_ID), nil)
+	if err != nil {
+		log.Printf("GET_SECONDARY_INBOUND: Ошибка создания запроса: %v", err)
+		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+
+	req.Header.Set("Cookie", sessionCookie)
+	log.Printf("GET_SECONDARY_INBOUND: Запрос создан, заголовки: %+v", req.Header)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("GET_SECONDARY_INBOUND: Ошибка выполнения запроса: %v", err)
+		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("GET_SECONDARY_INBOUND: Ошибка чтения ответа: %v", err)
+		return nil, fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+	log.Printf("GET_SECONDARY_INBOUND: Ответ сервера: status=%d, body=%s", resp.StatusCode, string(body))
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("GET_SECONDARY_INBOUND: Некорректный статус ответа: %d", resp.StatusCode)
+		return nil, fmt.Errorf("некорректный статус ответа: %d, body=%s", resp.StatusCode, string(body))
+	}
+
+	var inboundInfo InboundInfo
+	if err := json.Unmarshal(body, &inboundInfo); err != nil {
+		log.Printf("GET_SECONDARY_INBOUND: Ошибка десериализации ответа: %v, body=%s", err, string(body))
+		return nil, fmt.Errorf("ошибка десериализации ответа: %v, body=%s", err, string(body))
+	}
+
+	if !inboundInfo.Success {
+		log.Printf("GET_SECONDARY_INBOUND: Получение дополнительного inbound не удалось: msg=%s", inboundInfo.Msg)
+		return nil, fmt.Errorf("получение дополнительного inbound не удалось: %s", inboundInfo.Msg)
+	}
+
+	log.Printf("GET_SECONDARY_INBOUND: Успешно получен дополнительный inbound: ID=%d", inboundInfo.Obj.ID)
+	return &inboundInfo.Obj, nil
+}
+
+// AddSecondaryClient добавляет клиента в дополнительный инбаунд
+func AddSecondaryClient(sessionCookie string, user *User, days int) error {
+	if !SECONDARY_INBOUND_ENABLED {
+		return fmt.Errorf("дополнительный инбаунд отключен")
+	}
+
+	log.Printf("ADD_SECONDARY_CLIENT: Добавление клиента в дополнительный инбаунд для пользователя %d, days=%d", user.TelegramID, days)
+
+	// Получаем дополнительный inbound
+	targetInbound, err := GetSecondaryInbound(sessionCookie)
+	if err != nil {
+		log.Printf("ADD_SECONDARY_CLIENT: Ошибка получения дополнительного inbound: %v", err)
+		return fmt.Errorf("ошибка получения дополнительного inbound: %v", err)
+	}
+
+	if targetInbound == nil {
+		log.Printf("ADD_SECONDARY_CLIENT: Дополнительный inbound с ID %d не найден", SECONDARY_INBOUND_ID)
+		return fmt.Errorf("дополнительный inbound с ID %d не найден", SECONDARY_INBOUND_ID)
+	}
+
+	// Парсим settings
+	var settings Settings
+	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+		log.Printf("ADD_SECONDARY_CLIENT: Ошибка парсинга settings дополнительного inbound: %v", err)
+		return fmt.Errorf("ошибка парсинга settings: %v", err)
+	}
+
+	// Генерируем уникальный email для дополнительного инбаунда (формат: telegramID_1)
+	email := fmt.Sprintf("%d_1", user.TelegramID)
+	clientUUID := uuid.New().String()
+	subID := GenerateSubID()
+	expiryTime := time.Now().AddDate(0, 0, days).UnixMilli()
+	falseValue := false
+
+	newClient := Client{
+		ID:         clientUUID,
+		Flow:       "", // Для VLESS WebSocket flow должен быть пустым
+		Email:      email,
+		TotalGB:    0, // Убираем лимит трафика (0 = безлимит)
+		ExpiryTime: expiryTime,
+		Enable:     true,
+		TgID:       0, // Для дополнительного инбаунда TgID = 0 (как в существующих клиентах)
+		SubID:      subID,
+		Reset:      0,           // Убираем автопродление
+		Depleted:   &falseValue, // НЕ устанавливаем статус "исчерпано"
+		Exhausted:  &falseValue, // НЕ устанавливаем статус "исчерпано"
+		CreatedAt:  time.Now().UnixMilli(),
+		UpdatedAt:  time.Now().UnixMilli(),
+	}
+
+	// Добавляем нового клиента
+	settings.Clients = append(settings.Clients, newClient)
+
+	// Обновляем данные пользователя для дополнительного инбаунда
+	user.HasActiveSecondaryConfig = true
+	user.SecondaryClientID = clientUUID
+	user.SecondaryEmail = email
+	user.SecondarySubID = subID
+	user.SecondaryConfigCreatedAt = time.Now()
+	user.SecondaryExpiryTime = expiryTime
+
+	// Сериализуем обновлённые settings
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		log.Printf("ADD_SECONDARY_CLIENT: Ошибка сериализации settings: %v", err)
+		return fmt.Errorf("ошибка сериализации settings: %v", err)
+	}
+	targetInbound.Settings = string(settingsJSON)
+
+	// Обновляем дополнительный inbound
+	log.Printf("ADD_SECONDARY_CLIENT: Обновление дополнительного inbound для пользователя %d", user.TelegramID)
+	err = updateInbound(sessionCookie, *targetInbound)
+	if err != nil {
+		log.Printf("ADD_SECONDARY_CLIENT: Ошибка обновления дополнительного inbound: %v", err)
+		return fmt.Errorf("ошибка обновления дополнительного inbound: %v", err)
+	}
+
+	log.Printf("ADD_SECONDARY_CLIENT: ✅ Клиент успешно добавлен в дополнительный инбаунд для пользователя %d, Email=%s, SubID=%s",
+		user.TelegramID, email, subID)
+	return nil
+}
+
+// SyncUserWithSecondaryPanel синхронизирует пользователя с дополнительным инбаундом
+func SyncUserWithSecondaryPanel(user *User) error {
+	if !SECONDARY_INBOUND_ENABLED {
+		return fmt.Errorf("дополнительный инбаунд отключен")
+	}
+
+	log.Printf("SYNC_SECONDARY_PANEL: ===== НАЧАЛО СИНХРОНИЗАЦИИ С ДОПОЛНИТЕЛЬНЫМ ИНБАУНДОМ =====")
+	log.Printf("SYNC_SECONDARY_PANEL: Пользователь: %d, HasActiveSecondaryConfig=%v, SecondaryClientID=%s, SecondarySubID=%s",
+		user.TelegramID, user.HasActiveSecondaryConfig, user.SecondaryClientID, user.SecondarySubID)
+
+	// Авторизуемся в панели
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("SYNC_SECONDARY_PANEL: Ошибка авторизации для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка авторизации: %v", err)
+	}
+
+	// Получаем дополнительный inbound
+	targetInbound, err := GetSecondaryInbound(sessionCookie)
+	if err != nil {
+		log.Printf("SYNC_SECONDARY_PANEL: Ошибка получения дополнительного inbound для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка получения дополнительного inbound: %v", err)
+	}
+
+	if targetInbound == nil {
+		log.Printf("SYNC_SECONDARY_PANEL: Дополнительный inbound с ID %d не найден для пользователя %d", SECONDARY_INBOUND_ID, user.TelegramID)
+		return fmt.Errorf("дополнительный inbound с ID %d не найден", SECONDARY_INBOUND_ID)
+	}
+
+	// Парсим settings
+	var settings Settings
+	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+		log.Printf("SYNC_SECONDARY_PANEL: Ошибка парсинга settings для пользователя %d: %v", user.TelegramID, err)
+		return fmt.Errorf("ошибка парсинга settings: %v", err)
+	}
+
+	// Ищем клиента пользователя в дополнительном инбаунде
+	expectedEmail := fmt.Sprintf("%d_1", user.TelegramID)
+	existingClient := FindClientByEmail(settings.Clients, expectedEmail)
+
+	// Если не найден клиент с суффиксом _1, ищем клиента без суффикса
+	if existingClient == nil {
+		legacyEmail := fmt.Sprintf("%d", user.TelegramID)
+		existingClient = FindClientByEmail(settings.Clients, legacyEmail)
+		if existingClient != nil {
+			log.Printf("SYNC_SECONDARY_PANEL: Найден клиент без суффикса _1 для пользователя %d: Email=%s, переименовываем в %s",
+				user.TelegramID, existingClient.Email, expectedEmail)
+			// Переименовываем клиента, добавляя суффикс _1
+			existingClient.Email = expectedEmail
+
+			// Обновляем inbound с переименованным клиентом
+			log.Printf("SYNC_SECONDARY_PANEL: Обновление inbound с переименованным клиентом для пользователя %d", user.TelegramID)
+
+			// Обновляем settings в targetInbound
+			settingsBytes, err := json.Marshal(settings)
+			if err != nil {
+				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка маршалинга settings для пользователя %d: %v", user.TelegramID, err)
+				return fmt.Errorf("ошибка маршалинга settings: %v", err)
+			}
+			targetInbound.Settings = string(settingsBytes)
+
+			if err := UpdateInbound(sessionCookie, *targetInbound); err != nil {
+				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка обновления inbound с переименованным клиентом для пользователя %d: %v", user.TelegramID, err)
+				return fmt.Errorf("ошибка обновления inbound с переименованным клиентом: %v", err)
+			}
+			log.Printf("SYNC_SECONDARY_PANEL: ✅ Inbound обновлен с переименованным клиентом для пользователя %d", user.TelegramID)
+		}
+	}
+
+	if existingClient != nil {
+		log.Printf("SYNC_SECONDARY_PANEL: ✅ Найден клиент в дополнительном инбаунде для пользователя %d: Email=%s, SubID=%s, Enable=%v, ExpiryTime=%d",
+			user.TelegramID, existingClient.Email, existingClient.SubID, existingClient.Enable, existingClient.ExpiryTime)
+
+		// Обновляем данные пользователя из дополнительного инбаунда
+		oldSecondaryClientID := user.SecondaryClientID
+		oldSecondarySubID := user.SecondarySubID
+		oldHasActiveSecondaryConfig := user.HasActiveSecondaryConfig
+
+		user.SecondaryClientID = existingClient.ID
+		user.SecondarySubID = existingClient.SubID
+		user.SecondaryEmail = existingClient.Email
+		user.SecondaryExpiryTime = existingClient.ExpiryTime
+		user.HasActiveSecondaryConfig = existingClient.Enable && time.Now().UnixMilli() < existingClient.ExpiryTime
+		user.UpdatedAt = time.Now()
+
+		log.Printf("SYNC_SECONDARY_PANEL: Обновление данных пользователя %d: SecondaryClientID %s->%s, SecondarySubID %s->%s, HasActiveSecondaryConfig %v->%v",
+			user.TelegramID, oldSecondaryClientID, user.SecondaryClientID, oldSecondarySubID, user.SecondarySubID, oldHasActiveSecondaryConfig, user.HasActiveSecondaryConfig)
+
+		// Сохраняем в базу
+		log.Printf("SYNC_SECONDARY_PANEL: Сохранение обновленного пользователя %d в базу", user.TelegramID)
+		if err := UpdateUser(user); err != nil {
+			log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка обновления пользователя %d: %v", user.TelegramID, err)
+			return fmt.Errorf("ошибка обновления пользователя: %v", err)
+		} else {
+			log.Printf("SYNC_SECONDARY_PANEL: ✅ Пользователь %d успешно синхронизирован с дополнительным инбаундом, HasActiveSecondaryConfig=%v",
+				user.TelegramID, user.HasActiveSecondaryConfig)
+		}
+	} else {
+		log.Printf("SYNC_SECONDARY_PANEL: ❌ Конфиг %s в дополнительном инбаунде для пользователя %d не найден", expectedEmail, user.TelegramID)
+		log.Printf("SYNC_SECONDARY_PANEL: Доступные клиенты в дополнительном инбаунде:")
+		for i, client := range settings.Clients {
+			log.Printf("SYNC_SECONDARY_PANEL:   [%d] Email=%s, SubID=%s, Enable=%v", i, client.Email, client.SubID, client.Enable)
+		}
+
+		// Если у пользователя есть активный основной конфиг, создаем клиента в дополнительном инбаунде
+		if user.HasActiveConfig {
+			log.Printf("SYNC_SECONDARY_PANEL: У пользователя %d есть активный основной конфиг, создаем клиента в дополнительном инбаунде", user.TelegramID)
+
+			// Определяем количество дней на основе основного конфига
+			days := 30 // По умолчанию
+			if user.ExpiryTime > 0 {
+				// Если есть основной конфиг, используем его оставшееся время
+				remainingDays := int((user.ExpiryTime - time.Now().UnixMilli()) / (24 * 60 * 60 * 1000))
+				if remainingDays > 0 {
+					days = remainingDays
+				}
+			}
+
+			log.Printf("SYNC_SECONDARY_PANEL: Создание клиента в дополнительном инбаунде для пользователя %d, дней: %d", user.TelegramID, days)
+
+			err = AddSecondaryClient(sessionCookie, user, days)
+			if err != nil {
+				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка создания клиента в дополнительном инбаунде для пользователя %d: %v", user.TelegramID, err)
+				// Не прерываем выполнение, просто логируем ошибку
+			} else {
+				log.Printf("SYNC_SECONDARY_PANEL: ✅ Клиент создан в дополнительном инбаунде для пользователя %d: Email=%s, SubID=%s",
+					user.TelegramID, user.SecondaryEmail, user.SecondarySubID)
+
+				// Сохраняем обновленные данные пользователя
+				user.UpdatedAt = time.Now()
+				if err := UpdateUser(user); err != nil {
+					log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка сохранения данных пользователя %d после создания клиента: %v", user.TelegramID, err)
+				}
+			}
+		} else {
+			// Сбрасываем данные дополнительного инбаунда, если нет основного конфига
+			user.HasActiveSecondaryConfig = false
+			user.SecondaryClientID = ""
+			user.SecondarySubID = ""
+			user.SecondaryEmail = ""
+			user.SecondaryExpiryTime = 0
+			user.UpdatedAt = time.Now()
+
+			if err := UpdateUser(user); err != nil {
+				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка сброса данных дополнительного инбаунда для пользователя %d: %v", user.TelegramID, err)
+			}
+		}
+	}
+
+	log.Printf("SYNC_SECONDARY_PANEL: ===== КОНЕЦ СИНХРОНИЗАЦИИ С ДОПОЛНИТЕЛЬНЫМ ИНБАУНДОМ =====")
+	return nil
+}
+
+// IsSecondaryConfigActive проверяет, активен ли конфиг в дополнительном инбаунде
+func IsSecondaryConfigActive(user *User) bool {
+	if !SECONDARY_INBOUND_ENABLED || !user.HasActiveSecondaryConfig || user.SecondaryExpiryTime == 0 {
+		return false
+	}
+	return time.Now().UnixMilli() < user.SecondaryExpiryTime
+}
+
+// GetSecondaryConfigURL возвращает URL конфигурации для дополнительного инбаунда
+func GetSecondaryConfigURL(user *User) string {
+	if !SECONDARY_INBOUND_ENABLED || user.SecondarySubID == "" {
+		return ""
+	}
+	return SECONDARY_CONFIG_BASE_URL + user.SecondarySubID
+}
+
+// HasAnyActiveConfig проверяет, есть ли активный конфиг в любом из инбаундов
+func HasAnyActiveConfig(user *User) bool {
+	// Проверяем основной конфиг
+	if user.HasActiveConfig && IsConfigActive(user) {
+		return true
+	}
+
+	// Проверяем дополнительный конфиг, если он включен
+	if SECONDARY_INBOUND_ENABLED && user.HasActiveSecondaryConfig && IsSecondaryConfigActive(user) {
+		return true
+	}
+
+	return false
+}
+
+// GetActiveConfigInfo возвращает информацию об активных конфигах пользователя
+func GetActiveConfigInfo(user *User) map[string]interface{} {
+	info := make(map[string]interface{})
+
+	// Основной инбаунд
+	info["primary_active"] = user.HasActiveConfig && IsConfigActive(user)
+	info["primary_expiry"] = user.ExpiryTime
+	info["primary_config_url"] = CONFIG_BASE_URL + user.SubID
+
+	// Дополнительный инбаунд
+	if SECONDARY_INBOUND_ENABLED {
+		info["secondary_active"] = user.HasActiveSecondaryConfig && IsSecondaryConfigActive(user)
+		info["secondary_expiry"] = user.SecondaryExpiryTime
+		info["secondary_config_url"] = GetSecondaryConfigURL(user)
+	} else {
+		info["secondary_active"] = false
+		info["secondary_enabled"] = false
+	}
+
+	// Общий статус
+	info["any_active"] = HasAnyActiveConfig(user)
+
+	return info
 }

@@ -248,8 +248,11 @@ func (abs *AutoBillingService) processBalanceRecalculation() {
 			continue
 		}
 
+		// Проверяем наличие активного конфига в любом из инбаундов
+		hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
+
 		// Если у пользователя нет активного конфига, создаем новый
-		if !user.HasActiveConfig {
+		if !hasAnyActiveConfig {
 			err := abs.createConfigFromBalance(&user, availableDays)
 			if err != nil {
 				log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
@@ -333,8 +336,11 @@ func (abs *AutoBillingService) processBalanceRecalculationForUser(telegramID int
 
 	now := time.Now()
 
+	// Проверяем наличие активного конфига в любом из инбаундов
+	hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
+
 	// Если у пользователя нет активного конфига, создаем новый
-	if !user.HasActiveConfig {
+	if !hasAnyActiveConfig {
 		err := abs.createConfigFromBalance(user, availableDays)
 		if err != nil {
 			log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
@@ -396,6 +402,18 @@ func (abs *AutoBillingService) createConfigFromBalance(user *common.User, days i
 	if err != nil {
 		log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
 		return fmt.Errorf("ошибка создания конфига: %v", err)
+	}
+
+	// Создаем конфиг в дополнительном инбаунде, если он включен
+	if common.SECONDARY_INBOUND_ENABLED {
+		log.Printf("AUTO_BILLING: Создание конфига в дополнительном инбаунде для пользователя %d", user.TelegramID)
+		err = common.AddSecondaryClient(sessionCookie, user, days)
+		if err != nil {
+			log.Printf("AUTO_BILLING: ⚠️ Ошибка создания конфига в дополнительном инбаунде для пользователя %d: %v", user.TelegramID, err)
+			// Не прерываем выполнение, основной конфиг уже создан
+		} else {
+			log.Printf("AUTO_BILLING: ✅ Конфиг в дополнительном инбаунде создан для пользователя %d", user.TelegramID)
+		}
 	}
 
 	// Обновляем данные пользователя в базе БЕЗ изменения баланса
@@ -561,9 +579,10 @@ func (abs *AutoBillingService) diagnoseAndFixSyncIssues() {
 	fixedCount := 0
 	checkedCount := 0
 
-	// Проверяем каждого пользователя с активным конфигом
+	// Проверяем каждого пользователя с активным конфигом (в любом из инбаундов)
 	for _, user := range users {
-		if !user.HasActiveConfig || user.Balance <= 0 {
+		hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
+		if !hasAnyActiveConfig || user.Balance <= 0 {
 			continue
 		}
 

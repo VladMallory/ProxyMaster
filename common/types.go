@@ -37,6 +37,14 @@ type User struct {
 	ReferredBy       int64   `bson:"referred_by" json:"referred_by"`
 	ReferralEarnings float64 `bson:"referral_earnings" json:"referral_earnings"`
 	ReferralCount    int     `bson:"referral_count" json:"referral_count"`
+
+	// Дополнительный инбаунд
+	SecondaryClientID        string    `bson:"secondary_client_id" json:"secondary_client_id"`
+	SecondarySubID           string    `bson:"secondary_sub_id" json:"secondary_sub_id"`
+	SecondaryEmail           string    `bson:"secondary_email" json:"secondary_email"`
+	SecondaryConfigCreatedAt time.Time `bson:"secondary_config_created_at" json:"secondary_config_created_at"`
+	SecondaryExpiryTime      int64     `bson:"secondary_expiry_time" json:"secondary_expiry_time"`
+	HasActiveSecondaryConfig bool      `bson:"has_active_secondary_config" json:"has_active_secondary_config"`
 }
 
 // TrafficConfig представляет конфигурацию трафика

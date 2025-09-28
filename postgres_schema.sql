@@ -31,7 +31,14 @@ CREATE TABLE users (
     referral_code VARCHAR(50) UNIQUE,
     referred_by BIGINT,
     referral_earnings DECIMAL(10,2) DEFAULT 0.00,
-    referral_count INTEGER DEFAULT 0
+    referral_count INTEGER DEFAULT 0,
+    -- Дополнительный инбаунд
+    secondary_client_id VARCHAR(255),
+    secondary_sub_id VARCHAR(255),
+    secondary_email VARCHAR(255),
+    secondary_config_created_at TIMESTAMP,
+    secondary_expiry_time BIGINT,
+    has_active_secondary_config BOOLEAN DEFAULT FALSE
 );
 
 -- Настройки трафика
@@ -104,6 +111,7 @@ CREATE TABLE referral_bonuses (
 CREATE INDEX idx_users_telegram_id ON users(telegram_id);
 CREATE INDEX idx_users_created_at ON users(created_at);
 CREATE INDEX idx_users_has_active_config ON users(has_active_config);
+CREATE INDEX idx_users_has_active_secondary_config ON users(has_active_secondary_config);
 CREATE INDEX idx_users_has_used_trial ON users(has_used_trial);
 CREATE INDEX idx_users_balance ON users(balance);
 

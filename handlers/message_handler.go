@@ -577,12 +577,22 @@ func ensureUserHasConfig(bot *tgbotapi.BotAPI, user *common.User, chatID int64) 
 	// ВАЖНО: При каждом /start принудительно проверяем конфиг в панели
 	// Сначала синхронизируем с панелью, чтобы убедиться, что конфиг действительно существует
 	log.Printf("ENSURE_CONFIG: 🔄 Принудительная синхронизация с панелью для пользователя %d", user.TelegramID)
-	log.Printf("ENSURE_CONFIG: 📊 Текущее состояние пользователя %d: HasActiveConfig=%v, Balance=%.2f₽, ClientID=%s, SubID=%s",
-		user.TelegramID, user.HasActiveConfig, user.Balance, user.ClientID, user.SubID)
+	log.Printf("ENSURE_CONFIG: 📊 Текущее состояние пользователя %d: HasActiveConfig=%v, HasActiveSecondaryConfig=%v, Balance=%.2f₽, ClientID=%s, SubID=%s",
+		user.TelegramID, user.HasActiveConfig, user.HasActiveSecondaryConfig, user.Balance, user.ClientID, user.SubID)
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Небольшая задержка
 		log.Printf("ENSURE_CONFIG: Запуск syncUserWithPanelFromHandler для пользователя %d", user.TelegramID)
 		syncUserWithPanelFromHandler(user)
+
+		// Синхронизируем с дополнительным инбаундом, если он включен
+		if common.SECONDARY_INBOUND_ENABLED {
+			log.Printf("ENSURE_CONFIG: 🔄 Синхронизация с дополнительным инбаундом для пользователя %d", user.TelegramID)
+			if err := common.SyncUserWithSecondaryPanel(user); err != nil {
+				log.Printf("ENSURE_CONFIG: ⚠️ Ошибка синхронизации с дополнительным инбаундом для пользователя %d: %v", user.TelegramID, err)
+			} else {
+				log.Printf("ENSURE_CONFIG: ✅ Синхронизация с дополнительным инбаундом завершена для пользователя %d", user.TelegramID)
+			}
+		}
 
 		// После синхронизации проверяем еще раз
 		log.Printf("ENSURE_CONFIG: Получение обновленного пользователя %d после синхронизации", user.TelegramID)
@@ -592,9 +602,13 @@ func ensureUserHasConfig(bot *tgbotapi.BotAPI, user *common.User, chatID int64) 
 			return
 		}
 
+		// Проверяем наличие активного конфига в любом из инбаундов
+		hasAnyActiveConfig := updatedUser.HasActiveConfig || updatedUser.HasActiveSecondaryConfig
+
 		// Если после синхронизации у пользователя есть активный конфиг, ничего не делаем
-		if updatedUser.HasActiveConfig {
-			log.Printf("ENSURE_CONFIG: ✅ После синхронизации у пользователя %d найден активный конфиг", user.TelegramID)
+		if hasAnyActiveConfig {
+			log.Printf("ENSURE_CONFIG: ✅ После синхронизации у пользователя %d найден активный конфиг (основной: %v, дополнительный: %v)",
+				user.TelegramID, updatedUser.HasActiveConfig, updatedUser.HasActiveSecondaryConfig)
 			return
 		}
 
@@ -618,18 +632,17 @@ func ensureUserHasConfig(bot *tgbotapi.BotAPI, user *common.User, chatID int64) 
 		common.ForceBalanceRecalculation(updatedUser.TelegramID)
 		log.Printf("ENSURE_CONFIG: ✅ ForceBalanceRecalculation завершен для пользователя %d", updatedUser.TelegramID)
 	}()
-	return
 }
 
 // syncUserWithPanelFromHandler синхронизирует пользователя с панелью 3x-ui (копия из common/postgres.go)
 func syncUserWithPanelFromHandler(user *common.User) {
-	log.Printf("SYNC_PANEL: ===== НАЧАЛО СИНХРОНИЗАЦИИ С ПАНЕЛЬЮ =====")
-	log.Printf("SYNC_PANEL: Пользователь: %d", user.TelegramID)
-
 	if user == nil {
 		log.Printf("SYNC_PANEL: ❌ Пользователь nil, прерываем синхронизацию")
 		return
 	}
+
+	log.Printf("SYNC_PANEL: ===== НАЧАЛО СИНХРОНИЗАЦИИ С ПАНЕЛЬЮ =====")
+	log.Printf("SYNC_PANEL: Пользователь: %d", user.TelegramID)
 
 	// Авторизуемся в панели
 	log.Printf("SYNC_PANEL: Авторизация в панели для пользователя %d", user.TelegramID)

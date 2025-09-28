@@ -132,6 +132,18 @@ func (tm *TrialPeriodManager) CreateTrialConfigWithReferral(bot *tgbotapi.BotAPI
 		return fmt.Errorf("ошибка создания конфига: %v", err)
 	}
 
+	// Создаем конфиг в дополнительном инбаунде, если он включен
+	if SECONDARY_INBOUND_ENABLED {
+		log.Printf("TRIAL: Создание конфига в дополнительном инбаунде для пробного периода пользователя %d", user.TelegramID)
+		err = AddSecondaryClient(sessionCookie, user, trialDays)
+		if err != nil {
+			log.Printf("TRIAL: ⚠️ Ошибка создания конфига в дополнительном инбаунде для пользователя %d: %v", user.TelegramID, err)
+			// Не прерываем выполнение, основной конфиг уже создан
+		} else {
+			log.Printf("TRIAL: ✅ Конфиг в дополнительном инбаунде создан для пробного периода пользователя %d", user.TelegramID)
+		}
+	}
+
 	// НЕ списываем деньги - они остаются на балансе для автосписания
 	// Обновляем только данные пользователя в базе (без изменения баланса)
 	if err := UpdateUser(user); err != nil {
