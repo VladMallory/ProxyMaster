@@ -19,6 +19,7 @@ var globalResetStatusChecker *services.ResetStatusChecker
 var globalUniversalReminderService *services.UniversalReminderService
 var globalExpiredSubscriptionService *services.ExpiredSubscriptionService
 var globalDisabledConfigService *services.DisabledConfigService
+var globalDepletedStatusChecker *services.DepletedStatusChecker
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -118,6 +119,11 @@ func main() {
 	// Запускаем сервис проверки отключенных конфигов если включен (в отдельной горутине)
 	if common.DISABLED_CONFIG_CHECK_ENABLED {
 		go startDisabledConfigService()
+	}
+
+	// Запускаем сервис проверки ложных состояний "исчерпано" если включен (в отдельной горутине)
+	if common.DEPLETED_STATUS_CHECK_ENABLED {
+		go startDepletedStatusCheckerService()
 	}
 
 	// Запускаем Telegram бота (блокирующая функция)
@@ -393,4 +399,20 @@ func startDisabledConfigService() {
 	globalDisabledConfigService.Start()
 
 	log.Printf("DISABLED_CONFIG: Сервис проверки отключенных конфигов успешно запущен")
+}
+
+// startDepletedStatusCheckerService запускает сервис проверки ложных состояний "исчерпано"
+func startDepletedStatusCheckerService() {
+	log.Printf("DEPLETED_STATUS_CHECKER: Запуск сервиса проверки ложных состояний 'исчерпано'...")
+
+	// Ждем инициализации бота
+	time.Sleep(5 * time.Second)
+
+	// Создаем сервис проверки ложных состояний "исчерпано"
+	globalDepletedStatusChecker = services.NewDepletedStatusChecker()
+
+	// Запускаем сервис
+	globalDepletedStatusChecker.Start()
+
+	log.Printf("DEPLETED_STATUS_CHECKER: Сервис проверки ложных состояний 'исчерпано' успешно запущен")
 }

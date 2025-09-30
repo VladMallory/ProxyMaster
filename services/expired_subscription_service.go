@@ -147,18 +147,20 @@ func (ess *ExpiredSubscriptionService) disableExpiredSubscription(user *common.U
 	}
 
 	// ВАЖНО: Проверяем, можно ли сразу включить конфиг обратно, если у пользователя есть баланс
-	if user.Balance > 0 && common.AUTO_BILLING_ENABLED && !common.TARIFF_MODE_ENABLED {
+	// Включаем конфиг только если баланса хватает хотя бы на 1 день (>= PRICE_PER_DAY)
+	if user.Balance >= float64(common.PRICE_PER_DAY) && common.AUTO_BILLING_ENABLED && !common.TARIFF_MODE_ENABLED {
 		canAffordDays := int(user.Balance / float64(common.PRICE_PER_DAY))
-		if canAffordDays > 0 {
-			log.Printf("EXPIRED_SUBSCRIPTION: У пользователя %d есть баланс %.2f₽ (доступно %d дней), запускаем принудительный пересчет для включения конфига",
-				user.TelegramID, user.Balance, canAffordDays)
+		log.Printf("EXPIRED_SUBSCRIPTION: У пользователя %d есть баланс %.2f₽ (доступно %d дней), запускаем принудительный пересчет для включения конфига",
+			user.TelegramID, user.Balance, canAffordDays)
 
-			// Запускаем принудительный пересчет баланса для включения конфига
-			go func() {
-				time.Sleep(1 * time.Second) // Небольшая задержка
-				common.ForceBalanceRecalculation(user.TelegramID)
-			}()
-		}
+		// Запускаем принудительный пересчет баланса для включения конфига
+		go func() {
+			time.Sleep(1 * time.Second) // Небольшая задержка
+			common.ForceBalanceRecalculation(user.TelegramID)
+		}()
+	} else if user.Balance > 0 && user.Balance < float64(common.PRICE_PER_DAY) {
+		log.Printf("EXPIRED_SUBSCRIPTION: У пользователя %d недостаточный баланс %.2f₽ (требуется минимум %d₽), конфиг остается отключенным",
+			user.TelegramID, user.Balance, common.PRICE_PER_DAY)
 	}
 
 	// Отправляем уведомление пользователю
