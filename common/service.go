@@ -170,21 +170,29 @@ func (s *IPBanService) performCheck() {
 		} else {
 			// Конфиг не имеет активности в логах
 			if !config.Enable {
-				// Отключенный конфиг без активности - включаем
-				fmt.Printf("✅ Конфиг без активности: %s (отключен, включаем)\n", config.Email)
-				// Логируем в bot.log: начало включения конфига без активности
-				LogIPBanInfo("Включение конфига без активности %s", config.Email)
-				if err := s.ConfigManager.EnableConfig(config.Email); err != nil {
-					log.Printf("❌ Ошибка включения конфига %s: %v", config.Email, err)
-					// Логируем в bot.log: ошибка включения конфига
-					LogIPBanError("Ошибка включения конфига без активности %s: %v", config.Email, err)
+				// ВАЖНО: Проверяем баланс и время истечения перед включением
+				shouldEnable, reason := s.shouldEnableConfigByBalance(config.Email, config.ExpiryTime)
+				if !shouldEnable {
+					fmt.Printf("⏸️  Конфиг без активности: %s (отключен, пропускаем включение: %s)\n", config.Email, reason)
+					// Логируем в bot.log: причину пропуска включения
+					LogIPBanInfo("Пропуск включения конфига %s без активности: %s", config.Email, reason)
 				} else {
-					fmt.Printf("   ✅ Конфиг %s успешно включен\n", config.Email)
-					// Логируем в bot.log: успешное включение конфига без активности
-					LogIPBanAction("ВКЛЮЧЕН", config.Email, 0, []string{})
-					enabledCount++
-					// Отправляем уведомление о включении
-					s.sendConfigEnabledNotification(config.Email)
+					// Отключенный конфиг без активности - включаем
+					fmt.Printf("✅ Конфиг без активности: %s (отключен, включаем)\n", config.Email)
+					// Логируем в bot.log: начало включения конфига без активности
+					LogIPBanInfo("Включение конфига без активности %s", config.Email)
+					if err := s.ConfigManager.EnableConfig(config.Email); err != nil {
+						log.Printf("❌ Ошибка включения конфига %s: %v", config.Email, err)
+						// Логируем в bot.log: ошибка включения конфига
+						LogIPBanError("Ошибка включения конфига без активности %s: %v", config.Email, err)
+					} else {
+						fmt.Printf("   ✅ Конфиг %s успешно включен\n", config.Email)
+						// Логируем в bot.log: успешное включение конфига без активности
+						LogIPBanAction("ВКЛЮЧЕН", config.Email, 0, []string{})
+						enabledCount++
+						// Отправляем уведомление о включении
+						s.sendConfigEnabledNotification(config.Email)
+					}
 				}
 			} else {
 				// Включенный конфиг без активности - оставляем как есть
@@ -382,25 +390,65 @@ func (s *IPBanService) handleNormalConfig(stats *EmailIPStats) {
 		if err != nil {
 			log.Printf("❌ Ошибка получения статуса нормального конфига %s: %v", stats.Email, err)
 		} else if !currentStatus {
-			// Конфиг отключен в панели, но активность нормальная - включаем его
-			fmt.Printf("   🔓 Нормальный конфиг %s отключен в панели - включаем!\n", stats.Email)
-			// Логируем в bot.log: начало включения нормального конфига
-			LogIPBanInfo("Включение нормального конфига %s (активность в пределах нормы)", stats.Email)
-			if err := s.ConfigManager.EnableConfig(stats.Email); err != nil {
-				log.Printf("❌ Ошибка включения нормального конфига %s: %v", stats.Email, err)
-				// Логируем в bot.log: ошибка включения нормального конфига
-				LogIPBanError("Ошибка включения нормального конфига %s: %v", stats.Email, err)
+			// Проверяем баланс и время истечения перед включением
+			shouldEnable, reason := s.shouldEnableConfigByBalance(stats.Email, 0)
+			if !shouldEnable {
+				fmt.Printf("   ⏸️  Нормальный конфиг %s отключен в панели, но пропускаем включение: %s\n", stats.Email, reason)
+				// Логируем в bot.log: причину пропуска включения
+				LogIPBanInfo("Пропуск включения нормального конфига %s: %s", stats.Email, reason)
 			} else {
-				fmt.Printf("   ✅ Нормальный конфиг %s успешно включен в панели\n", stats.Email)
-				// Логируем в bot.log: успешное включение нормального конфига с деталями IP
-				LogIPBanAction("ВКЛЮЧЕН", stats.Email, stats.TotalIPs, getIPAddressesFromStats(stats))
-				// Отправляем уведомление о включении
-				s.sendConfigEnabledNotification(stats.Email)
+				// Конфиг отключен в панели, но активность нормальная - включаем его
+				fmt.Printf("   🔓 Нормальный конфиг %s отключен в панели - включаем!\n", stats.Email)
+				// Логируем в bot.log: начало включения нормального конфига
+				LogIPBanInfo("Включение нормального конфига %s (активность в пределах нормы)", stats.Email)
+				if err := s.ConfigManager.EnableConfig(stats.Email); err != nil {
+					log.Printf("❌ Ошибка включения нормального конфига %s: %v", stats.Email, err)
+					// Логируем в bot.log: ошибка включения нормального конфига
+					LogIPBanError("Ошибка включения нормального конфига %s: %v", stats.Email, err)
+				} else {
+					fmt.Printf("   ✅ Нормальный конфиг %s успешно включен в панели\n", stats.Email)
+					// Логируем в bot.log: успешное включение нормального конфига с деталями IP
+					LogIPBanAction("ВКЛЮЧЕН", stats.Email, stats.TotalIPs, getIPAddressesFromStats(stats))
+					// Отправляем уведомление о включении
+					s.sendConfigEnabledNotification(stats.Email)
+				}
 			}
 		} else {
 			fmt.Printf("   ℹ️  Конфиг %s работает нормально и уже включен\n", stats.Email)
 		}
 	}
+}
+
+// shouldEnableConfigByBalance проверяет, можно ли включить конфиг на основе баланса и времени истечения
+func (s *IPBanService) shouldEnableConfigByBalance(email string, expiryTime int64) (bool, string) {
+	// Конвертируем email в telegram_id
+	telegramID, err := strconv.ParseInt(email, 10, 64)
+	if err != nil {
+		// Не числовой email - разрешаем включение (может быть тестовый конфиг)
+		return true, ""
+	}
+
+	// Получаем пользователя из базы данных
+	user, err := GetUserByTelegramID(telegramID)
+	if err != nil || user == nil {
+		// Пользователь не найден - не включаем
+		return false, "пользователь не найден в БД"
+	}
+
+	// Проверяем баланс
+	if user.Balance < float64(PRICE_PER_DAY) {
+		return false, fmt.Sprintf("недостаточный баланс %.2f₽ < %d₽", user.Balance, PRICE_PER_DAY)
+	}
+
+	// Проверяем время истечения
+	now := time.Now()
+	if expiryTime > 0 && expiryTime <= now.UnixMilli() {
+		// Подписка истекла, но есть баланс - разрешаем включение (пересчет баланса обновит время)
+		return true, ""
+	}
+
+	// Все проверки пройдены
+	return true, ""
 }
 
 // GetStatus возвращает текущий статус сервиса

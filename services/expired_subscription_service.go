@@ -272,17 +272,25 @@ func (ess *ExpiredSubscriptionService) checkPanelSyncAndDisableExpired() int {
 		if client.Enable && !user.HasActiveConfig {
 			// Проверяем, истекла ли подписка по времени
 			if client.ExpiryTime > 0 && client.ExpiryTime <= now.UnixMilli() {
-				log.Printf("EXPIRED_SUBSCRIPTION: Найдена рассинхронизация для пользователя %d (email: %s) - конфиг активен в панели, но подписка истекла",
-					user.TelegramID, client.Email)
+				log.Printf("EXPIRED_SUBSCRIPTION: Найдена рассинхронизация для пользователя %d (email: %s) - конфиг активен в панели, но подписка истекла (баланс: %.2f₽)",
+					user.TelegramID, client.Email, user.Balance)
 
-				// Отключаем конфиг в панели
+				// ВАЖНО: Если баланс <= 0, отключаем конфиг и блокируем повторное включение
+				// Если баланс > 0 и >= PRICE_PER_DAY, запускаем пересчет вместо отключения
+				if user.Balance >= float64(common.PRICE_PER_DAY) && common.AUTO_BILLING_ENABLED && !common.TARIFF_MODE_ENABLED {
+					log.Printf("EXPIRED_SUBSCRIPTION: У пользователя %d есть баланс %.2f₽ (>= %d₽), пропускаем отключение - пересчет баланса включит конфиг автоматически",
+						user.TelegramID, user.Balance, common.PRICE_PER_DAY)
+					continue
+				}
+
+				// Отключаем конфиг в панели только если баланса недостаточно
 				if err := ess.configManager.DisableConfig(client.Email); err != nil {
 					log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отключения конфига в панели для пользователя %d: %v",
 						user.TelegramID, err)
 				} else {
 					disabledCount++
-					log.Printf("EXPIRED_SUBSCRIPTION: Конфиг в панели успешно отключен для пользователя %d (исправлена рассинхронизация)",
-						user.TelegramID)
+					log.Printf("EXPIRED_SUBSCRIPTION: Конфиг в панели успешно отключен для пользователя %d (исправлена рассинхронизация, баланс недостаточен: %.2f₽)",
+						user.TelegramID, user.Balance)
 
 					// Отправляем уведомление администратору о исправлении рассинхронизации
 					if common.ADMIN_NOTIFICATIONS_ENABLED && common.ADMIN_CONFIG_BLOCKING_ENABLED {
