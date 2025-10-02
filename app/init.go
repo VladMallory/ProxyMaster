@@ -46,6 +46,12 @@ func InitializeApp() {
 			http.ServeFile(w, r, "importRedirect/redirect_v2raytun.html")
 		})
 
+		// Обработчик для redirect_v2raytun_test.html (тестовый файл для отладки Android)
+		http.HandleFunc("/redirect_v2raytun_test.html", func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("HTTP_SERVER: v2raytun TEST redirect request: %s", r.URL.String())
+			http.ServeFile(w, r, "importRedirect/redirect_v2raytun_test.html")
+		})
+
 		// Обработчик для callback-ов ЮКассы
 		http.HandleFunc("/yukassa/callback", handleYukassaCallback)
 

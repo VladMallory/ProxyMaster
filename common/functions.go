@@ -47,7 +47,13 @@ func GetRedirectURL() string {
 	var redirectFile string
 	switch REDIRECT_IMPORT {
 	case "v2raytun":
-		redirectFile = "redirect_v2raytun.html"
+		// ===== ВРЕМЕННОЕ ПЕРЕКЛЮЧЕНИЕ НА ТЕСТОВЫЙ REDIRECT =====
+		// Используем тестовый redirect для решения проблемы с Android импортом
+		// Проблема: v2raytun на Android не мог импортировать base64-кодированные подписки
+		// Решение: тестовый файл декодирует base64 и создает правильные VLESS/VMESS URL
+
+		// redirectFile = "redirect_v2raytun.html"  // оригинальный рабочий файл (для iOS)
+		redirectFile = "redirect_v2raytun_test.html" // тестовый файл с улучшенной поддержкой Android
 	case "happ":
 		// ===== ВРЕМЕННОЕ ПЕРЕКЛЮЧЕНИЕ НА ТЕСТОВЫЙ REDIRECT =====
 		// Используем тестовый redirect для решения проблемы с Android импортом
