@@ -145,17 +145,20 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 		}
 	}
 
-	text := fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
-
-	text += fmt.Sprintf("💰 Ваш баланс: %.2f₽\n", user.Balance)
-	text += fmt.Sprintf("💳 Стоимость подписки: %d₽ в день\n\n", common.PRICE_PER_DAY)
+	text := ""
+	text = fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
+	text += "<blockquote>"
+	text += fmt.Sprintf("––💰 Ваш баланс: %.2f₽\n", user.Balance)
+	text += fmt.Sprintf("--💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
 
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
-		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
-		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
-		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
-		text += fmt.Sprintf("2️⃣ После установки нажмите 'Подключить (%s)' для настройки", common.GetAppName())
+		text += fmt.Sprintf("--✅ Подписка активна до %s\n\n", expiryDate)
+		text += "</blockquote>"
+
+		text += "\n🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
+		text += "1️⃣ Скачайте приложение по кнопке <u>Скачать приложение</u>. Выберите ваш телефон, <u>iOS</u> или <u>Android</u>\n"
+		text += fmt.Sprintf("2️⃣ После установки нажмите <u>Подключить (%s)</u>, он импортирует подписку в %s", common.GetAppName(), common.GetAppName())
 	} else {
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
@@ -167,10 +170,10 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 				text += "💡 Выберите подходящий тариф и начните пользоваться безопасным интернетом!"
 			} else {
 				text += "🔐 У вас нет активного конфига для подключения\n"
-				if user.Balance > 0 {
+				if user.Balance > float64(common.PRICE_PER_DAY) {
 					text += "💡 Конфиг будет создан автоматически при наличии достаточного баланса!"
 				} else {
-					text += "💡 Пополните баланс для получения доступа к VPN!"
+					text += "💡 Пополните баланс для получения доступа к подписке!"
 				}
 			}
 		}
@@ -179,6 +182,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 	log.Printf("SEND_MAIN_MENU: Текст меню для TelegramID=%d: %s", user.TelegramID, text)
 
 	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = "HTML"
 	msg.ReplyMarkup = &keyboard
 	if _, err := bot.Send(msg); err != nil {
 		log.Printf("SEND_MAIN_MENU: Ошибка отправки сообщения для TelegramID=%d: %v", user.TelegramID, err)
@@ -321,17 +325,20 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 		}
 	}
 
-	text := fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
-
-	text += fmt.Sprintf("💰 Ваш баланс: %.2f₽\n", user.Balance)
-	text += fmt.Sprintf("💳 Стоимость подписки: %d₽ в день\n\n", common.PRICE_PER_DAY)
+	text := ""
+	text = fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
+	text += "<blockquote>"
+	text += fmt.Sprintf("––💰 Ваш баланс: %.2f₽\n", user.Balance)
+	text += fmt.Sprintf("--💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
 
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
-		text += fmt.Sprintf("✅ Подписка активна до %s\n\n", expiryDate)
-		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
-		text += "1️⃣ Сначала скачайте приложение нажав кнопку ниже\n"
-		text += fmt.Sprintf("2️⃣ После установки нажмите 'Подключить (%s)' для настройки", common.GetAppName())
+		text += fmt.Sprintf("--✅ Подписка активна до %s\n\n", expiryDate)
+		text += "</blockquote>"
+
+		text += "\n🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
+		text += "1️⃣ Скачайте приложение по кнопке <u>Скачать приложение</u>. Выберите ваш телефон, <u>iOS</u> или <u>Android</u>\n"
+		text += fmt.Sprintf("2️⃣ После установки нажмите <u>Подключить (%s)</u>, он импортирует подписку в %s", common.GetAppName(), common.GetAppName())
 	} else {
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
@@ -343,18 +350,18 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 				text += "💡 Выберите подходящий тариф и начните пользоваться безопасным интернетом!"
 			} else {
 				text += "🔐 У вас нет активного конфига для подключения\n"
-				if user.Balance > 0 {
+				if user.Balance > float64(common.PRICE_PER_DAY) {
 					text += "💡 Конфиг будет создан автоматически при наличии достаточного баланса!"
 				} else {
-					text += "💡 Пополните баланс для получения доступа к VPN!"
+					text += "💡 Пополните баланс для получения доступа к подписке!"
 				}
 			}
 		}
 	}
-
 	log.Printf("EDIT_MAIN_MENU: Текст меню для TelegramID=%d: %s", user.TelegramID, text)
 
 	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
+	editMsg.ParseMode = "HTML"
 	editMsg.ReplyMarkup = &keyboard
 	if _, err := bot.Send(editMsg); err != nil {
 		log.Printf("EDIT_MAIN_MENU: Ошибка редактирования сообщения для TelegramID=%d, MessageID=%d: %v", user.TelegramID, messageID, err)
