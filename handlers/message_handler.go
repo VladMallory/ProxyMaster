@@ -128,6 +128,22 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		return
 	}
 
+	// ИСПРАВЛЕНИЕ: Если пользователь уже использовал пробный период, но у него нет активного конфига,
+	// показываем основное меню вместо того, чтобы ничего не показывать
+	if message.IsCommand() && message.Command() == "start" && !user.HasActiveConfig && !common.TrialManager.CanUseTrial(user) {
+		log.Printf("HANDLE_MESSAGE: Пользователь %d уже использовал пробный период, показываем основное меню", telegramUser.ID)
+		// Проверяем и создаем конфиг, если нужно
+		ensureUserHasConfig(bot, user, message.Chat.ID)
+		// Получаем обновленного пользователя после ensureUserHasConfig
+		updatedUser, err := common.GetUserByTelegramID(user.TelegramID)
+		if err != nil {
+			log.Printf("HANDLE_MESSAGE: Ошибка получения обновленного пользователя %d: %v", user.TelegramID, err)
+			updatedUser = user // используем оригинального пользователя
+		}
+		menus.SendMainMenu(bot, message.Chat.ID, updatedUser)
+		return
+	}
+
 	log.Printf("HANDLE_MESSAGE: Проверка команды: %s, IsCommand=%v, HasActiveConfig=%v, CanUseTrial=%v",
 		message.Command(), message.IsCommand(), user.HasActiveConfig, common.TrialManager.CanUseTrial(user))
 

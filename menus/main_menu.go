@@ -129,13 +129,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 				// Режим автосписания - без кнопки "Продлить"
 				keyboard = tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
-					),
-					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
-					),
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("🔐 Конфиг", "vpn"),
 					),
 					tgbotapi.NewInlineKeyboardRow(
 						tgbotapi.NewInlineKeyboardButtonURL("❓ Поддержка", common.SUPPORT_LINK),
@@ -148,18 +142,20 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 	text := ""
 	text = fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
 	text += "<blockquote>"
-	text += fmt.Sprintf("––💰 Ваш баланс: %.2f₽\n", user.Balance)
-	text += fmt.Sprintf("--💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
+	text += fmt.Sprintf("—💰 Ваш баланс: %.2f₽\n", user.Balance)
+	text += fmt.Sprintf("—💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
 
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
-		text += fmt.Sprintf("--✅ Подписка активна до %s\n\n", expiryDate)
-		text += "</blockquote>"
+		text += fmt.Sprintf("—✅ Подписка активна до %s\n", expiryDate)
+		text += "</blockquote>\n\n"
 
-		text += "\n🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
+		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
 		text += "1️⃣ Скачайте приложение по кнопке <u>Скачать приложение</u>. Выберите ваш телефон, <u>iOS</u> или <u>Android</u>\n"
 		text += fmt.Sprintf("2️⃣ После установки нажмите <u>Подключить (%s)</u>, он импортирует подписку в %s", common.GetAppName(), common.GetAppName())
 	} else {
+		text += "</blockquote>\n\n"
+
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
 			text += fmt.Sprintf("На ваш баланс будет добавлено %d₽ для ознакомления с сервисом.\n", common.TRIAL_BALANCE_AMOUNT)
@@ -328,18 +324,20 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 	text := ""
 	text = fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
 	text += "<blockquote>"
-	text += fmt.Sprintf("––💰 Ваш баланс: %.2f₽\n", user.Balance)
-	text += fmt.Sprintf("--💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
+	text += fmt.Sprintf("——💰 Ваш баланс: %.2f₽\n", user.Balance)
+	text += fmt.Sprintf("——💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
 
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
-		text += fmt.Sprintf("--✅ Подписка активна до %s\n\n", expiryDate)
-		text += "</blockquote>"
+		text += fmt.Sprintf("——✅ Подписка активна до %s\n", expiryDate)
+		text += "</blockquote>\n\n"
 
-		text += "\n🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
+		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
 		text += "1️⃣ Скачайте приложение по кнопке <u>Скачать приложение</u>. Выберите ваш телефон, <u>iOS</u> или <u>Android</u>\n"
 		text += fmt.Sprintf("2️⃣ После установки нажмите <u>Подключить (%s)</u>, он импортирует подписку в %s", common.GetAppName(), common.GetAppName())
 	} else {
+		text += "</blockquote>\n\n"
+
 		if common.TrialManager.CanUseTrial(user) {
 			text += "🎁 У вас есть возможность попробовать наш сервис бесплатно!\n"
 			text += fmt.Sprintf("На ваш баланс будет добавлено %d₽ для ознакомления с сервисом.\n", common.TRIAL_BALANCE_AMOUNT)

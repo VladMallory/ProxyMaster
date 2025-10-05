@@ -127,13 +127,16 @@ func (ess *ExpiredSubscriptionService) isSubscriptionExpired(user *common.User, 
 func (ess *ExpiredSubscriptionService) disableExpiredSubscription(user *common.User) error {
 	log.Printf("EXPIRED_SUBSCRIPTION: Отключение истекшей подписки для пользователя %d", user.TelegramID)
 
-	// Отключаем конфиг в панели управления
+	// Отключаем конфиг в панели управления и ротируем UUID для немедленного обрыва активных сессий
 	if user.Email != "" {
-		err := ess.configManager.DisableConfig(user.Email)
+		newUUID, err := ess.configManager.DisableAndRotateConfig(user.Email)
 		if err != nil {
-			log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отключения конфига в панели для пользователя %d: %v",
+			log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отключения конфига и ротации UUID в панели для пользователя %d: %v",
 				user.TelegramID, err)
 			// Не возвращаем ошибку, продолжаем обновление в базе данных
+		} else {
+			log.Printf("EXPIRED_SUBSCRIPTION: Конфиг успешно отключен и UUID обновлен для пользователя %d (новый UUID: %s)",
+				user.TelegramID, newUUID)
 		}
 	}
 
@@ -283,14 +286,15 @@ func (ess *ExpiredSubscriptionService) checkPanelSyncAndDisableExpired() int {
 					continue
 				}
 
-				// Отключаем конфиг в панели только если баланса недостаточно
-				if err := ess.configManager.DisableConfig(client.Email); err != nil {
-					log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отключения конфига в панели для пользователя %d: %v",
+				// Отключаем конфиг в панели и ротируем UUID только если баланса недостаточно
+				newUUID, err := ess.configManager.DisableAndRotateConfig(client.Email)
+				if err != nil {
+					log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отключения конфига и ротации UUID в панели для пользователя %d: %v",
 						user.TelegramID, err)
 				} else {
 					disabledCount++
-					log.Printf("EXPIRED_SUBSCRIPTION: Конфиг в панели успешно отключен для пользователя %d (исправлена рассинхронизация, баланс недостаточен: %.2f₽)",
-						user.TelegramID, user.Balance)
+					log.Printf("EXPIRED_SUBSCRIPTION: Конфиг в панели успешно отключен и UUID обновлен для пользователя %d (исправлена рассинхронизация, баланс недостаточен: %.2f₽, новый UUID: %s)",
+						user.TelegramID, user.Balance, newUUID)
 
 					// Отправляем уведомление администратору о исправлении рассинхронизации
 					if common.ADMIN_NOTIFICATIONS_ENABLED && common.ADMIN_CONFIG_BLOCKING_ENABLED {
