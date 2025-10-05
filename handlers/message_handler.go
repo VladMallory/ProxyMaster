@@ -228,6 +228,8 @@ func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common
 		handleCheckResetCommand(bot, message)
 	case "check_depleted":
 		handleCheckDepletedCommand(bot, message)
+	case "check_depleted_parallel":
+		handleCheckDepletedParallelCommand(bot, message)
 	case "clear_nil_config":
 		handleClearNilConfigCommand(bot, message)
 	case "confirm_clear_users":
@@ -850,6 +852,43 @@ func handleCheckDepletedCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message)
 		msg := tgbotapi.NewMessage(message.Chat.ID, "✅ Проверка ложных состояний 'исчерпано' завершена. Результаты в логах.")
 		if _, err := bot.Send(msg); err != nil {
 			log.Printf("HANDLE_CHECK_DEPLETED_COMMAND: Ошибка отправки сообщения о завершении: %v", err)
+		}
+	}()
+}
+
+// handleCheckDepletedParallelCommand обрабатывает команду /check_depleted_parallel
+func handleCheckDepletedParallelCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_CHECK_DEPLETED_PARALLEL_COMMAND: Выполнение команды /check_depleted_parallel для TelegramID=%d", message.From.ID)
+
+	// Проверяем, что пользователь - админ
+	if message.From.ID != common.ADMIN_ID {
+		log.Printf("HANDLE_CHECK_DEPLETED_PARALLEL_COMMAND: Пользователь TelegramID=%d не является админом", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_CHECK_DEPLETED_PARALLEL_COMMAND: Ошибка отправки сообщения о запрете: %v", err)
+		}
+		return
+	}
+
+	// Отправляем сообщение о начале проверки
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🚀 Запуск параллельной проверки ложных состояний 'исчерпано'...")
+	if _, err := bot.Send(msg); err != nil {
+		log.Printf("HANDLE_CHECK_DEPLETED_PARALLEL_COMMAND: Ошибка отправки сообщения: %v", err)
+		return
+	}
+
+	// Запускаем параллельную проверку в отдельной горутине
+	go func() {
+		// Создаем временный экземпляр сервиса для параллельной проверки
+		checker := services.NewDepletedStatusChecker()
+
+		// Выполняем параллельную проверку
+		checker.CheckAndFixDepletedStatusParallel()
+
+		// Отправляем сообщение о завершении
+		msg := tgbotapi.NewMessage(message.Chat.ID, "✅ Параллельная проверка ложных состояний 'исчерпано' завершена. Результаты в логах.")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_CHECK_DEPLETED_PARALLEL_COMMAND: Ошибка отправки сообщения о завершении: %v", err)
 		}
 	}()
 }
