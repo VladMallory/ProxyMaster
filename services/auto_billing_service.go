@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"bot/common"
@@ -212,92 +213,21 @@ func (abs *AutoBillingService) ProcessBalanceRecalculationForUser(telegramID int
 	abs.processBalanceRecalculationForUser(telegramID)
 }
 
+// ProcessBalanceRecalculationOptimized экспортированный метод для оптимизированного пересчета баланса
+func (abs *AutoBillingService) ProcessBalanceRecalculationOptimized() {
+	abs.processBalanceRecalculationOptimized()
+}
+
+// ProcessBalanceRecalculationParallel экспортированный метод для параллельного пересчета баланса
+func (abs *AutoBillingService) ProcessBalanceRecalculationParallel() {
+	abs.processBalanceRecalculationParallel()
+}
+
 // processBalanceRecalculation выполняет пересчет дней по балансу
+// ТЕПЕРЬ ИСПОЛЬЗУЕТ ОПТИМИЗИРОВАННУЮ ВЕРСИЮ С БАТЧИНГОМ ПО УМОЛЧАНИЮ
 func (abs *AutoBillingService) processBalanceRecalculation() {
-	// Проверяем, что автосписание все еще включено
-	if !common.AUTO_BILLING_ENABLED || common.TARIFF_MODE_ENABLED {
-		log.Printf("AUTO_BILLING: Автосписание отключено или включен тарифный режим, пропускаем пересчет баланса")
-		return
-	}
-
-	log.Printf("AUTO_BILLING: Начало пересчета дней по балансу")
-
-	// Сначала выполняем диагностику рассинхронизации
-	abs.diagnoseAndFixSyncIssues()
-
-	// Получаем всех пользователей
-	users, err := common.GetAllUsers()
-	if err != nil {
-		log.Printf("AUTO_BILLING: Ошибка получения пользователей для пересчета: %v", err)
-		return
-	}
-
-	recalculatedCount := 0
-	now := time.Now()
-
-	for _, user := range users {
-		// Пересчитываем только для пользователей с балансом больше 0
-		if user.Balance <= 0 {
-			continue
-		}
-
-		// Вычисляем количество дней по балансу
-		availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
-
-		if availableDays <= 0 {
-			continue
-		}
-
-		// Проверяем наличие активного конфига в любом из инбаундов
-		hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
-
-		// Если у пользователя нет активного конфига, создаем новый
-		if !hasAnyActiveConfig {
-			err := abs.createConfigFromBalance(&user, availableDays)
-			if err != nil {
-				log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
-				continue
-			}
-			recalculatedCount++
-			log.Printf("AUTO_BILLING: Создан конфиг на %d дней для пользователя %d", availableDays, user.TelegramID)
-		} else {
-			// Если конфиг есть, всегда синхронизируем время истечения с балансом
-			currentExpiryTime := time.UnixMilli(user.ExpiryTime)
-
-			// Вычисляем желаемое время истечения от текущего момента
-			desiredExpiryTime := now.Add(time.Duration(availableDays) * 24 * time.Hour)
-
-			// В режиме автосписания всегда синхронизируем время с балансом
-			// Проверяем, отличается ли желаемое время от текущего больше чем на 1 час
-			timeDiff := desiredExpiryTime.Sub(currentExpiryTime)
-			absDiff := timeDiff
-			if absDiff < 0 {
-				absDiff = -absDiff
-			}
-
-			if absDiff > time.Hour {
-				log.Printf("AUTO_BILLING: Принудительная синхронизация времени истечения для пользователя %d", user.TelegramID)
-				log.Printf("AUTO_BILLING: Текущее время в базе: %s, желаемое время: %s, разница: %v",
-					currentExpiryTime.Format("2006-01-02 15:04"),
-					desiredExpiryTime.Format("2006-01-02 15:04"),
-					timeDiff)
-
-				// Принудительно обновляем время истечения
-				err := abs.updateConfigExpiry(&user, availableDays)
-				if err != nil {
-					log.Printf("AUTO_BILLING: Ошибка принудительного обновления конфига для пользователя %d: %v", user.TelegramID, err)
-					continue
-				}
-				recalculatedCount++
-				log.Printf("AUTO_BILLING: Принудительно обновлен конфиг на %d дней для пользователя %d", availableDays, user.TelegramID)
-			} else {
-				log.Printf("AUTO_BILLING: Конфиг пользователя %d уже синхронизирован (до %s, доступно дней: %d)",
-					user.TelegramID, currentExpiryTime.Format("2006-01-02 15:04"), availableDays)
-			}
-		}
-	}
-
-	log.Printf("AUTO_BILLING: Пересчет дней завершен. Обновлено: %d конфигов", recalculatedCount)
+	// Используем оптимизированную версию с батчингом для максимальной производительности
+	abs.processBalanceRecalculationOptimized()
 }
 
 // processBalanceRecalculationForUser выполняет пересчет дней по балансу для конкретного пользователя
@@ -625,4 +555,367 @@ func (abs *AutoBillingService) diagnoseAndFixSyncIssues() {
 
 	log.Printf("SYNC_DIAGNOSTIC: ===== ДИАГНОСТИКА ЗАВЕРШЕНА =====")
 	log.Printf("SYNC_DIAGNOSTIC: Проверено пользователей: %d, исправлено: %d", checkedCount, fixedCount)
+}
+
+// ============================================================================
+// ОПТИМИЗИРОВАННЫЕ ФУНКЦИИ AUTO_BILLING (БАТЧИНГ + ПАРАЛЛЕЛИЗМ)
+// ============================================================================
+
+// processBalanceRecalculationOptimized оптимизированная версия пересчета баланса с батчингом
+// ОСНОВНАЯ ОПТИМИЗАЦИЯ: Один API вызов вместо сотен для всех пользователей
+func (abs *AutoBillingService) processBalanceRecalculationOptimized() {
+	// Проверяем, что автосписание все еще включено
+	if !common.AUTO_BILLING_ENABLED || common.TARIFF_MODE_ENABLED {
+		log.Printf("AUTO_BILLING: Автосписание отключено или включен тарифный режим, пропускаем пересчет баланса")
+		return
+	}
+
+	log.Printf("AUTO_BILLING: Начало ОПТИМИЗИРОВАННОГО пересчета дней по балансу")
+
+	// ===== ЭТАП 1: ПОЛУЧАЕМ ДАННЫЕ ОДИН РАЗ =====
+	// Получаем всех пользователей из базы данных
+	users, err := common.GetAllUsers()
+	if err != nil {
+		log.Printf("AUTO_BILLING: Ошибка получения пользователей для пересчета: %v", err)
+		return
+	}
+
+	// Получаем сессию ОДИН РАЗ для всех операций
+	sessionCookie, err := common.Login()
+	if err != nil {
+		log.Printf("AUTO_BILLING: Ошибка авторизации в панели: %v", err)
+		return
+	}
+
+	// Получаем данные inbound ОДИН РАЗ для всех пользователей
+	inbound, err := common.GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("AUTO_BILLING: Ошибка получения inbound: %v", err)
+		return
+	}
+
+	// Парсим settings ОДИН РАЗ
+	var settings common.Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("AUTO_BILLING: Ошибка парсинга settings: %v", err)
+		return
+	}
+
+	// ===== ЭТАП 2: АНАЛИЗИРУЕМ ПОЛЬЗОВАТЕЛЕЙ БЕЗ API ВЫЗОВОВ =====
+	now := time.Now()
+	var usersToSync []common.User   // Пользователи для синхронизации времени
+	var usersToCreate []common.User // Пользователи для создания конфигов
+	var usersToFix []common.User    // Пользователи с рассинхронизацией
+
+	log.Printf("AUTO_BILLING: Анализ %d пользователей...", len(users))
+
+	for _, user := range users {
+		// Пропускаем пользователей без баланса
+		if user.Balance <= 0 {
+			continue
+		}
+
+		// Вычисляем количество дней по балансу
+		availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
+		if availableDays <= 0 {
+			continue
+		}
+
+		// Проверяем наличие активного конфига
+		hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
+
+		if !hasAnyActiveConfig {
+			// Пользователь без конфига - нужно создать
+			usersToCreate = append(usersToCreate, user)
+		} else {
+			// Пользователь с конфигом - проверяем синхронизацию
+			currentExpiryTime := time.UnixMilli(user.ExpiryTime)
+			desiredExpiryTime := now.Add(time.Duration(availableDays) * 24 * time.Hour)
+			timeDiff := desiredExpiryTime.Sub(currentExpiryTime)
+
+			// Проверяем разницу времени (больше 1 часа = нужна синхронизация)
+			absDiff := timeDiff
+			if absDiff < 0 {
+				absDiff = -absDiff
+			}
+
+			if absDiff > time.Hour {
+				usersToSync = append(usersToSync, user)
+			}
+		}
+	}
+
+	// ===== ЭТАП 3: ДИАГНОСТИКА РАССИНХРОНИЗАЦИИ В ПАМЯТИ =====
+	// Создаем карту клиентов из панели для быстрого поиска
+	panelClientsMap := make(map[string]*common.Client)
+	for i := range settings.Clients {
+		client := &settings.Clients[i]
+		panelClientsMap[client.Email] = client
+		if client.ID != "" {
+			panelClientsMap[client.ID] = client
+		}
+		if client.SubID != "" {
+			panelClientsMap[client.SubID] = client
+		}
+	}
+
+	// Проверяем рассинхронизацию для пользователей с активными конфигами
+	for _, user := range users {
+		hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
+		if !hasAnyActiveConfig || user.Balance <= 0 {
+			continue
+		}
+
+		// Ищем клиента в панели
+		foundInPanel := false
+		if panelClientsMap[fmt.Sprintf("%d", user.TelegramID)] != nil ||
+			(user.ClientID != "" && panelClientsMap[user.ClientID] != nil) ||
+			(user.SubID != "" && panelClientsMap[user.SubID] != nil) {
+			foundInPanel = true
+		}
+
+		if !foundInPanel {
+			usersToFix = append(usersToFix, user)
+		}
+	}
+
+	// ===== ЭТАП 4: БАТЧЕВАЯ ОБРАБОТКА =====
+	modified := false
+	recalculatedCount := 0
+
+	// 4.1: Исправляем рассинхронизацию (сброс флагов в базе данных)
+	if len(usersToFix) > 0 {
+		log.Printf("AUTO_BILLING: Исправление рассинхронизации для %d пользователей", len(usersToFix))
+		for _, user := range usersToFix {
+			user.HasActiveConfig = false
+			user.ClientID = ""
+			user.SubID = ""
+			user.Email = ""
+			user.ExpiryTime = 0
+
+			if err := common.UpdateUser(&user); err != nil {
+				log.Printf("AUTO_BILLING: Ошибка сброса флагов для пользователя %d: %v", user.TelegramID, err)
+			} else {
+				log.Printf("AUTO_BILLING: Сброшены флаги для пользователя %d", user.TelegramID)
+				recalculatedCount++
+			}
+		}
+	}
+
+	// 4.2: Создаем конфиги для пользователей без конфигов (последовательно, так как создание требует индивидуальной обработки)
+	if len(usersToCreate) > 0 {
+		log.Printf("AUTO_BILLING: Создание конфигов для %d пользователей", len(usersToCreate))
+		for _, user := range usersToCreate {
+			availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
+			err := abs.createConfigFromBalance(&user, availableDays)
+			if err != nil {
+				log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
+				continue
+			}
+			recalculatedCount++
+			log.Printf("AUTO_BILLING: Создан конфиг на %d дней для пользователя %d", availableDays, user.TelegramID)
+		}
+	}
+
+	// 4.3: Синхронизируем время истечения для всех пользователей ОДНИМ ОБНОВЛЕНИЕМ
+	if len(usersToSync) > 0 {
+		log.Printf("AUTO_BILLING: Синхронизация времени для %d пользователей", len(usersToSync))
+		modified = abs.syncExpiryTimesBatch(sessionCookie, &settings, usersToSync, now)
+		if modified {
+			recalculatedCount += len(usersToSync)
+		}
+	}
+
+	// ===== ЭТАП 5: ОБНОВЛЯЕМ INBOUND ОДИН РАЗ =====
+	if modified {
+		log.Printf("AUTO_BILLING: Обновление inbound с синхронизированными пользователями...")
+		settingsJSON, err := json.Marshal(settings)
+		if err != nil {
+			log.Printf("AUTO_BILLING: Ошибка сериализации settings: %v", err)
+			return
+		}
+		inbound.Settings = string(settingsJSON)
+
+		if err := common.UpdateInbound(sessionCookie, *inbound); err != nil {
+			log.Printf("AUTO_BILLING: Ошибка обновления inbound: %v", err)
+			return
+		}
+
+		log.Printf("AUTO_BILLING: Inbound успешно обновлен")
+	}
+
+	log.Printf("AUTO_BILLING: ОПТИМИЗИРОВАННЫЙ пересчет завершен. Обработано пользователей: %d", recalculatedCount)
+}
+
+// syncExpiryTimesBatch синхронизирует время истечения для группы пользователей в памяти
+// ОПТИМИЗАЦИЯ: Изменяем все конфиги в памяти, затем обновляем панель одним вызовом
+func (abs *AutoBillingService) syncExpiryTimesBatch(sessionCookie string, settings *common.Settings, usersToSync []common.User, now time.Time) bool {
+	modified := false
+	syncedCount := 0
+
+	// Создаем карту пользователей для быстрого поиска
+	userMap := make(map[int64]common.User)
+	for _, user := range usersToSync {
+		userMap[user.TelegramID] = user
+	}
+
+	// Проходим по всем клиентам в панели и обновляем тех, кто в списке
+	for i, client := range settings.Clients {
+		// Ищем пользователя по email (который содержит TelegramID)
+		var foundUser *common.User
+		for _, user := range usersToSync {
+			if strings.HasPrefix(client.Email, fmt.Sprintf("%d", user.TelegramID)) ||
+				client.Email == fmt.Sprintf("%d", user.TelegramID) {
+				foundUser = &user
+				break
+			}
+		}
+
+		if foundUser != nil {
+			// Вычисляем новое время истечения
+			availableDays := int(foundUser.Balance / float64(common.PRICE_PER_DAY))
+			newExpiryTime := now.Add(time.Duration(availableDays) * 24 * time.Hour)
+
+			// Обновляем время истечения в памяти
+			settings.Clients[i].ExpiryTime = newExpiryTime.UnixMilli()
+			settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
+
+			log.Printf("AUTO_BILLING: Синхронизировано время для пользователя %d: %s (до %s)",
+				foundUser.TelegramID, client.Email, newExpiryTime.Format("2006-01-02 15:04"))
+
+			// Обновляем пользователя в базе данных
+			foundUser.ExpiryTime = newExpiryTime.UnixMilli()
+			if err := common.UpdateUser(foundUser); err != nil {
+				log.Printf("AUTO_BILLING: Ошибка обновления пользователя %d в базе: %v", foundUser.TelegramID, err)
+			}
+
+			modified = true
+			syncedCount++
+		}
+	}
+
+	if syncedCount > 0 {
+		log.Printf("AUTO_BILLING: Батчевая синхронизация завершена. Синхронизировано пользователей: %d", syncedCount)
+	}
+
+	return modified
+}
+
+// processBalanceRecalculationParallel параллельная версия пересчета баланса
+// ОПТИМИЗАЦИЯ: Обрабатываем пользователей параллельно с ограничением горутин
+func (abs *AutoBillingService) processBalanceRecalculationParallel() {
+	// Проверяем, что автосписание все еще включено
+	if !common.AUTO_BILLING_ENABLED || common.TARIFF_MODE_ENABLED {
+		log.Printf("AUTO_BILLING: Автосписание отключено или включен тарифный режим, пропускаем пересчет баланса")
+		return
+	}
+
+	log.Printf("AUTO_BILLING: Начало ПАРАЛЛЕЛЬНОГО пересчета дней по балансу")
+
+	// Получаем всех пользователей
+	users, err := common.GetAllUsers()
+	if err != nil {
+		log.Printf("AUTO_BILLING: Ошибка получения пользователей для пересчета: %v", err)
+		return
+	}
+
+	// Фильтруем пользователей с балансом
+	var usersWithBalance []common.User
+	for _, user := range users {
+		if user.Balance > 0 {
+			availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
+			if availableDays > 0 {
+				usersWithBalance = append(usersWithBalance, user)
+			}
+		}
+	}
+
+	if len(usersWithBalance) == 0 {
+		log.Printf("AUTO_BILLING: Нет пользователей с достаточным балансом")
+		return
+	}
+
+	// Создаем каналы для параллельной обработки
+	const maxConcurrency = 5 // Максимум 5 одновременных горутин (меньше чем для depleted, так как автосписание более критично)
+	semaphore := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+	recalculatedCount := 0
+
+	log.Printf("AUTO_BILLING: Запускаем параллельную обработку %d пользователей с максимальной параллельностью %d", len(usersWithBalance), maxConcurrency)
+
+	now := time.Now()
+
+	for _, user := range usersWithBalance {
+		wg.Add(1)
+		go func(u common.User) {
+			defer wg.Done()
+
+			// Захватываем слот семафора
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }() // Освобождаем слот
+
+			// Обрабатываем пользователя
+			if abs.processUserBalanceRecalculation(&u, now) {
+				mutex.Lock()
+				recalculatedCount++
+				mutex.Unlock()
+			}
+		}(user)
+	}
+
+	// Ждем завершения всех горутин
+	wg.Wait()
+
+	log.Printf("AUTO_BILLING: ПАРАЛЛЕЛЬНЫЙ пересчет завершен. Обработано пользователей: %d", recalculatedCount)
+}
+
+// processUserBalanceRecalculation обрабатывает пересчет баланса для одного пользователя
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: Выделенная логика для одного пользователя (используется в параллельной версии)
+func (abs *AutoBillingService) processUserBalanceRecalculation(user *common.User, now time.Time) bool {
+	// Вычисляем количество дней по балансу
+	availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
+	if availableDays <= 0 {
+		return false
+	}
+
+	// Проверяем наличие активного конфига
+	hasAnyActiveConfig := user.HasActiveConfig || user.HasActiveSecondaryConfig
+
+	if !hasAnyActiveConfig {
+		// Создаем новый конфиг
+		err := abs.createConfigFromBalance(user, availableDays)
+		if err != nil {
+			log.Printf("AUTO_BILLING: Ошибка создания конфига для пользователя %d: %v", user.TelegramID, err)
+			return false
+		}
+		log.Printf("AUTO_BILLING: Создан конфиг на %d дней для пользователя %d", availableDays, user.TelegramID)
+		return true
+	} else {
+		// Синхронизируем время истечения
+		currentExpiryTime := time.UnixMilli(user.ExpiryTime)
+		desiredExpiryTime := now.Add(time.Duration(availableDays) * 24 * time.Hour)
+		timeDiff := desiredExpiryTime.Sub(currentExpiryTime)
+
+		// Проверяем разницу времени
+		absDiff := timeDiff
+		if absDiff < 0 {
+			absDiff = -absDiff
+		}
+
+		if absDiff > time.Hour {
+			// Нужна синхронизация
+			err := abs.updateConfigExpiry(user, availableDays)
+			if err != nil {
+				log.Printf("AUTO_BILLING: Ошибка обновления конфига для пользователя %d: %v", user.TelegramID, err)
+				return false
+			}
+			log.Printf("AUTO_BILLING: Обновлен конфиг на %d дней для пользователя %d", availableDays, user.TelegramID)
+			return true
+		} else {
+			log.Printf("AUTO_BILLING: Конфиг пользователя %d уже синхронизирован (до %s, доступно дней: %d)",
+				user.TelegramID, currentExpiryTime.Format("2006-01-02 15:04"), availableDays)
+			return false
+		}
+	}
 }

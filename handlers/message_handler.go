@@ -230,6 +230,10 @@ func handleCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, user *common
 		handleCheckDepletedCommand(bot, message)
 	case "check_depleted_parallel":
 		handleCheckDepletedParallelCommand(bot, message)
+	case "auto_billing_optimized":
+		handleAutoBillingOptimizedCommand(bot, message)
+	case "auto_billing_parallel":
+		handleAutoBillingParallelCommand(bot, message)
 	case "clear_nil_config":
 		handleClearNilConfigCommand(bot, message)
 	case "confirm_clear_users":
@@ -889,6 +893,80 @@ func handleCheckDepletedParallelCommand(bot *tgbotapi.BotAPI, message *tgbotapi.
 		msg := tgbotapi.NewMessage(message.Chat.ID, "✅ Параллельная проверка ложных состояний 'исчерпано' завершена. Результаты в логах.")
 		if _, err := bot.Send(msg); err != nil {
 			log.Printf("HANDLE_CHECK_DEPLETED_PARALLEL_COMMAND: Ошибка отправки сообщения о завершении: %v", err)
+		}
+	}()
+}
+
+// handleAutoBillingOptimizedCommand обрабатывает команду /auto_billing_optimized
+func handleAutoBillingOptimizedCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_AUTO_BILLING_OPTIMIZED_COMMAND: Выполнение команды /auto_billing_optimized для TelegramID=%d", message.From.ID)
+
+	// Проверяем, что пользователь - админ
+	if message.From.ID != common.ADMIN_ID {
+		log.Printf("HANDLE_AUTO_BILLING_OPTIMIZED_COMMAND: Пользователь TelegramID=%d не является админом", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_AUTO_BILLING_OPTIMIZED_COMMAND: Ошибка отправки сообщения о запрете: %v", err)
+		}
+		return
+	}
+
+	// Отправляем сообщение о начале проверки
+	msg := tgbotapi.NewMessage(message.Chat.ID, "🚀 Запуск оптимизированного автосписания...")
+	if _, err := bot.Send(msg); err != nil {
+		log.Printf("HANDLE_AUTO_BILLING_OPTIMIZED_COMMAND: Ошибка отправки сообщения: %v", err)
+		return
+	}
+
+	// Запускаем оптимизированное автосписание в отдельной горутине
+	go func() {
+		// Создаем временный экземпляр сервиса для оптимизированной проверки
+		abs := services.NewAutoBillingService(bot)
+
+		// Выполняем оптимизированное автосписание
+		abs.ProcessBalanceRecalculationOptimized()
+
+		// Отправляем сообщение о завершении
+		msg := tgbotapi.NewMessage(message.Chat.ID, "✅ Оптимизированное автосписание завершено. Результаты в логах.")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_AUTO_BILLING_OPTIMIZED_COMMAND: Ошибка отправки сообщения о завершении: %v", err)
+		}
+	}()
+}
+
+// handleAutoBillingParallelCommand обрабатывает команду /auto_billing_parallel
+func handleAutoBillingParallelCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+	log.Printf("HANDLE_AUTO_BILLING_PARALLEL_COMMAND: Выполнение команды /auto_billing_parallel для TelegramID=%d", message.From.ID)
+
+	// Проверяем, что пользователь - админ
+	if message.From.ID != common.ADMIN_ID {
+		log.Printf("HANDLE_AUTO_BILLING_PARALLEL_COMMAND: Пользователь TelegramID=%d не является админом", message.From.ID)
+		msg := tgbotapi.NewMessage(message.Chat.ID, "🚫 Доступ запрещён")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_AUTO_BILLING_PARALLEL_COMMAND: Ошибка отправки сообщения о запрете: %v", err)
+		}
+		return
+	}
+
+	// Отправляем сообщение о начале проверки
+	msg := tgbotapi.NewMessage(message.Chat.ID, "⚡ Запуск параллельного автосписания...")
+	if _, err := bot.Send(msg); err != nil {
+		log.Printf("HANDLE_AUTO_BILLING_PARALLEL_COMMAND: Ошибка отправки сообщения: %v", err)
+		return
+	}
+
+	// Запускаем параллельное автосписание в отдельной горутине
+	go func() {
+		// Создаем временный экземпляр сервиса для параллельной проверки
+		abs := services.NewAutoBillingService(bot)
+
+		// Выполняем параллельное автосписание
+		abs.ProcessBalanceRecalculationParallel()
+
+		// Отправляем сообщение о завершении
+		msg := tgbotapi.NewMessage(message.Chat.ID, "✅ Параллельное автосписание завершено. Результаты в логах.")
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("HANDLE_AUTO_BILLING_PARALLEL_COMMAND: Ошибка отправки сообщения о завершении: %v", err)
 		}
 	}()
 }

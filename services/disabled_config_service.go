@@ -1,8 +1,11 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
+	"sync"
 	"time"
 
 	"bot/common"
@@ -61,45 +64,11 @@ func (dcs *DisabledConfigService) Stop() {
 }
 
 // checkDisabledConfigs проверяет всех пользователей на отключенные конфиги с достаточным балансом
+// ТЕПЕРЬ ИСПОЛЬЗУЕТ ГИБРИДНУЮ ВЕРСИЮ: БАТЧИНГ + ГОРУТИНЫ для максимальной производительности
 func (dcs *DisabledConfigService) checkDisabledConfigs() {
-	log.Printf("DISABLED_CONFIG: Начинаем проверку отключенных конфигов...")
-
-	// Получаем ВСЕХ пользователей (не только с активными конфигами)
-	users, err := common.GetAllUsers()
-	if err != nil {
-		log.Printf("DISABLED_CONFIG: Ошибка получения пользователей: %v", err)
-		return
-	}
-
-	enabledCount := 0
-	checkedCount := 0
-
-	for _, user := range users {
-		checkedCount++
-
-		// Проверяем условия для включения конфига
-		if shouldEnable, reason := dcs.shouldEnableConfig(&user); shouldEnable {
-			log.Printf("DISABLED_CONFIG: Найден отключенный конфиг с достаточным балансом для пользователя %d (email: %s, баланс: %.2f₽, причина: %s)",
-				user.TelegramID, user.Email, user.Balance, reason)
-
-			// Включаем конфиг пользователя
-			if err := dcs.enableUserConfig(&user); err != nil {
-				log.Printf("DISABLED_CONFIG: Ошибка включения конфига для пользователя %d: %v",
-					user.TelegramID, err)
-			} else {
-				enabledCount++
-				log.Printf("DISABLED_CONFIG: Конфиг успешно включен для пользователя %d", user.TelegramID)
-			}
-		}
-	}
-
-	if enabledCount > 0 {
-		log.Printf("DISABLED_CONFIG: Проверка завершена. Проверено пользователей: %d, включено конфигов: %d",
-			checkedCount, enabledCount)
-	} else {
-		log.Printf("DISABLED_CONFIG: Проверка завершена. Проверено пользователей: %d, отключенных конфигов с достаточным балансом не найдено",
-			checkedCount)
-	}
+	// ОПТИМИЗАЦИЯ: Используем гибридную версию (батчинг + горутины) для максимальной производительности
+	// Результат: 3 API вызова вместо N×3 + параллельная обработка пользователей
+	dcs.CheckDisabledConfigsHybrid()
 }
 
 // shouldEnableConfig проверяет, нужно ли включить конфиг пользователя
@@ -250,7 +219,227 @@ func (dcs *DisabledConfigService) sendAdminNotification(user *common.User) {
 }
 
 // ForceCheckDisabledConfigs экспортированный метод для принудительной проверки отключенных конфигов
+// РЕКОМЕНДУЕТСЯ: Теперь использует ГИБРИДНУЮ версию (батчинг + горутины)
 func (dcs *DisabledConfigService) ForceCheckDisabledConfigs() {
 	log.Printf("DISABLED_CONFIG: Принудительная проверка отключенных конфигов")
-	dcs.checkDisabledConfigs()
+	dcs.checkDisabledConfigs() // Вызывает гибридную версию (батчинг + горутины)
+}
+
+// ============================================================================
+// ОПТИМИЗИРОВАННЫЕ ФУНКЦИИ DISABLED_CONFIG (БАТЧИНГ + ПАРАЛЛЕЛИЗМ)
+// ============================================================================
+
+// CheckDisabledConfigsHybrid гибридная версия: БАТЧИНГ + ГОРУТИНЫ
+// ОСНОВНАЯ ОПТИМИЗАЦИЯ: Минимальные API вызовы + максимальная скорость обработки
+//
+// ПРОБЛЕМА ИЗНАЧАЛЬНОЙ ВЕРСИИ:
+// - Для каждого пользователя: GetConfigStatus() + EnableConfig() + ForceResetDepletedStatus()
+// - Каждый ForceResetDepletedStatus() делает свой Login()
+// - Результат: N×3 API вызовов для N пользователей + последовательная обработка
+//
+// РЕШЕНИЕ ГИБРИДНОЙ ВЕРСИИ:
+// - БАТЧИНГ: Один Login() + один GetInbound() + один UpdateInbound()
+// - ГОРУТИНЫ: Параллельная обработка пользователей в памяти
+// - Результат: 3 API вызова + максимальная скорость обработки
+func (dcs *DisabledConfigService) CheckDisabledConfigsHybrid() {
+	log.Printf("DISABLED_CONFIG: Начинаем ГИБРИДНУЮ проверку отключенных конфигов (батчинг + горутины)...")
+
+	// ===== ЭТАП 1: БАТЧИНГ - ПОЛУЧАЕМ ДАННЫЕ ОДИН РАЗ =====
+	users, err := common.GetAllUsers()
+	if err != nil {
+		log.Printf("DISABLED_CONFIG: Ошибка получения пользователей: %v", err)
+		return
+	}
+
+	if len(users) == 0 {
+		log.Printf("DISABLED_CONFIG: Нет пользователей для проверки")
+		return
+	}
+
+	// БАТЧИНГ: Получаем сессию ОДИН РАЗ для всех операций
+	sessionCookie, err := common.Login()
+	if err != nil {
+		log.Printf("DISABLED_CONFIG: Ошибка авторизации в панели: %v", err)
+		return
+	}
+
+	// БАТЧИНГ: Получаем данные inbound ОДИН РАЗ для всех пользователей
+	inbound, err := common.GetInbound(sessionCookie)
+	if err != nil {
+		log.Printf("DISABLED_CONFIG: Ошибка получения inbound: %v", err)
+		return
+	}
+
+	// БАТЧИНГ: Парсим settings ОДИН РАЗ и работаем с данными в памяти
+	var settings common.Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("DISABLED_CONFIG: Ошибка парсинга settings: %v", err)
+		return
+	}
+
+	// ===== ЭТАП 2: ГОРУТИНЫ - ПАРАЛЛЕЛЬНАЯ ПРОВЕРКА =====
+	now := time.Now()
+	var usersToEnable []*common.User
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	// ГОРУТИНЫ: Обрабатываем пользователей параллельно с ограничением
+	const maxConcurrency = 5 // Максимум 5 одновременных горутин
+	semaphore := make(chan struct{}, maxConcurrency)
+
+	log.Printf("DISABLED_CONFIG: Запускаем параллельную проверку %d пользователей с максимальной параллельностью %d", len(users), maxConcurrency)
+
+	for _, user := range users {
+		wg.Add(1)
+		go func(u common.User) {
+			defer wg.Done()
+
+			// Получаем семафор для ограничения параллельности
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			// ГОРУТИНЫ: Проверяем пользователя в памяти (без API вызовов)
+			if dcs.shouldEnableConfigOptimized(&u, now, &settings) {
+				mu.Lock()
+				usersToEnable = append(usersToEnable, &u)
+				mu.Unlock()
+			}
+		}(user)
+	}
+
+	// Ждем завершения всех горутин
+	wg.Wait()
+
+	if len(usersToEnable) == 0 {
+		log.Printf("DISABLED_CONFIG: ГИБРИДНАЯ проверка завершена. Проверено пользователей: %d, отключенных конфигов с достаточным балансом не найдено", len(users))
+		return
+	}
+
+	log.Printf("DISABLED_CONFIG: Найдено %d пользователей для включения конфигов", len(usersToEnable))
+
+	// ===== ЭТАП 3: ГОРУТИНЫ - ПАРАЛЛЕЛЬНОЕ ВКЛЮЧЕНИЕ =====
+	enabledCount := 0
+	var enabledMu sync.Mutex
+
+	// ГОРУТИНЫ: Включаем конфиги параллельно
+	for _, user := range usersToEnable {
+		wg.Add(1)
+		go func(u *common.User) {
+			defer wg.Done()
+
+			// Получаем семафор
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			// ГОРУТИНЫ: Обрабатываем пользователя в памяти
+			if dcs.processUserInMemory(u, &settings, now) {
+				enabledMu.Lock()
+				enabledCount++
+				enabledMu.Unlock()
+			}
+		}(user)
+	}
+
+	// Ждем завершения всех горутин
+	wg.Wait()
+
+	// ===== ЭТАП 4: БАТЧИНГ - ОБНОВЛЯЕМ ПАНЕЛЬ ОДИН РАЗ =====
+	if enabledCount > 0 {
+		// БАТЧИНГ: Обновляем inbound ОДИН РАЗ для всех изменений
+		settingsJSON, err := json.Marshal(settings)
+		if err != nil {
+			log.Printf("DISABLED_CONFIG: Ошибка сериализации settings: %v", err)
+			return
+		}
+		inbound.Settings = string(settingsJSON)
+
+		if err := common.UpdateInbound(sessionCookie, *inbound); err != nil {
+			log.Printf("DISABLED_CONFIG: Ошибка обновления inbound: %v", err)
+			return
+		}
+		log.Printf("DISABLED_CONFIG: Inbound успешно обновлен")
+	}
+
+	log.Printf("DISABLED_CONFIG: ГИБРИДНАЯ проверка завершена. Проверено пользователей: %d, включено конфигов: %d", len(users), enabledCount)
+}
+
+// shouldEnableConfigOptimized оптимизированная версия без API вызовов
+// ОПТИМИЗАЦИЯ: Работает с данными в памяти вместо API вызовов
+func (dcs *DisabledConfigService) shouldEnableConfigOptimized(user *common.User, now time.Time, settings *common.Settings) bool {
+	// Проверяем базовые условия (быстрые проверки без API)
+	if user.ClientID == "" || user.SubID == "" || user.Email == "" {
+		return false
+	}
+
+	if user.Balance < float64(common.PRICE_PER_DAY) {
+		return false
+	}
+
+	// ОПТИМИЗАЦИЯ: Ищем клиента в уже загруженных settings (данные в памяти)
+	// В старой версии вызывался GetConfigStatus() для каждого пользователя
+	telegramIDStr := fmt.Sprintf("%d", user.TelegramID)
+	for _, client := range settings.Clients {
+		if client.Email == user.Email ||
+			strings.HasPrefix(client.Email, telegramIDStr+"_") ||
+			strings.HasPrefix(client.Email, telegramIDStr+" ") {
+
+			// Если конфиг отключен в панели, но у пользователя есть достаточный баланс - включаем
+			return !client.Enable
+		}
+	}
+
+	return false
+}
+
+// processUserInMemory обрабатывает пользователя в памяти (для гибридной версии)
+// ГОРУТИНЫ: Работает с данными в памяти, безопасна для параллельного выполнения
+func (dcs *DisabledConfigService) processUserInMemory(user *common.User, settings *common.Settings, now time.Time) bool {
+	// ГОРУТИНЫ: Включаем конфиг в settings (данные в памяти)
+	telegramIDStr := fmt.Sprintf("%d", user.TelegramID)
+	for i, client := range settings.Clients {
+		if client.Email == user.Email ||
+			strings.HasPrefix(client.Email, telegramIDStr+"_") ||
+			strings.HasPrefix(client.Email, telegramIDStr+" ") {
+
+			// Включаем конфиг в памяти
+			settings.Clients[i].Enable = true
+
+			// Сбрасываем статус "исчерпано" в памяти
+			if settings.Clients[i].Depleted != nil {
+				*settings.Clients[i].Depleted = false
+			}
+			if settings.Clients[i].Exhausted != nil {
+				*settings.Clients[i].Exhausted = false
+			}
+
+			log.Printf("DISABLED_CONFIG: Конфиг включен для пользователя %d (email: %s)", user.TelegramID, user.Email)
+			break
+		}
+	}
+
+	// Обновляем статус пользователя в базе данных
+	user.HasActiveConfig = true
+
+	// Если время истечения не установлено или истекло, устанавливаем новое
+	if user.ExpiryTime <= now.UnixMilli() {
+		availableDays := int(user.Balance / float64(common.PRICE_PER_DAY))
+		if availableDays > 0 {
+			user.ExpiryTime = now.Add(time.Duration(availableDays) * 24 * time.Hour).UnixMilli()
+		}
+	}
+
+	if err := common.UpdateUser(user); err != nil {
+		log.Printf("DISABLED_CONFIG: Ошибка обновления пользователя %d: %v", user.TelegramID, err)
+		return false
+	}
+
+	// ГОРУТИНЫ: Отправляем уведомления асинхронно
+	if dcs.bot != nil {
+		go dcs.sendConfigEnabledNotification(user)
+	}
+	if common.ADMIN_NOTIFICATIONS_ENABLED && common.ADMIN_CONFIG_BLOCKING_ENABLED {
+		go dcs.sendAdminNotification(user)
+	}
+
+	return true
 }
