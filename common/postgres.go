@@ -418,6 +418,21 @@ func AddBalancePG(telegramID int64, amount float64) error {
 	go func() {
 		time.Sleep(100 * time.Millisecond) // 100ms задержка
 		log.Printf("POSTGRES: Запуск принудительного пересчета после пополнения баланса для пользователя %d на сумму %.2f₽", telegramID, amount)
+
+		// Сбрасываем статус "исчерпано" если он есть (только для пользователей с проблемами)
+		sessionCookie, err := Login()
+		if err != nil {
+			log.Printf("POSTGRES: Ошибка авторизации для сброса статуса 'исчерпано' для пользователя %d: %v", telegramID, err)
+		} else {
+			log.Printf("POSTGRES: Попытка сброса статуса 'исчерпано' для пользователя %d после пополнения баланса", telegramID)
+			if err := ForceResetDepletedStatus(sessionCookie, telegramID); err != nil {
+				// Это нормально - значит у пользователя нет статуса "исчерпано" или конфига
+				log.Printf("POSTGRES: Статус 'исчерпано' не найден для пользователя %d (это нормально): %v", telegramID, err)
+			} else {
+				log.Printf("POSTGRES: ✅ Статус 'исчерпано' успешно сброшен для пользователя %d после пополнения баланса", telegramID)
+			}
+		}
+
 		ForceBalanceRecalculation(telegramID)
 	}()
 
