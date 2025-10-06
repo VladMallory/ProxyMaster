@@ -324,12 +324,12 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 	text := ""
 	text = fmt.Sprintf("🌟 Добро пожаловать, %s!\n\n", user.FirstName)
 	text += "<blockquote>"
-	text += fmt.Sprintf("——💰 Ваш баланс: %.2f₽\n", user.Balance)
-	text += fmt.Sprintf("——💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
+	text += fmt.Sprintf("-💰 Ваш баланс: %.2f₽\n", user.Balance)
+	text += fmt.Sprintf("-💳 Стоимость подписки: %d₽ в день(%d₽ в месяц)\n", common.PRICE_PER_DAY, common.PRICE_PER_DAY*30)
 
 	if common.IsConfigActive(user) {
 		expiryDate := common.FormatRussianDateFromUnix(user.ExpiryTime)
-		text += fmt.Sprintf("——✅ Подписка активна до %s\n", expiryDate)
+		text += fmt.Sprintf("-✅ Подписка активна до %s\n", expiryDate)
 		text += "</blockquote>\n\n"
 
 		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
