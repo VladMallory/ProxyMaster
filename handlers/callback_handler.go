@@ -160,6 +160,9 @@ func HandleCallback(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
 	case data == "main_menu":
 		log.Printf("HANDLE_CALLBACK: Вызов editMainMenu для TelegramID=%d", userID)
 		menus.EditMainMenu(bot, chatID, messageID, user)
+	case data == "multi_subscription":
+		// Обработка мультиподписок
+		HandleMultiSubscriptionCallback(bot, callback)
 	case strings.HasPrefix(data, "multi_"):
 		// Обработка мультиподписок
 		HandleMultiSubscriptionCallback(bot, callback)

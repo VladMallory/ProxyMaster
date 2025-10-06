@@ -241,7 +241,7 @@ func SendMultiSubscriptionSuccess(bot *tgbotapi.BotAPI, chatID int64, user *comm
 	// Создаем клавиатуру с ссылкой на мультиподписку
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить мультиподписку", common.GetRedirectURL()+subscription.SubscriptionURL),
+			tgbotapi.NewInlineKeyboardButtonURL("📱 Подключить мультиподписку", "https://im.shadowfade.ru:8443/redirect_multi_subscription.html?id="+subscription.ID),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("🔐 Мои подписки", "my_subscriptions"),

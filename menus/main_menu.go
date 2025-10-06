@@ -16,9 +16,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 	var keyboard tgbotapi.InlineKeyboardMarkup
 
 	if common.IsConfigActive(user) {
-		// Используем HTML редирект страницу
-		subscriptionURL := common.CONFIG_BASE_URL + user.SubID
-		redirectURL := common.GetRedirectURL() + subscriptionURL
+		// Пользователь имеет активную подписку
 
 		if common.TARIFF_MODE_ENABLED {
 			// Режим тарифов - показываем кнопку "Продлить"
@@ -27,7 +25,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
+					tgbotapi.NewInlineKeyboardButtonData("🌍 Мультиподписка", "multi_subscription"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
@@ -48,7 +46,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
+					tgbotapi.NewInlineKeyboardButtonData("🌍 Мультиподписка", "multi_subscription"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
@@ -152,7 +150,7 @@ func SendMainMenu(bot *tgbotapi.BotAPI, chatID int64, user *common.User) {
 
 		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
 		text += "1️⃣ Скачайте приложение по кнопке <u>Скачать приложение</u>. Выберите ваш телефон, <u>iOS</u> или <u>Android</u>\n"
-		text += fmt.Sprintf("2️⃣ После установки нажмите <u>Подключить (%s)</u>, он импортирует подписку в %s", common.GetAppName(), common.GetAppName())
+		text += "2️⃣ После установки нажмите <u>Мультиподписка</u>, чтобы выбрать серверы и создать подписку"
 	} else {
 		text += "</blockquote>\n\n"
 
@@ -192,9 +190,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 	var keyboard tgbotapi.InlineKeyboardMarkup
 
 	if common.IsConfigActive(user) {
-		// Используем HTML редирект страницу
-		subscriptionURL := common.CONFIG_BASE_URL + user.SubID
-		redirectURL := common.GetRedirectURL() + subscriptionURL
+		// Пользователь имеет активную подписку
 
 		if common.TARIFF_MODE_ENABLED {
 			// Режим тарифов - показываем кнопку "Продлить"
@@ -203,7 +199,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
+					tgbotapi.NewInlineKeyboardButtonData("🌍 Мультиподписка", "multi_subscription"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💳 Продлить", "extend"),
@@ -224,7 +220,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 					tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonURL(fmt.Sprintf("📱 Подключить (%s)", common.GetAppName()), redirectURL),
+					tgbotapi.NewInlineKeyboardButtonData("🌍 Мультиподписка", "multi_subscription"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("💰 Пополнить", "topup"),
@@ -334,7 +330,7 @@ func EditMainMenu(bot *tgbotapi.BotAPI, chatID int64, messageID int, user *commo
 
 		text += "🚀 Если вам не понятно как подключиться, обратитесь в поддержку, мы отправим инструкцию и поможем\n\n"
 		text += "1️⃣ Скачайте приложение по кнопке <u>Скачать приложение</u>. Выберите ваш телефон, <u>iOS</u> или <u>Android</u>\n"
-		text += fmt.Sprintf("2️⃣ После установки нажмите <u>Подключить (%s)</u>, он импортирует подписку в %s", common.GetAppName(), common.GetAppName())
+		text += "2️⃣ После установки нажмите <u>Мультиподписка</u>, чтобы выбрать серверы и создать подписку"
 	} else {
 		text += "</blockquote>\n\n"
 

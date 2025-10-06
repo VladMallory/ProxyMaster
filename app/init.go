@@ -43,6 +43,12 @@ func InitializeApp() {
 			http.ServeFile(w, r, "importRedirect/redirect_happ_test.html")
 		})
 
+		// Обработчик для redirect_multi_subscription.html (мультиподписки)
+		http.HandleFunc("/redirect_multi_subscription.html", func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("HTTP_SERVER: Multi subscription redirect request: %s", r.URL.String())
+			http.ServeFile(w, r, "importRedirect/redirect_multi_subscription.html")
+		})
+
 		// Обработчик для redirect_v2raytun.html
 		http.HandleFunc("/redirect_v2raytun.html", func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("HTTP_SERVER: v2raytun redirect request: %s", r.URL.String())

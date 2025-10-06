@@ -1,538 +1,418 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мультиподписка VPN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
-
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-
-        .logo {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 16px;
-            line-height: 1.5;
-        }
-
-        .status {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-left: 4px solid #28a745;
-        }
-
-        .status-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .status-text {
-            color: #28a745;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .status-details {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .servers-info {
-            background: #e3f2fd;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: left;
-        }
-
-        .servers-title {
-            color: #1976d2;
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .server-list {
-            list-style: none;
-        }
-
-        .server-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .server-item:last-child {
-            border-bottom: none;
-        }
-
-        .server-flag {
-            font-size: 20px;
-            margin-right: 12px;
-        }
-
-        .server-name {
-            color: #333;
-            font-weight: 500;
-        }
-
-        .server-country {
-            color: #666;
-            font-size: 14px;
-            margin-left: auto;
-        }
-
-        .buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: none;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #666;
-            border: 2px solid #e0e0e0;
-        }
-
-        .btn-secondary:hover {
-            background: #e9ecef;
-            border-color: #d0d0d0;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
-        }
-
-        .loading {
-            display: none;
-            margin: 20px 0;
-        }
-
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 20px auto;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
+        .btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .status {
+            margin: 20px 0;
+            font-size: 18px;
+        }
         .error {
-            background: #f8d7da;
-            color: #721c24;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 10px;
             padding: 15px;
-            border-radius: 8px;
             margin: 20px 0;
-            display: none;
         }
-
-        .success {
-            background: #d4edda;
-            color: #155724;
+        .debug-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
             padding: 15px;
-            border-radius: 8px;
             margin: 20px 0;
-            display: none;
-        }
-
-        .features {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
+            font-size: 12px;
             text-align: left;
-        }
-
-        .features-title {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            color: #666;
-        }
-
-        .feature-icon {
-            margin-right: 10px;
-            color: #28a745;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .btn {
-                padding: 12px 20px;
-                font-size: 14px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">🌍</div>
-        <h1>Мультиподписка VPN</h1>
-        <p class="subtitle">Выберите несколько серверов для лучшей производительности и стабильности</p>
-
-        <div class="status">
-            <div class="status-icon">✅</div>
-            <div class="status-text">Мультиподписка готова</div>
-            <div class="status-details">Ваша подписка включает несколько серверов из разных стран</div>
+        <h1>🌍 Мультиподписка VPN</h1>
+        <div id="loading">
+            <div class="spinner"></div>
+            <div class="status">Загрузка мультиподписки...</div>
         </div>
-
-        <div class="servers-info" id="serversInfo" style="display: none;">
-            <div class="servers-title">🌍 Включенные серверы</div>
-            <ul class="server-list" id="serverList">
-                <!-- Серверы будут добавлены динамически -->
-            </ul>
-        </div>
-
-        <div class="features">
-            <div class="features-title">🚀 Преимущества мультиподписки</div>
-            <div class="feature-item">
-                <span class="feature-icon">⚡</span>
-                <span>Автоматическое переключение между серверами</span>
+        <div id="manual" style="display: none;">
+            <a href="" id="manual-link" class="btn">📱 Импортировать мультиподписку</a>
+            <br>
+            <a href="" id="copy-link" class="btn">📋 Скопировать ссылку</a>
+            <br>
+            <a href="" id="android-intent-link" class="btn" style="display: none;">🤖 Android Intent</a>
+            <br>
+            
+            <!-- ===== ЕДИНСТВЕННАЯ КНОПКА ДЛЯ ANDROID ===== -->
+            <div id="android-single-button" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: none;">
+                <a href="" id="subscription-import-link" class="btn" style="background: rgba(76, 175, 80, 0.3); border-color: rgba(76, 175, 80, 0.5); font-size: 18px; padding: 15px 30px;">
+                    🔗 Нажмите сюда, чтобы добавить подписку
+                </a>
+                <br>
+                
+                <div style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+                    <strong>💡 Инструкция:</strong> Нажмите кнопку выше для автоматического добавления подписки в Happ
+                </div>
             </div>
-            <div class="feature-item">
-                <span class="feature-icon">🌐</span>
-                <span>Лучшая производительность и стабильность</span>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">🔒</span>
-                <span>Возможность обхода блокировок</span>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">🔄</span>
-                <span>Автоматическое обновление конфигураций</span>
+            
+            <!-- ===== ИНСТРУКЦИЯ ДЛЯ iOS ===== -->
+            <div id="ios-instruction" style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+                <strong>💡 Инструкция:</strong> 
+                <span id="instruction-text">
+                    Нажмите кнопку выше для автоматического добавления конфигурации в Happ
+                </span>
             </div>
         </div>
-
-        <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
-            <div>Загрузка конфигурации...</div>
+        <div id="error" style="display: none;" class="error">
+            <h3>❌ Ошибка</h3>
+            <p id="error-text"></p>
         </div>
-
-        <div class="error" id="error">
-            <strong>Ошибка:</strong> <span id="errorText"></span>
-        </div>
-
-        <div class="success" id="success">
-            <strong>Успешно!</strong> <span id="successText"></span>
-        </div>
-
-        <div class="buttons">
-            <button class="btn btn-primary" id="importBtn" onclick="importSubscription()">
-                📱 Импортировать мультиподписку
-            </button>
-            <button class="btn btn-secondary" id="copyBtn" onclick="copySubscription()">
-                📋 Скопировать ссылку
-            </button>
-            <a href="#" class="btn btn-secondary" id="backBtn" onclick="goBack()">
-                ← Назад в бот
-            </a>
+        <div id="debug" class="debug-info" style="display: none;">
+            <h4>🐛 Debug информация:</h4>
+            <div id="debug-content"></div>
         </div>
     </div>
 
-    <script>
-        // Получаем параметры из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const subscriptionId = urlParams.get('id');
-        const appType = urlParams.get('app') || 'happ'; // happ или v2raytun
-
-        let subscriptionData = null;
-        let subscriptionUrl = '';
-
-        // Инициализация страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!subscriptionId) {
-                showError('ID мультиподписки не указан');
-                return;
-            }
-
-            loadSubscriptionData();
-        });
-
-        // Загрузка данных мультиподписки
-        async function loadSubscriptionData() {
-            showLoading(true);
+<script>
+    // Получаем ID мультиподписки из параметра
+    const urlParams = new URLSearchParams(window.location.search);
+    const subscriptionId = urlParams.get('id');
+    const configUrl = subscriptionId ? 'https://im.shadowfade.ru:8443/api/multi-subscription?id=' + subscriptionId : null;
+    
+    // Определяем платформу
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    console.log('=== MULTI SUBSCRIPTION REDIRECT DEBUG ===');
+    console.log('Получен ID мультиподписки:', subscriptionId);
+    console.log('Сформированный URL:', configUrl);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('isAndroid:', isAndroid);
+    console.log('isIOS:', isIOS);
+    console.log('isMobile:', isMobile);
+    
+    // ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ОТКРЫТИЯ ПРИЛОЖЕНИЯ =====
+    function tryOpenApp(url, attempt) {
+        try {
+            console.log('Попытка ' + attempt + ': открытие', url);
             
-            try {
-                const response = await fetch(`/api/multi-subscription?id=${subscriptionId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`Ошибка загрузки: ${response.status}`);
+            // Метод 1: Создаем скрытую ссылку и кликаем по ней
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Метод 2: Прямое перенаправление через window.location
+            window.location.href = url;
+        } catch (e) {
+            console.log('Попытка ' + attempt + ' открытия приложения не удалась:', e);
+        }
+    }
+    
+    // ===== ФУНКЦИЯ НАСТРОЙКИ КНОПКИ АВТОМАТИЧЕСКОГО ДОБАВЛЕНИЯ =====
+    function setupAutoAddButton(happUrl, description) {
+        document.getElementById('manual-link').href = 'javascript:void(0)';
+        document.getElementById('manual-link').textContent = '📱 Автоматически добавить в Happ';
+        
+        document.getElementById('manual-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Автоматическое добавление:', description);
+            
+            tryOpenApp(happUrl, 'auto-add');
+            
+            setTimeout(function() {
+                alert('✅ Конфигурация добавлена в Happ!\n\nЕсли приложение не открылось, нажмите кнопку еще раз.');
+            }, 1000);
+        });
+    }
+    
+    
+    // ===== ФУНКЦИЯ ПРОВЕРКИ BASE64 =====
+    function isBase64(str) {
+        try {
+            const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+            if (!base64Regex.test(str)) {
+                return false;
+            }
+            
+            const decoded = atob(str);
+            
+            for (let i = 0; i < decoded.length; i++) {
+                const charCode = decoded.charCodeAt(i);
+                if (charCode < 32 && charCode !== 9 && charCode !== 10 && charCode !== 13) {
+                    return false;
                 }
-
-                const data = await response.text();
-                subscriptionData = data;
-                subscriptionUrl = `${window.location.origin}/api/multi-subscription?id=${subscriptionId}`;
-
-                // Загружаем информацию о серверах
-                await loadServersInfo();
-
-                showLoading(false);
-                showSuccess('Мультиподписка загружена успешно!');
-                
-            } catch (error) {
-                console.error('Ошибка загрузки мультиподписки:', error);
-                showError('Ошибка загрузки мультиподписки: ' + error.message);
-                showLoading(false);
             }
+            
+            return true;
+        } catch (e) {
+            return false;
         }
+    }
+    
+    // Показываем debug информацию
+    const debugContent = document.getElementById('debug-content');
+    debugContent.innerHTML = `
+        <strong>URL:</strong> ${configUrl || 'Не указан'}<br>
+        <strong>User Agent:</strong> ${navigator.userAgent}<br>
+        <strong>Платформа:</strong> ${isAndroid ? 'Android' : isIOS ? 'iOS' : 'Desktop'}<br>
+        <strong>Мобильное устройство:</strong> ${isMobile ? 'Да' : 'Нет'}<br>
+        <strong>Логика:</strong> ${isAndroid ? 'Android с одной кнопкой' : 'iOS с автоимпортом'}
+    `;
+    document.getElementById('debug').style.display = 'block';
 
-        // Загрузка информации о серверах
-        async function loadServersInfo() {
-            try {
-                // Здесь можно добавить API для получения информации о серверах
-                // Пока что показываем заглушку
-                const serversInfo = document.getElementById('serversInfo');
-                const serverList = document.getElementById('serverList');
+    if (configUrl) {
+        if (isAndroid) {
+            // ===== ANDROID: ЛОГИКА С ОДНОЙ КНОПКОЙ =====
+            console.log('Используем Android логику с одной кнопкой');
+            
+            // Показываем единственную кнопку для Android
+            document.getElementById('android-single-button').style.display = 'block';
+            // Скрываем инструкцию для iOS
+            document.getElementById('ios-instruction').style.display = 'none';
+            // Скрываем ненужные кнопки для Android
+            document.getElementById('copy-link').style.display = 'none';
+            document.getElementById('android-intent-link').style.display = 'none';
+            document.getElementById('manual-link').style.display = 'none';
+            
+            // Обновляем статус для Android
+            document.querySelector('.status').textContent = 'Нажмите кнопку ниже для добавления подписки в Happ:';
+            
+            // Настраиваем кнопки для Android
+            const happUrl = 'happ://add/' + encodeURIComponent(configUrl);
+            const androidIntentUrl = 'intent://add/' + encodeURIComponent(configUrl) + '#Intent;scheme=happ;package=com.happ.vpn;end';
+            
+            // Основная кнопка Happ (скрыта для Android)
+            document.getElementById('manual-link').href = 'javascript:void(0)';
+            document.getElementById('manual-link').textContent = '📱 Автоматически добавить в Happ';
+            
+            // Android Intent кнопка (скрыта для Android)
+            document.getElementById('android-intent-link').href = androidIntentUrl;
+            
+            // Кнопка копирования (скрыта для Android)
+            document.getElementById('copy-link').href = 'javascript:void(0)';
+            
+            // ===== НАСТРОЙКА ЕДИНСТВЕННОЙ КНОПКИ ДЛЯ ANDROID =====
+            // Кнопка "Автоматически добавить подписку" - добавляет подписку (не конфигурацию)
+            document.getElementById('subscription-import-link').href = 'javascript:void(0)';
+            document.getElementById('subscription-import-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Автоматический импорт подписки:', configUrl);
                 
-                // Добавляем заглушку серверов
-                const servers = [
-                    { flag: '🇩🇪', name: 'Германия #1', country: 'DE' },
-                    { flag: '🇫🇮', name: 'Финляндия #1', country: 'FI' },
-                    { flag: '🇳🇱', name: 'Нидерланды #1', country: 'NL' }
-                ];
-
-                serverList.innerHTML = '';
-                servers.forEach(server => {
-                    const li = document.createElement('li');
-                    li.className = 'server-item';
-                    li.innerHTML = `
-                        <span class="server-flag">${server.flag}</span>
-                        <span class="server-name">${server.name}</span>
-                        <span class="server-country">${server.country}</span>
-                    `;
-                    serverList.appendChild(li);
-                });
-
-                serversInfo.style.display = 'block';
-            } catch (error) {
-                console.error('Ошибка загрузки информации о серверах:', error);
-            }
-        }
-
-        // Импорт мультиподписки
-        function importSubscription() {
-            if (!subscriptionData) {
-                showError('Данные мультиподписки не загружены');
-                return;
-            }
-
-            const importBtn = document.getElementById('importBtn');
-            importBtn.disabled = true;
-            importBtn.textContent = '⏳ Импорт...';
-
-            try {
-                if (appType === 'happ') {
-                    importToHapp();
-                } else if (appType === 'v2raytun') {
-                    importToV2rayTun();
-                } else {
-                    // Пробуем определить приложение автоматически
-                    if (navigator.userAgent.includes('Android')) {
-                        importToHapp();
+                tryOpenApp('happ://add/' + configUrl, 'auto-subscription');
+                
+                setTimeout(function() {
+                    alert('✅ Подписка добавлена в Happ!\n\nЕсли приложение не открылось, нажмите кнопку еще раз.');
+                }, 1000);
+            });
+            
+            // Функция копирования ссылки (отключена для Android, так как кнопка скрыта)
+            // document.getElementById('copy-link').addEventListener('click', function() { ... });
+            
+            // ===== ОСНОВНАЯ ЛОГИКА ИМПОРТА ПОДПИСОК ДЛЯ ANDROID =====
+            console.log('Используем улучшенную логику импорта подписок для Android');
+            
+            // Получаем данные мультиподписки через API
+            fetch(configUrl)
+                .then(response => response.text())
+                .then(data => {
+                    console.log('Получены данные мультиподписки:', data);
+                    
+                    // Мультиподписка содержит несколько конфигураций, разделенных переносами строк
+                    const configs = data.split('\n').filter(line => line.trim());
+                    console.log('Найдено конфигураций:', configs.length);
+                    
+                    if (configs.length > 0) {
+                        // Берем первую конфигурацию для импорта
+                        const firstConfig = configs[0];
+                        console.log('Используем первую конфигурацию:', firstConfig);
+                        
+                        if (isBase64(firstConfig)) {
+                            try {
+                                const decodedUrl = atob(firstConfig);
+                                console.log('Декодированный URL:', decodedUrl);
+                            
+                            if (decodedUrl.startsWith('vless://') || decodedUrl.startsWith('vmess://') || decodedUrl.startsWith('trojan://') || decodedUrl.startsWith('ss://')) {
+                                const cleanUrl = decodeURIComponent(decodedUrl);
+                                console.log('Чистый URL для Happ:', cleanUrl);
+                                
+                                // Настраиваем основную кнопку для автоматического добавления (отключено для Android)
+                                // document.getElementById('manual-link').addEventListener('click', function(e) { ... });
+                                
+                                // ===== КНОПКА УЖЕ НАСТРОЕНА ДЛЯ ПОДПИСКИ =====
+                                // Кнопка "Автоматически добавить подписку" уже настроена выше для использования configUrl
+                                
+                                // Обновляем функцию копирования
+                                document.getElementById('copy-link').onclick = function() {
+                                    navigator.clipboard.writeText(cleanUrl).then(function() {
+                                        alert('✅ Ссылка скопирована!\n\nОткройте Happ → Добавить конфигурацию → Вставить ссылку');
+                                    }).catch(function() {
+                                        const textArea = document.createElement('textarea');
+                                        textArea.value = cleanUrl;
+                                        document.body.appendChild(textArea);
+                                        textArea.select();
+                                        document.execCommand('copy');
+                                        document.body.removeChild(textArea);
+                                        alert('✅ Ссылка скопирована!\n\nОткройте Happ → Добавить конфигурацию → Вставить ссылку');
+                                    });
+                                };
+                            } else {
+                                // Кнопка уже настроена для подписки выше
+                                console.log('Используем URL подписки для Happ:', configUrl);
+                            }
+                        } catch (e) {
+                            console.log('Ошибка декодирования мультиподписки:', e);
+                            showError('Ошибка обработки конфигурации мультиподписки');
+                        }
                     } else {
-                        importToV2rayTun();
+                        console.log('Конфигурация мультиподписки не в формате Base64');
+                        showError('Некорректный формат конфигурации мультиподписки');
+                    }
+                } else {
+                    console.log('Не найдено конфигураций в мультиподписке');
+                    showError('Мультиподписка не содержит конфигураций');
+                }
+                })
+                .catch(e => {
+                    console.log('Ошибка при получении данных подписки для Happ:', e);
+                    // Кнопка уже настроена для подписки выше
+                });
+            
+            // Показываем кнопки через 1 секунду
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('manual').style.display = 'block';
+            }, 1000);
+            
+        } else {
+            // ===== iOS И ДРУГИЕ ПЛАТФОРМЫ: ОРИГИНАЛЬНАЯ ЛОГИКА С АВТОИМПОРТОМ =====
+            console.log('Используем iOS логику с автоимпортом');
+            
+            const v2rayUrl = 'happ://add/' + encodeURIComponent(configUrl);
+            console.log('Сформирован Happ URL:', v2rayUrl);
+            
+            // Устанавливаем ссылки
+            document.getElementById('manual-link').href = v2rayUrl;
+            document.getElementById('manual-link').textContent = '📱 Открыть в Happ';
+            document.getElementById('copy-link').href = 'javascript:void(0)';
+            
+            // Скрываем Android-специфичные кнопки
+            document.getElementById('android-intent-link').style.display = 'none';
+            document.getElementById('android-single-button').style.display = 'none';
+            
+            // Функция копирования ссылки
+            document.getElementById('copy-link').addEventListener('click', function() {
+                navigator.clipboard.writeText(configUrl).then(function() {
+                    alert('✅ Ссылка скопирована!\n\nОткройте Happ → Добавить конфигурацию → Вставить ссылку');
+                }).catch(function() {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = configUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('✅ Ссылка скопирована!\n\nОткройте Happ → Добавить конфигурацию → Вставить ссылку');
+                });
+            });
+
+            // ===== АВТОИМПОРТ ДЛЯ iOS =====
+            // Пытаемся открыть приложение автоматически
+            let appOpened = false;
+            
+            // Первая попытка - немедленно
+            try {
+                console.log('Попытка 1: открытие', v2rayUrl);
+                window.location.href = v2rayUrl;
+                appOpened = true;
+            } catch (e) {
+                console.log('Первая попытка открытия приложения не удалась:', e);
+            }
+            
+            // Вторая попытка через 1 секунду
+            setTimeout(function() {
+                if (!appOpened) {
+                    try {
+                        console.log('Попытка 2: открытие', v2rayUrl);
+                        window.location.href = v2rayUrl;
+                        appOpened = true;
+                    } catch (e) {
+                        console.log('Вторая попытка открытия приложения не удалась:', e);
                     }
                 }
-            } catch (error) {
-                console.error('Ошибка импорта:', error);
-                showError('Ошибка импорта: ' + error.message);
-                importBtn.disabled = false;
-                importBtn.textContent = '📱 Импортировать мультиподписку';
-            }
-        }
-
-        // Импорт в Happ
-        function importToHapp() {
-            try {
-                // Создаем ссылку для импорта в Happ
-                const happUrl = `happ://add/${encodeURIComponent(subscriptionUrl)}`;
-                
-                // Пытаемся открыть приложение
-                window.location.href = happUrl;
-                
-                // Показываем сообщение об успехе
-                setTimeout(() => {
-                    showSuccess('Мультиподписка импортирована в Happ!');
-                    document.getElementById('importBtn').textContent = '✅ Импортировано';
-                }, 1000);
-                
-            } catch (error) {
-                throw new Error('Ошибка импорта в Happ: ' + error.message);
-            }
-        }
-
-        // Импорт в V2rayTun
-        function importToV2rayTun() {
-            try {
-                // Создаем ссылку для импорта в V2rayTun
-                const v2rayUrl = `v2raytun://import/${encodeURIComponent(subscriptionUrl)}`;
-                
-                // Пытаемся открыть приложение
-                window.location.href = v2rayUrl;
-                
-                // Показываем сообщение об успехе
-                setTimeout(() => {
-                    showSuccess('Мультиподписка импортирована в V2rayTun!');
-                    document.getElementById('importBtn').textContent = '✅ Импортировано';
-                }, 1000);
-                
-            } catch (error) {
-                throw new Error('Ошибка импорта в V2rayTun: ' + error.message);
-            }
-        }
-
-        // Копирование ссылки мультиподписки
-        function copySubscription() {
-            if (!subscriptionUrl) {
-                showError('Ссылка мультиподписки не доступна');
-                return;
-            }
-
-            navigator.clipboard.writeText(subscriptionUrl).then(() => {
-                showSuccess('Ссылка скопирована в буфер обмена!');
-            }).catch(err => {
-                console.error('Ошибка копирования:', err);
-                showError('Ошибка копирования ссылки');
-            });
-        }
-
-        // Возврат в бот
-        function goBack() {
-            // Можно добавить ссылку на бот или закрыть окно
-            if (window.opener) {
-                window.close();
-            } else {
-                window.history.back();
-            }
-        }
-
-        // Показ загрузки
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
-
-        // Показ ошибки
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            const errorText = document.getElementById('errorText');
-            errorText.textContent = message;
-            errorDiv.style.display = 'block';
+            }, 1000);
             
-            // Скрываем другие сообщения
-            document.getElementById('success').style.display = 'none';
-        }
-
-        // Показ успеха
-        function showSuccess(message) {
-            const successDiv = document.getElementById('success');
-            const successText = document.getElementById('successText');
-            successText.textContent = message;
-            successDiv.style.display = 'block';
+            // Третья попытка через 3 секунды (если предыдущие не сработали)
+            setTimeout(function() {
+                if (!appOpened) {
+                    try {
+                        console.log('Попытка 3: открытие', v2rayUrl);
+                        window.location.href = v2rayUrl;
+                        appOpened = true;
+                    } catch (e) {
+                        console.log('Третья попытка открытия приложения не удалась:', e);
+                    }
+                }
+            }, 3000);
             
-            // Скрываем другие сообщения
-            document.getElementById('error').style.display = 'none';
+            // Показываем ручные кнопки через 4 секунды
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('manual').style.display = 'block';
+            }, 4000);
         }
-
-        // Обработка ошибок
-        window.addEventListener('error', function(e) {
-            console.error('Глобальная ошибка:', e.error);
-            showError('Произошла неожиданная ошибка');
-        });
-
-        // Обработка необработанных промисов
-        window.addEventListener('unhandledrejection', function(e) {
-            console.error('Необработанная ошибка промиса:', e.reason);
-            showError('Ошибка загрузки данных');
-        });
-    </script>
+        
+    } else {
+        console.log('URL параметр не найден');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error-text').textContent = 'Не указана ссылка на конфигурацию Happ';
+    }
+</script>
 </body>
 </html>

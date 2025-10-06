@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -74,7 +76,7 @@ func GetServersByIDs(serverIDs []string) ([]Server, error) {
 		FROM multi_servers 
 		WHERE id IN (%s)
 		ORDER BY priority DESC, name`,
-		fmt.Sprintf("%s", placeholders[0]))
+		placeholders[0])
 
 	// Заменяем первый плейсхолдер на все остальные
 	for i := 1; i < len(placeholders); i++ {
@@ -195,7 +197,7 @@ func CreateMultiSubscription(userID int64, serverIDs []string) (*MultiSubscripti
 	}
 
 	// Генерируем уникальный ID для мультиподписки
-	subscriptionID := "multi_" + uuid.New().String()
+	subscriptionID := uuid.New().String()
 
 	// Создаем URL мультиподписки
 	subscriptionURL := MULTI_SUBSCRIPTION_BASE_URL + subscriptionID
@@ -258,6 +260,20 @@ func CreateMultiSubscription(userID int64, serverIDs []string) (*MultiSubscripti
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 		ExpiryTime:      expiryTime,
+	}
+
+	// Создаем клиентов для каждого сервера в мультиподписке
+	if MULTI_SERVER_AUTO_CREATE_CLIENTS {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION: Создание клиентов для %d серверов", len(servers))
+		for _, server := range servers {
+			client, err := CreateMultiSubscriptionClient(userID, server.ID, subscriptionID)
+			if err != nil {
+				log.Printf("CREATE_MULTI_SUBSCRIPTION: Ошибка создания клиента для сервера %s: %v", server.ID, err)
+				// Продолжаем, даже если клиент не создался
+			} else if client != nil {
+				log.Printf("CREATE_MULTI_SUBSCRIPTION: ✅ Клиент создан для сервера %s: %s", server.ID, client.Email)
+			}
+		}
 	}
 
 	log.Printf("CREATE_MULTI_SUBSCRIPTION: Мультиподписка успешно создана: %s", subscriptionID)
@@ -339,4 +355,144 @@ func CleanupExpiredServerSelectionStates() error {
 	rowsAffected, _ := result.RowsAffected()
 	log.Printf("CLEANUP_EXPIRED_SERVER_SELECTION_STATES: Удалено %d истекших состояний", rowsAffected)
 	return nil
+}
+
+// CreateMultiSubscriptionClient создает клиента для мультиподписки в инбаунде
+func CreateMultiSubscriptionClient(userID int64, serverID string, subscriptionID string) (*Client, error) {
+	log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Создание клиента для мультиподписки %s, сервер %s, пользователь %d", subscriptionID, serverID, userID)
+
+	// Проверяем, нужно ли создавать клиента
+	if !MULTI_SERVER_AUTO_CREATE_CLIENTS {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Автоматическое создание клиентов отключено")
+		return nil, nil
+	}
+
+	// Авторизуемся в панели
+	sessionCookie, err := Login()
+	if err != nil {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Ошибка авторизации: %v", err)
+		return nil, fmt.Errorf("ошибка авторизации: %v", err)
+	}
+
+	// Получаем inbound
+	inbound, err := getInboundByID(sessionCookie, MULTI_SERVER_INBOUND_ID)
+	if err != nil {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Ошибка получения inbound: %v", err)
+		return nil, fmt.Errorf("ошибка получения inbound: %v", err)
+	}
+
+	// Парсим settings
+	var settings Settings
+	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Ошибка парсинга settings: %v", err)
+		return nil, fmt.Errorf("ошибка парсинга settings: %v", err)
+	}
+
+	// Создаем уникальный email для клиента
+	email := fmt.Sprintf("%d_%s_%s", userID, serverID, subscriptionID)
+
+	// Проверяем, существует ли уже клиент с таким email
+	if MULTI_SERVER_CHECK_EXISTING {
+		for _, client := range settings.Clients {
+			if client.Email == email {
+				log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Клиент с email %s уже существует", email)
+				return &client, nil
+			}
+		}
+	}
+
+	// Создаем нового клиента
+	clientUUID := uuid.New().String()
+	subID := generateSubID()
+	expiryTime := time.Now().AddDate(0, 0, MULTI_SERVER_DEFAULT_EXPIRY_DAYS).UnixMilli()
+	falseValue := false
+
+	newClient := Client{
+		ID:         clientUUID,
+		Flow:       "", // Пустой flow для VLESS XHTTP
+		Email:      email,
+		TotalGB:    0, // Безлимитный трафик
+		ExpiryTime: expiryTime,
+		Enable:     true,
+		TgID:       userID,
+		SubID:      subID,
+		Reset:      0,
+		Depleted:   &falseValue,
+		Exhausted:  &falseValue,
+		CreatedAt:  time.Now().UnixMilli(),
+		UpdatedAt:  time.Now().UnixMilli(),
+	}
+
+	// Добавляем клиента в список
+	settings.Clients = append(settings.Clients, newClient)
+
+	log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Создаем клиента с настройками:")
+	log.Printf("   📧 Email: %s", email)
+	log.Printf("   🔑 SubID: %s", subID)
+	log.Printf("   🆔 ClientID: %s", clientUUID)
+	log.Printf("   🌊 Flow: '%s' (пустой как указано)", newClient.Flow)
+	log.Printf("   ⏰ ExpiryTime: %d (%s)", expiryTime, time.UnixMilli(expiryTime).Format("2006-01-02 15:04:05"))
+	log.Printf("   ✅ Enable: %v", newClient.Enable)
+	log.Printf("   📊 TotalGB: %d (0 = безлимит)", newClient.TotalGB)
+
+	// Сериализуем обновленные settings
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Ошибка сериализации settings: %v", err)
+		return nil, fmt.Errorf("ошибка сериализации settings: %v", err)
+	}
+	inbound.Settings = string(settingsJSON)
+
+	// Обновляем inbound
+	if err := UpdateInbound(sessionCookie, *inbound); err != nil {
+		log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: Ошибка обновления inbound: %v", err)
+		return nil, fmt.Errorf("ошибка обновления inbound: %v", err)
+	}
+
+	log.Printf("CREATE_MULTI_SUBSCRIPTION_CLIENT: ✅ Клиент успешно создан в инбаунде %d", MULTI_SERVER_INBOUND_ID)
+	return &newClient, nil
+}
+
+// getInboundByID получает inbound по ID (аналогично test_start_server2.go)
+func getInboundByID(sessionCookie string, inboundID int) (*Inbound, error) {
+	log.Printf("GET_INBOUND_BY_ID: Получение inbound ID=%d", inboundID)
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%spanel/api/inbounds/get/%d", PANEL_URL, inboundID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+
+	req.Header.Set("Cookie", sessionCookie)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("некорректный статус ответа: %d, body=%s", resp.StatusCode, string(body))
+	}
+
+	var inboundInfo InboundInfo
+	if err := json.Unmarshal(body, &inboundInfo); err != nil {
+		return nil, fmt.Errorf("ошибка десериализации ответа: %v, body=%s", err, string(body))
+	}
+
+	if !inboundInfo.Success {
+		return nil, fmt.Errorf("получение inbound не удалось: %s", inboundInfo.Msg)
+	}
+
+	log.Printf("GET_INBOUND_BY_ID: ✅ Успешно получен inbound: ID=%d", inboundInfo.Obj.ID)
+	return &inboundInfo.Obj, nil
+}
+
+// generateSubID генерирует уникальный SubID
+func generateSubID() string {
+	return uuid.New().String()
 }

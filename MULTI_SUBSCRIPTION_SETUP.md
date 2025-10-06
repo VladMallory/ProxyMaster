@@ -1,114 +1,150 @@
-# Быстрая настройка мультиподписок
+# Настройка мультиподписок
 
-## 1. Обновление базы данных
+## Обзор
 
-Выполните SQL-скрипт для создания таблиц мультиподписок:
+Система мультиподписок позволяет пользователям создавать подписки, включающие несколько VPN серверов одновременно. При создании мультиподписки автоматически создаются клиенты в указанном инбаунде X-UI панели.
 
-```bash
-psql -U vpn_bot_user -d vpn_bot -f postgres_schema.sql
-```
+## Настройки в config.go
 
-## 2. Настройка конфигурации
-
-В файле `common/config.go` убедитесь, что настройки мультиподписок включены:
+### Основные настройки мультиподписок
 
 ```go
 // ========== МУЛЬТИПОДПИСКИ ==========
-MULTI_SUBSCRIPTION_ENABLED = true        // Мультиподписки включены
-MULTI_SUBSCRIPTION_MAX_SERVERS = 5       // Максимальное количество серверов
-MULTI_SUBSCRIPTION_BASE_URL = "https://im.shadowfade.ru:8443/multi/" // Базовый URL
-MULTI_SUBSCRIPTION_CLEANUP_INTERVAL = 60 // Интервал очистки состояний (мин)
+MULTI_SUBSCRIPTION_ENABLED = true                                    // Включены ли мультиподписки
+MULTI_SUBSCRIPTION_MAX_SERVERS = 5                                   // Максимальное количество серверов
+MULTI_SUBSCRIPTION_BASE_URL = "https://im.shadowfade.ru:8443/multi/" // Базовый URL для ссылок
+MULTI_SUBSCRIPTION_CLEANUP_INTERVAL = 60                             // Интервал очистки состояний (мин)
 ```
 
-## 3. Добавление серверов
-
-Добавьте серверы в таблицу `multi_servers`:
-
-```sql
-INSERT INTO multi_servers (id, name, country, country_code, flag, inbound_id, config_url, json_url, protocol, transport, enabled, priority) VALUES
-('server_de_1', 'Германия #1', 'Германия', 'DE', '🇩🇪', 1, 'https://your-server.com/config/de1', 'https://your-server.com/json/de1', 'vless', 'websocket', true, 100),
-('server_fi_1', 'Финляндия #1', 'Финляндия', 'FI', '🇫🇮', 2, 'https://your-server.com/config/fi1', 'https://your-server.com/json/fi1', 'vless', 'websocket', true, 90),
-('server_nl_1', 'Нидерланды #1', 'Нидерланды', 'NL', '🇳🇱', 3, 'https://your-server.com/config/nl1', 'https://your-server.com/json/nl1', 'vless', 'websocket', true, 80);
-```
-
-## 4. Обновление главного меню
-
-Замените вызовы `SendMainMenu` на `SendMainMenuWithMultiSubscription` в обработчиках:
+### Настройки серверов мультиподписок
 
 ```go
-// Вместо
-menus.SendMainMenu(bot, chatID, user)
-
-// Используйте
-menus.SendMainMenuWithMultiSubscription(bot, chatID, user)
+// ========== НАСТРОЙКИ МУЛЬТИПОДПИСОК СЕРВЕРОВ ==========
+MULTI_SERVER_INBOUND_ID = 19                                         // ID инбаунда для мультиподписок
+MULTI_SERVER_AUTO_CREATE_CLIENTS = true                              // Автоматически создавать клиентов
+MULTI_SERVER_CHECK_EXISTING = true                                   // Проверять существующих клиентов
+MULTI_SERVER_DEFAULT_EXPIRY_DAYS = 30                                // Дней действия по умолчанию
 ```
 
-## 5. Перезапуск бота
+## Настройка инбаунда
 
-```bash
-# Остановите бота
-pkill -f "go run main.go"
+1. **Создайте инбаунд в X-UI панели** с ID 19 (или измените `MULTI_SERVER_INBOUND_ID`)
+2. **Настройте протокол** - рекомендуется VLESS с XHTTP
+3. **Убедитесь, что инбаунд активен**
 
-# Запустите заново
-go run main.go
-```
+## Добавление серверов
 
-## 6. Тестирование
+Серверы добавляются в таблицу `multi_servers`:
 
-1. Откройте бота в Telegram
-2. Нажмите "🌍 Мультиподписка"
-3. Выберите несколько серверов
-4. Подтвердите выбор
-5. Проверьте создание мультиподписки
-
-## 7. Мониторинг
-
-Проверьте логи на наличие ошибок:
-
-```bash
-tail -f /root/bot/logs/console.log | grep MULTI_SUBSCRIPTION
-```
-
-## Возможные проблемы
-
-### Ошибка "Мультиподписки временно недоступны"
-- Проверьте, что `MULTI_SUBSCRIPTION_ENABLED = true`
-- Перезапустите бота
-
-### Ошибка "Не найдено серверов"
-- Проверьте таблицу `multi_servers`
-- Убедитесь, что есть серверы с `enabled = true`
-
-### Ошибка API "/api/multi-subscription"
-- Проверьте, что HTTP сервер запущен на порту 8081
-- Проверьте логи на наличие ошибок
-
-### Ошибка импорта в приложение
-- Проверьте, что URL серверов доступны
-- Убедитесь, что приложение поддерживает импорт подписок
-
-## Дополнительные настройки
-
-### Изменение максимального количества серверов
-```go
-MULTI_SUBSCRIPTION_MAX_SERVERS = 10  // До 10 серверов
-```
-
-### Изменение базового URL
-```go
-MULTI_SUBSCRIPTION_BASE_URL = "https://your-domain.com/multi/"
-```
-
-### Добавление новых стран
 ```sql
 INSERT INTO multi_servers (id, name, country, country_code, flag, inbound_id, config_url, json_url, protocol, transport, enabled, priority) 
-VALUES ('server_uk_1', 'Великобритания #1', 'Великобритания', 'GB', '🇬🇧', 6, 'https://your-server.com/config/uk1', 'https://your-server.com/json/uk1', 'vless', 'websocket', true, 70);
+VALUES 
+('germany', 'Германия', 'Germany', 'DE', '🇩🇪', 19, 'https://example.com/config', 'https://example.com/json', 'vless', 'xhttp', true, 100),
+('finland', 'Финляндия', 'Finland', 'FI', '🇫🇮', 19, 'https://example.com/config', 'https://example.com/json', 'vless', 'xhttp', true, 90);
 ```
 
-## Поддержка
+### Параметры сервера
 
-При возникновении проблем:
-1. Проверьте логи бота
-2. Убедитесь, что все настройки корректны
-3. Проверьте доступность серверов
-4. Обратитесь к документации `MULTI_SUBSCRIPTION_README.md`
+- `id` - уникальный идентификатор сервера
+- `name` - отображаемое название
+- `country` - название страны
+- `country_code` - код страны (ISO)
+- `flag` - эмодзи флага
+- `inbound_id` - ID инбаунда в X-UI панели
+- `config_url` - URL для получения конфигурации
+- `json_url` - URL для получения JSON конфигурации
+- `protocol` - протокол (vless, vmess, etc.)
+- `transport` - транспорт (xhttp, ws, etc.)
+- `enabled` - включен ли сервер
+- `priority` - приоритет отображения (больше = выше)
+
+## Логика создания клиентов
+
+### Автоматическое создание
+
+При создании мультиподписки система:
+
+1. **Проверяет настройку** `MULTI_SERVER_AUTO_CREATE_CLIENTS`
+2. **Для каждого сервера** создает клиента в инбаунде
+3. **Проверяет существующих клиентов** (если `MULTI_SERVER_CHECK_EXISTING = true`)
+4. **Генерирует уникальный email** в формате: `{userID}_{serverID}_{subscriptionID}`
+
+### Параметры клиента
+
+```go
+type Client struct {
+    ID         string    // UUID клиента
+    Flow       string    // Пустой для VLESS XHTTP
+    Email      string    // Уникальный email
+    TotalGB    int64     // 0 = безлимитный трафик
+    ExpiryTime int64     // Время истечения (миллисекунды)
+    Enable     bool      // Включен ли клиент
+    TgID       int64     // ID пользователя Telegram
+    SubID      string    // Уникальный SubID
+    Reset      int64     // Сброс трафика
+    Depleted   *bool     // Исчерпан ли трафик
+    Exhausted  *bool     // Исчерпан ли лимит
+    CreatedAt  int64     // Время создания
+    UpdatedAt  int64     // Время обновления
+}
+```
+
+## API Endpoints
+
+### Получение мультиподписки
+
+```
+GET /api/multi-subscription?id={subscription_id}
+```
+
+Возвращает конфигурацию мультиподписки в формате, подходящем для импорта в VPN клиенты.
+
+## Использование
+
+1. **Пользователь выбирает** "Мультиподписка" в главном меню
+2. **Выбирает серверы** из доступного списка
+3. **Подтверждает выбор** и создает мультиподписку
+4. **Получает ссылку** для автоимпорта
+5. **Клиенты автоматически создаются** в X-UI панели
+
+## Мониторинг
+
+### Логи
+
+Система ведет подробные логи:
+
+```
+CREATE_MULTI_SUBSCRIPTION_CLIENT: Создание клиента для мультиподписки {id}, сервер {server}, пользователь {user}
+CREATE_MULTI_SUBSCRIPTION_CLIENT: Клиент с email {email} уже существует
+CREATE_MULTI_SUBSCRIPTION_CLIENT: ✅ Клиент успешно создан в инбаунде {id}
+```
+
+### Очистка
+
+Автоматическая очистка истекших состояний выбора серверов каждые 60 минут (настраивается в `MULTI_SUBSCRIPTION_CLEANUP_INTERVAL`).
+
+## Безопасность
+
+- **Уникальные email** для каждого клиента
+- **Проверка существующих клиентов** перед созданием
+- **Транзакционность** операций с базой данных
+- **Валидация** входных данных
+
+## Устранение неполадок
+
+### Клиент не создается
+
+1. Проверьте `MULTI_SERVER_AUTO_CREATE_CLIENTS = true`
+2. Убедитесь, что инбаунд с ID `MULTI_SERVER_INBOUND_ID` существует
+3. Проверьте логи на ошибки авторизации в панели
+
+### Дублирование клиентов
+
+1. Убедитесь, что `MULTI_SERVER_CHECK_EXISTING = true`
+2. Проверьте логику генерации email
+
+### Ошибки API
+
+1. Проверьте настройки `MULTI_SUBSCRIPTION_BASE_URL`
+2. Убедитесь, что серверы добавлены в `multi_servers`
+3. Проверьте статус инбаундов
