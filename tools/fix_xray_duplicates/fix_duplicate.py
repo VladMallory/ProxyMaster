@@ -6,19 +6,19 @@ import sys
 DB_PATH = "/etc/x-ui/x-ui.db"
 
 def main():
-    print("=== УДАЛЕНИЕ ДУБЛИКАТА 873925520_1 ===\n")
+    print("=== УДАЛЕНИЕ ДУБЛИКАТА 873925520_server2 ===\n")
     
     # Подключаемся к базе
     conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.cursor()
     
     try:
-        # Получаем inbound 5
-        cursor.execute("SELECT id, settings FROM inbounds WHERE id = 5")
+        # Получаем inbound 2
+        cursor.execute("SELECT id, settings FROM inbounds WHERE id = 2")
         row = cursor.fetchone()
         
         if not row:
-            print("❌ Inbound 5 не найден")
+            print("❌ Inbound 2 не найден")
             return
         
         inbound_id, settings_str = row
@@ -26,9 +26,9 @@ def main():
         
         print(f"Inbound {inbound_id}: всего клиентов = {len(settings['clients'])}")
         
-        # Ищем дубликаты 873925520_1
-        duplicates = [c for c in settings['clients'] if c['email'] == '873925520_1']
-        print(f"Найдено записей с email '873925520_1': {len(duplicates)}\n")
+        # Ищем дубликаты 873925520_server2
+        duplicates = [c for c in settings['clients'] if c['email'] == '873925520_server2']
+        print(f"Найдено записей с email '873925520_server2': {len(duplicates)}\n")
         
         if len(duplicates) <= 1:
             print("✓ Дубликатов нет, всё в порядке")
@@ -53,7 +53,7 @@ def main():
             print(f"✗ Удаляем запись с expiryTime={r['expiryTime']}, SubID={r['subId']}")
         
         # Удаляем дубликаты из списка
-        new_clients = [c for c in settings['clients'] if not (c['email'] == '873925520_1' and c != keep)]
+        new_clients = [c for c in settings['clients'] if not (c['email'] == '873925520_server2' and c != keep)]
         
         print(f"\nБыло клиентов: {len(settings['clients'])}")
         print(f"Стало клиентов: {len(new_clients)}")

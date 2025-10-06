@@ -162,3 +162,39 @@ type UsersStatistics struct {
 	NewThisMonth        int     `json:"new_this_month"`
 	ConversionRate      float64 `json:"conversion_rate"`
 }
+
+// Server представляет сервер в мультиподписке
+type Server struct {
+	ID          string `json:"id" bson:"id"`
+	Name        string `json:"name" bson:"name"`
+	Country     string `json:"country" bson:"country"`
+	CountryCode string `json:"country_code" bson:"country_code"`
+	Flag        string `json:"flag" bson:"flag"`
+	InboundID   int    `json:"inbound_id" bson:"inbound_id"`
+	ConfigURL   string `json:"config_url" bson:"config_url"`
+	JSONURL     string `json:"json_url" bson:"json_url"`
+	Protocol    string `json:"protocol" bson:"protocol"`
+	Transport   string `json:"transport" bson:"transport"`
+	Enabled     bool   `json:"enabled" bson:"enabled"`
+	Priority    int    `json:"priority" bson:"priority"` // Приоритет отображения
+}
+
+// MultiSubscription представляет мультиподписку пользователя
+type MultiSubscription struct {
+	ID              string    `json:"id" bson:"id"`
+	UserID          int64     `json:"user_id" bson:"user_id"`
+	Servers         []Server  `json:"servers" bson:"servers"`
+	SubscriptionURL string    `json:"subscription_url" bson:"subscription_url"`
+	IsActive        bool      `json:"is_active" bson:"is_active"`
+	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" bson:"updated_at"`
+	ExpiryTime      int64     `json:"expiry_time" bson:"expiry_time"`
+}
+
+// ServerSelectionState представляет состояние выбора серверов
+type ServerSelectionState struct {
+	UserID     int64    `json:"user_id"`
+	Selected   []string `json:"selected"`    // ID выбранных серверов
+	MaxServers int      `json:"max_servers"` // Максимальное количество серверов
+	Step       string   `json:"step"`        // Текущий шаг: "select", "confirm", "create"
+}

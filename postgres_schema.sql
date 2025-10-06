@@ -353,8 +353,171 @@ COMMENT ON COLUMN users.referred_by IS 'Telegram ID пользователя, к
 COMMENT ON COLUMN users.referral_earnings IS 'Общая сумма заработанных реферальных бонусов';
 COMMENT ON COLUMN users.referral_count IS 'Количество приглашенных пользователей';
 
+-- === МУЛЬТИПОДПИСКИ ===
+
+-- Таблица серверов для мультиподписок
+CREATE TABLE multi_servers (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    country VARCHAR(100) NOT NULL,
+    country_code VARCHAR(3) NOT NULL,
+    flag VARCHAR(10) NOT NULL,
+    inbound_id INTEGER NOT NULL,
+    config_url VARCHAR(500) NOT NULL,
+    json_url VARCHAR(500) NOT NULL,
+    protocol VARCHAR(20) NOT NULL DEFAULT 'vless',
+    transport VARCHAR(20) NOT NULL DEFAULT 'websocket',
+    enabled BOOLEAN DEFAULT TRUE,
+    priority INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Таблица мультиподписок пользователей
+CREATE TABLE multi_subscriptions (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    subscription_url VARCHAR(500) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    expiry_time BIGINT,
+    FOREIGN KEY (user_id) REFERENCES users(telegram_id) ON DELETE CASCADE
+);
+
+-- Таблица связи мультиподписок с серверами (many-to-many)
+CREATE TABLE multi_subscription_servers (
+    id SERIAL PRIMARY KEY,
+    subscription_id VARCHAR(50) NOT NULL,
+    server_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (subscription_id) REFERENCES multi_subscriptions(id) ON DELETE CASCADE,
+    FOREIGN KEY (server_id) REFERENCES multi_servers(id) ON DELETE CASCADE,
+    UNIQUE(subscription_id, server_id)
+);
+
+-- Таблица состояний выбора серверов (для временного хранения)
+CREATE TABLE server_selection_states (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    selected_servers JSONB NOT NULL DEFAULT '[]',
+    max_servers INTEGER DEFAULT 5,
+    step VARCHAR(20) DEFAULT 'select',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP DEFAULT (NOW() + INTERVAL '1 hour'),
+    FOREIGN KEY (user_id) REFERENCES users(telegram_id) ON DELETE CASCADE
+);
+
+-- Индексы для мультиподписок
+CREATE INDEX idx_multi_servers_enabled ON multi_servers(enabled);
+CREATE INDEX idx_multi_servers_priority ON multi_servers(priority);
+CREATE INDEX idx_multi_servers_country ON multi_servers(country);
+
+CREATE INDEX idx_multi_subscriptions_user ON multi_subscriptions(user_id);
+CREATE INDEX idx_multi_subscriptions_active ON multi_subscriptions(is_active);
+CREATE INDEX idx_multi_subscriptions_created ON multi_subscriptions(created_at);
+
+CREATE INDEX idx_multi_subscription_servers_subscription ON multi_subscription_servers(subscription_id);
+CREATE INDEX idx_multi_subscription_servers_server ON multi_subscription_servers(server_id);
+
+CREATE INDEX idx_server_selection_states_user ON server_selection_states(user_id);
+CREATE INDEX idx_server_selection_states_expires ON server_selection_states(expires_at);
+
+-- Триггеры для автоматического обновления updated_at
+CREATE TRIGGER update_multi_servers_updated_at 
+    BEFORE UPDATE ON multi_servers 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_multi_subscriptions_updated_at 
+    BEFORE UPDATE ON multi_subscriptions 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_server_selection_states_updated_at 
+    BEFORE UPDATE ON server_selection_states 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Функция для очистки истекших состояний выбора серверов
+CREATE OR REPLACE FUNCTION cleanup_expired_server_selection_states()
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+BEGIN
+    DELETE FROM server_selection_states 
+    WHERE expires_at < NOW();
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    IF deleted_count > 0 THEN
+        RAISE NOTICE 'Удалено истекших состояний выбора серверов: %', deleted_count;
+    END IF;
+    
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Функция для получения мультиподписки пользователя
+CREATE OR REPLACE FUNCTION get_user_multi_subscription(user_telegram_id BIGINT)
+RETURNS TABLE(
+    subscription_id VARCHAR(50),
+    subscription_url VARCHAR(500),
+    is_active BOOLEAN,
+    created_at TIMESTAMP,
+    expiry_time BIGINT,
+    servers JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        ms.id as subscription_id,
+        ms.subscription_url,
+        ms.is_active,
+        ms.created_at,
+        ms.expiry_time,
+        COALESCE(
+            jsonb_agg(
+                jsonb_build_object(
+                    'id', s.id,
+                    'name', s.name,
+                    'country', s.country,
+                    'country_code', s.country_code,
+                    'flag', s.flag,
+                    'inbound_id', s.inbound_id,
+                    'config_url', s.config_url,
+                    'json_url', s.json_url,
+                    'protocol', s.protocol,
+                    'transport', s.transport,
+                    'enabled', s.enabled,
+                    'priority', s.priority
+                ) ORDER BY s.priority DESC, s.name
+            ) FILTER (WHERE s.id IS NOT NULL),
+            '[]'::jsonb
+        ) as servers
+    FROM multi_subscriptions ms
+    LEFT JOIN multi_subscription_servers mss ON ms.id = mss.subscription_id
+    LEFT JOIN multi_servers s ON mss.server_id = s.id
+    WHERE ms.user_id = user_telegram_id
+    GROUP BY ms.id, ms.subscription_url, ms.is_active, ms.created_at, ms.expiry_time;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Вставка базовых серверов по умолчанию
+INSERT INTO multi_servers (id, name, country, country_code, flag, inbound_id, config_url, json_url, protocol, transport, enabled, priority) VALUES
+('server_de_1', 'Германия #1', 'Германия', 'DE', '🇩🇪', 1, 'https://example.com/config/de1', 'https://example.com/json/de1', 'vless', 'websocket', true, 100),
+('server_fi_1', 'Финляндия #1', 'Финляндия', 'FI', '🇫🇮', 2, 'https://example.com/config/fi1', 'https://example.com/json/fi1', 'vless', 'websocket', true, 90),
+('server_nl_1', 'Нидерланды #1', 'Нидерланды', 'NL', '🇳🇱', 3, 'https://example.com/config/nl1', 'https://example.com/json/nl1', 'vless', 'websocket', true, 80),
+('server_us_1', 'США #1', 'США', 'US', '🇺🇸', 4, 'https://example.com/config/us1', 'https://example.com/json/us1', 'vless', 'websocket', true, 70),
+('server_sg_1', 'Сингапур #1', 'Сингапур', 'SG', '🇸🇬', 5, 'https://example.com/config/sg1', 'https://example.com/json/sg1', 'vless', 'websocket', true, 60)
+ON CONFLICT (id) DO NOTHING;
+
+-- Комментарии к таблицам мультиподписок
+COMMENT ON TABLE multi_servers IS 'Серверы для мультиподписок';
+COMMENT ON TABLE multi_subscriptions IS 'Мультиподписки пользователей';
+COMMENT ON TABLE multi_subscription_servers IS 'Связь мультиподписок с серверами';
+COMMENT ON TABLE server_selection_states IS 'Временные состояния выбора серверов';
+
 -- ========================================
--- РЕФЕРАЛЬНАЯ СИСТЕМА ИНТЕГРИРОВАНА
+-- РЕФЕРАЛЬНАЯ СИСТЕМА И МУЛЬТИПОДПИСКИ ИНТЕГРИРОВАНЫ
 -- ========================================
--- Реферальная система полностью интегрирована в основную схему
+-- Реферальная система и мультиподписки полностью интегрированы в основную схему
 -- Все таблицы, функции и индексы созданы выше

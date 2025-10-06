@@ -1,10 +1,13 @@
 package app
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"bot/common"
@@ -93,6 +96,46 @@ func InitializeApp() {
 			w.Header().Set("Content-Type", "text/plain")
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Write(body)
+		})
+
+		// API для мультиподписок
+		// Использование: /api/multi-subscription?id=SUBSCRIPTION_ID
+		http.HandleFunc("/api/multi-subscription", func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("HTTP_SERVER: API multi-subscription request: %s", r.URL.String())
+
+			// Получаем ID мультиподписки из параметров запроса
+			subscriptionID := r.URL.Query().Get("id")
+			if subscriptionID == "" {
+				http.Error(w, "ID parameter is required", http.StatusBadRequest)
+				return
+			}
+
+			// Получаем мультиподписку из базы данных
+			subscription, err := getMultiSubscriptionByID(subscriptionID)
+			if err != nil {
+				log.Printf("HTTP_SERVER: Error getting multi-subscription %s: %v", subscriptionID, err)
+				http.Error(w, "Multi-subscription not found", http.StatusNotFound)
+				return
+			}
+
+			if subscription == nil || !subscription.IsActive {
+				log.Printf("HTTP_SERVER: Multi-subscription %s not found or inactive", subscriptionID)
+				http.Error(w, "Multi-subscription not found or inactive", http.StatusNotFound)
+				return
+			}
+
+			// Генерируем конфигурации для всех серверов
+			configs, err := generateMultiSubscriptionConfigs(subscription)
+			if err != nil {
+				log.Printf("HTTP_SERVER: Error generating multi-subscription configs: %v", err)
+				http.Error(w, "Failed to generate configurations", http.StatusInternalServerError)
+				return
+			}
+
+			// Возвращаем конфигурации
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Write([]byte(configs))
 		})
 
 		log.Printf("HTTP_SERVER: Запуск HTTP сервера на порту 8081")
@@ -240,4 +283,119 @@ func StartBot(token string) {
 	}
 
 	bot.Start()
+}
+
+// getMultiSubscriptionByID получает мультиподписку по ID
+func getMultiSubscriptionByID(subscriptionID string) (*common.MultiSubscription, error) {
+	log.Printf("GET_MULTI_SUBSCRIPTION_BY_ID: Получение мультиподписки %s", subscriptionID)
+
+	query := `
+		SELECT ms.id, ms.user_id, ms.subscription_url, ms.is_active, ms.created_at, ms.expiry_time,
+		       COALESCE(
+		           jsonb_agg(
+		               jsonb_build_object(
+		                   'id', s.id,
+		                   'name', s.name,
+		                   'country', s.country,
+		                   'country_code', s.country_code,
+		                   'flag', s.flag,
+		                   'inbound_id', s.inbound_id,
+		                   'config_url', s.config_url,
+		                   'json_url', s.json_url,
+		                   'protocol', s.protocol,
+		                   'transport', s.transport,
+		                   'enabled', s.enabled,
+		                   'priority', s.priority
+		               ) ORDER BY s.priority DESC, s.name
+		           ) FILTER (WHERE s.id IS NOT NULL),
+		           '[]'::jsonb
+		       ) as servers
+		FROM multi_subscriptions ms
+		LEFT JOIN multi_subscription_servers mss ON ms.id = mss.subscription_id
+		LEFT JOIN multi_servers s ON mss.server_id = s.id
+		WHERE ms.id = $1
+		GROUP BY ms.id, ms.subscription_url, ms.is_active, ms.created_at, ms.expiry_time, ms.user_id`
+
+	var subscription common.MultiSubscription
+	var serversJSON string
+
+	err := common.GetDatabasePG().QueryRow(query, subscriptionID).Scan(
+		&subscription.ID, &subscription.UserID, &subscription.SubscriptionURL, &subscription.IsActive,
+		&subscription.CreatedAt, &subscription.ExpiryTime, &serversJSON,
+	)
+	if err == sql.ErrNoRows {
+		log.Printf("GET_MULTI_SUBSCRIPTION_BY_ID: Мультиподписка %s не найдена", subscriptionID)
+		return nil, nil
+	}
+	if err != nil {
+		log.Printf("GET_MULTI_SUBSCRIPTION_BY_ID: Ошибка получения мультиподписки: %v", err)
+		return nil, fmt.Errorf("ошибка получения мультиподписки: %v", err)
+	}
+
+	// Десериализуем серверы
+	err = json.Unmarshal([]byte(serversJSON), &subscription.Servers)
+	if err != nil {
+		log.Printf("GET_MULTI_SUBSCRIPTION_BY_ID: Ошибка десериализации серверов: %v", err)
+		return nil, fmt.Errorf("ошибка десериализации серверов: %v", err)
+	}
+
+	subscription.UpdatedAt = time.Now()
+
+	log.Printf("GET_MULTI_SUBSCRIPTION_BY_ID: Мультиподписка получена: %s, серверов: %d", subscription.ID, len(subscription.Servers))
+	return &subscription, nil
+}
+
+// generateMultiSubscriptionConfigs генерирует конфигурации для мультиподписки
+func generateMultiSubscriptionConfigs(subscription *common.MultiSubscription) (string, error) {
+	log.Printf("GENERATE_MULTI_SUBSCRIPTION_CONFIGS: Генерация конфигураций для мультиподписки %s", subscription.ID)
+
+	var allConfigs []string
+
+	for _, server := range subscription.Servers {
+		// Получаем конфигурацию для каждого сервера
+		config, err := getServerConfig(server)
+		if err != nil {
+			log.Printf("GENERATE_MULTI_SUBSCRIPTION_CONFIGS: Ошибка получения конфигурации сервера %s: %v", server.ID, err)
+			continue
+		}
+		allConfigs = append(allConfigs, config)
+	}
+
+	if len(allConfigs) == 0 {
+		return "", fmt.Errorf("не удалось получить конфигурации ни для одного сервера")
+	}
+
+	// Объединяем все конфигурации
+	result := strings.Join(allConfigs, "\n")
+
+	log.Printf("GENERATE_MULTI_SUBSCRIPTION_CONFIGS: Сгенерировано %d конфигураций", len(allConfigs))
+	return result, nil
+}
+
+// getServerConfig получает конфигурацию для конкретного сервера
+func getServerConfig(server common.Server) (string, error) {
+	log.Printf("GET_SERVER_CONFIG: Получение конфигурации для сервера %s", server.ID)
+
+	// Делаем запрос к серверу конфигураций
+	resp, err := http.Get(server.ConfigURL)
+	if err != nil {
+		log.Printf("GET_SERVER_CONFIG: Ошибка запроса к серверу %s: %v", server.ID, err)
+		return "", fmt.Errorf("ошибка запроса к серверу: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Читаем ответ сервера
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("GET_SERVER_CONFIG: Ошибка чтения ответа сервера %s: %v", server.ID, err)
+		return "", fmt.Errorf("ошибка чтения ответа: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("GET_SERVER_CONFIG: Сервер %s вернул статус %d", server.ID, resp.StatusCode)
+		return "", fmt.Errorf("сервер вернул статус %d", resp.StatusCode)
+	}
+
+	log.Printf("GET_SERVER_CONFIG: Конфигурация для сервера %s получена (%d байт)", server.ID, len(body))
+	return string(body), nil
 }

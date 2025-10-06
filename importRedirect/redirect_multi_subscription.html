@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мультиподписка VPN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .status {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .status-details {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .servers-info {
+            background: #e3f2fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .servers-title {
+            color: #1976d2;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .server-list {
+            list-style: none;
+        }
+
+        .server-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .server-item:last-child {
+            border-bottom: none;
+        }
+
+        .server-flag {
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .server-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .server-country {
+            color: #666;
+            font-size: 14px;
+            margin-left: auto;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #d0d0d0;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .features {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .features-title {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .feature-icon {
+            margin-right: 10px;
+            color: #28a745;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🌍</div>
+        <h1>Мультиподписка VPN</h1>
+        <p class="subtitle">Выберите несколько серверов для лучшей производительности и стабильности</p>
+
+        <div class="status">
+            <div class="status-icon">✅</div>
+            <div class="status-text">Мультиподписка готова</div>
+            <div class="status-details">Ваша подписка включает несколько серверов из разных стран</div>
+        </div>
+
+        <div class="servers-info" id="serversInfo" style="display: none;">
+            <div class="servers-title">🌍 Включенные серверы</div>
+            <ul class="server-list" id="serverList">
+                <!-- Серверы будут добавлены динамически -->
+            </ul>
+        </div>
+
+        <div class="features">
+            <div class="features-title">🚀 Преимущества мультиподписки</div>
+            <div class="feature-item">
+                <span class="feature-icon">⚡</span>
+                <span>Автоматическое переключение между серверами</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🌐</span>
+                <span>Лучшая производительность и стабильность</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🔒</span>
+                <span>Возможность обхода блокировок</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🔄</span>
+                <span>Автоматическое обновление конфигураций</span>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <div>Загрузка конфигурации...</div>
+        </div>
+
+        <div class="error" id="error">
+            <strong>Ошибка:</strong> <span id="errorText"></span>
+        </div>
+
+        <div class="success" id="success">
+            <strong>Успешно!</strong> <span id="successText"></span>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-primary" id="importBtn" onclick="importSubscription()">
+                📱 Импортировать мультиподписку
+            </button>
+            <button class="btn btn-secondary" id="copyBtn" onclick="copySubscription()">
+                📋 Скопировать ссылку
+            </button>
+            <a href="#" class="btn btn-secondary" id="backBtn" onclick="goBack()">
+                ← Назад в бот
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Получаем параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const subscriptionId = urlParams.get('id');
+        const appType = urlParams.get('app') || 'happ'; // happ или v2raytun
+
+        let subscriptionData = null;
+        let subscriptionUrl = '';
+
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!subscriptionId) {
+                showError('ID мультиподписки не указан');
+                return;
+            }
+
+            loadSubscriptionData();
+        });
+
+        // Загрузка данных мультиподписки
+        async function loadSubscriptionData() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`/api/multi-subscription?id=${subscriptionId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка загрузки: ${response.status}`);
+                }
+
+                const data = await response.text();
+                subscriptionData = data;
+                subscriptionUrl = `${window.location.origin}/api/multi-subscription?id=${subscriptionId}`;
+
+                // Загружаем информацию о серверах
+                await loadServersInfo();
+
+                showLoading(false);
+                showSuccess('Мультиподписка загружена успешно!');
+                
+            } catch (error) {
+                console.error('Ошибка загрузки мультиподписки:', error);
+                showError('Ошибка загрузки мультиподписки: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // Загрузка информации о серверах
+        async function loadServersInfo() {
+            try {
+                // Здесь можно добавить API для получения информации о серверах
+                // Пока что показываем заглушку
+                const serversInfo = document.getElementById('serversInfo');
+                const serverList = document.getElementById('serverList');
+                
+                // Добавляем заглушку серверов
+                const servers = [
+                    { flag: '🇩🇪', name: 'Германия #1', country: 'DE' },
+                    { flag: '🇫🇮', name: 'Финляндия #1', country: 'FI' },
+                    { flag: '🇳🇱', name: 'Нидерланды #1', country: 'NL' }
+                ];
+
+                serverList.innerHTML = '';
+                servers.forEach(server => {
+                    const li = document.createElement('li');
+                    li.className = 'server-item';
+                    li.innerHTML = `
+                        <span class="server-flag">${server.flag}</span>
+                        <span class="server-name">${server.name}</span>
+                        <span class="server-country">${server.country}</span>
+                    `;
+                    serverList.appendChild(li);
+                });
+
+                serversInfo.style.display = 'block';
+            } catch (error) {
+                console.error('Ошибка загрузки информации о серверах:', error);
+            }
+        }
+
+        // Импорт мультиподписки
+        function importSubscription() {
+            if (!subscriptionData) {
+                showError('Данные мультиподписки не загружены');
+                return;
+            }
+
+            const importBtn = document.getElementById('importBtn');
+            importBtn.disabled = true;
+            importBtn.textContent = '⏳ Импорт...';
+
+            try {
+                if (appType === 'happ') {
+                    importToHapp();
+                } else if (appType === 'v2raytun') {
+                    importToV2rayTun();
+                } else {
+                    // Пробуем определить приложение автоматически
+                    if (navigator.userAgent.includes('Android')) {
+                        importToHapp();
+                    } else {
+                        importToV2rayTun();
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка импорта:', error);
+                showError('Ошибка импорта: ' + error.message);
+                importBtn.disabled = false;
+                importBtn.textContent = '📱 Импортировать мультиподписку';
+            }
+        }
+
+        // Импорт в Happ
+        function importToHapp() {
+            try {
+                // Создаем ссылку для импорта в Happ
+                const happUrl = `happ://add/${encodeURIComponent(subscriptionUrl)}`;
+                
+                // Пытаемся открыть приложение
+                window.location.href = happUrl;
+                
+                // Показываем сообщение об успехе
+                setTimeout(() => {
+                    showSuccess('Мультиподписка импортирована в Happ!');
+                    document.getElementById('importBtn').textContent = '✅ Импортировано';
+                }, 1000);
+                
+            } catch (error) {
+                throw new Error('Ошибка импорта в Happ: ' + error.message);
+            }
+        }
+
+        // Импорт в V2rayTun
+        function importToV2rayTun() {
+            try {
+                // Создаем ссылку для импорта в V2rayTun
+                const v2rayUrl = `v2raytun://import/${encodeURIComponent(subscriptionUrl)}`;
+                
+                // Пытаемся открыть приложение
+                window.location.href = v2rayUrl;
+                
+                // Показываем сообщение об успехе
+                setTimeout(() => {
+                    showSuccess('Мультиподписка импортирована в V2rayTun!');
+                    document.getElementById('importBtn').textContent = '✅ Импортировано';
+                }, 1000);
+                
+            } catch (error) {
+                throw new Error('Ошибка импорта в V2rayTun: ' + error.message);
+            }
+        }
+
+        // Копирование ссылки мультиподписки
+        function copySubscription() {
+            if (!subscriptionUrl) {
+                showError('Ссылка мультиподписки не доступна');
+                return;
+            }
+
+            navigator.clipboard.writeText(subscriptionUrl).then(() => {
+                showSuccess('Ссылка скопирована в буфер обмена!');
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                showError('Ошибка копирования ссылки');
+            });
+        }
+
+        // Возврат в бот
+        function goBack() {
+            // Можно добавить ссылку на бот или закрыть окно
+            if (window.opener) {
+                window.close();
+            } else {
+                window.history.back();
+            }
+        }
+
+        // Показ загрузки
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // Показ ошибки
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Скрываем другие сообщения
+            document.getElementById('success').style.display = 'none';
+        }
+
+        // Показ успеха
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            const successText = document.getElementById('successText');
+            successText.textContent = message;
+            successDiv.style.display = 'block';
+            
+            // Скрываем другие сообщения
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // Обработка ошибок
+        window.addEventListener('error', function(e) {
+            console.error('Глобальная ошибка:', e.error);
+            showError('Произошла неожиданная ошибка');
+        });
+
+        // Обработка необработанных промисов
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Необработанная ошибка промиса:', e.reason);
+            showError('Ошибка загрузки данных');
+        });
+    </script>
+</body>
+</html>
