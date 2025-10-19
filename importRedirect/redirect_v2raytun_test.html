@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Подключение к v2raytun</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .status {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .debug-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 12px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Подключение к v2raytun</h1>
+        <div id="loading">
+            <div class="spinner"></div>
+            <div class="status">Перенаправление в v2raytun...</div>
+        </div>
+        <div id="manual" style="display: none;">
+            <a href="" id="manual-link" class="btn">📱 Открыть в v2raytun</a>
+            <br>
+            <a href="" id="copy-link" class="btn">📋 Скопировать ссылку</a>
+            <br>
+            <a href="" id="android-intent-link" class="btn" style="display: none;">🤖 Android Intent</a>
+            <br>
+            
+            <!-- ===== ЕДИНСТВЕННАЯ КНОПКА ДЛЯ ANDROID ===== -->
+            <div id="android-single-button" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: none;">
+                <a href="" id="subscription-import-link" class="btn" style="background: rgba(76, 175, 80, 0.3); border-color: rgba(76, 175, 80, 0.5); font-size: 18px; padding: 15px 30px;">
+                    🔗 Нажмите сюда, чтобы добавить подписку
+                </a>
+                <br>
+                
+                <div style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+                    <strong>💡 Инструкция:</strong> Нажмите кнопку выше для автоматического добавления подписки в v2raytun
+                </div>
+            </div>
+            
+            <!-- ===== ИНСТРУКЦИЯ ДЛЯ iOS ===== -->
+            <div id="ios-instruction" style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+                <strong>💡 Инструкция:</strong> 
+                <span id="instruction-text">
+                    Нажмите кнопку выше для автоматического добавления конфигурации в v2raytun
+                </span>
+            </div>
+        </div>
+        <div id="error" style="display: none;" class="error">
+            <h3>❌ Ошибка</h3>
+            <p id="error-text"></p>
+        </div>
+        <div id="debug" class="debug-info" style="display: none;">
+            <h4>🐛 Debug информация:</h4>
+            <div id="debug-content"></div>
+        </div>
+    </div>
+
+<script>
+    // Получаем URL из параметра
+    const urlParams = new URLSearchParams(window.location.search);
+    const configUrl = urlParams.get('url');
+    
+    // Определяем платформу
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    console.log('=== V2RAYTUN REDIRECT TEST DEBUG ===');
+    console.log('Получен URL параметр:', configUrl);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('isAndroid:', isAndroid);
+    console.log('isIOS:', isIOS);
+    console.log('isMobile:', isMobile);
+    
+    // ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ОТКРЫТИЯ ПРИЛОЖЕНИЯ =====
+    function tryOpenApp(url, attempt) {
+        try {
+            console.log('Попытка ' + attempt + ': открытие', url);
+            
+            // Метод 1: Создаем скрытую ссылку и кликаем по ней
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Метод 2: Прямое перенаправление через window.location
+            window.location.href = url;
+        } catch (e) {
+            console.log('Попытка ' + attempt + ' открытия приложения не удалась:', e);
+        }
+    }
+    
+    // ===== ФУНКЦИЯ НАСТРОЙКИ КНОПКИ АВТОМАТИЧЕСКОГО ДОБАВЛЕНИЯ =====
+    function setupAutoAddButton(v2raytunUrl, description) {
+        document.getElementById('manual-link').href = 'javascript:void(0)';
+        document.getElementById('manual-link').textContent = '📱 Автоматически добавить в v2raytun';
+        
+        document.getElementById('manual-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Автоматическое добавление:', description);
+            
+            tryOpenApp(v2raytunUrl, 'auto-add');
+            
+            setTimeout(function() {
+                alert('✅ Конфигурация добавлена в v2raytun!\n\nЕсли приложение не открылось, нажмите кнопку еще раз.');
+            }, 1000);
+        });
+    }
+    
+    
+    // ===== ФУНКЦИЯ ПРОВЕРКИ BASE64 =====
+    function isBase64(str) {
+        try {
+            const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+            if (!base64Regex.test(str)) {
+                return false;
+            }
+            
+            const decoded = atob(str);
+            
+            for (let i = 0; i < decoded.length; i++) {
+                const charCode = decoded.charCodeAt(i);
+                if (charCode < 32 && charCode !== 9 && charCode !== 10 && charCode !== 13) {
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    // Показываем debug информацию
+    const debugContent = document.getElementById('debug-content');
+    debugContent.innerHTML = `
+        <strong>URL:</strong> ${configUrl || 'Не указан'}<br>
+        <strong>User Agent:</strong> ${navigator.userAgent}<br>
+        <strong>Платформа:</strong> ${isAndroid ? 'Android' : isIOS ? 'iOS' : 'Desktop'}<br>
+        <strong>Мобильное устройство:</strong> ${isMobile ? 'Да' : 'Нет'}<br>
+        <strong>Логика:</strong> ${isAndroid ? 'Android с одной кнопкой' : 'iOS с автоимпортом'}
+    `;
+    document.getElementById('debug').style.display = 'block';
+
+    if (configUrl) {
+        if (isAndroid) {
+            // ===== ANDROID: ЛОГИКА С ОДНОЙ КНОПКОЙ =====
+            console.log('Используем Android логику с одной кнопкой');
+            
+            // Показываем единственную кнопку для Android
+            document.getElementById('android-single-button').style.display = 'block';
+            // Скрываем инструкцию для iOS
+            document.getElementById('ios-instruction').style.display = 'none';
+            // Скрываем ненужные кнопки для Android
+            document.getElementById('copy-link').style.display = 'none';
+            document.getElementById('android-intent-link').style.display = 'none';
+            document.getElementById('manual-link').style.display = 'none';
+            
+            // Обновляем статус для Android
+            document.querySelector('.status').textContent = 'Нажмите кнопку ниже для добавления подписки в v2raytun:';
+            
+            // Настраиваем кнопки для Android
+            const v2raytunUrl = 'v2raytun://import/' + encodeURIComponent(configUrl);
+            const androidIntentUrl = 'intent://import/' + encodeURIComponent(configUrl) + '#Intent;scheme=v2raytun;package=com.v2raytun.app;end';
+            
+            // Основная кнопка v2raytun (скрыта для Android)
+            document.getElementById('manual-link').href = 'javascript:void(0)';
+            document.getElementById('manual-link').textContent = '📱 Автоматически добавить в v2raytun';
+            
+            // Android Intent кнопка (скрыта для Android)
+            document.getElementById('android-intent-link').href = androidIntentUrl;
+            
+            // Кнопка копирования (скрыта для Android)
+            document.getElementById('copy-link').href = 'javascript:void(0)';
+            
+            // ===== НАСТРОЙКА ЕДИНСТВЕННОЙ КНОПКИ ДЛЯ ANDROID =====
+            // Кнопка "Автоматически добавить подписку" - добавляет подписку (не конфигурацию)
+            document.getElementById('subscription-import-link').href = 'javascript:void(0)';
+            document.getElementById('subscription-import-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Автоматический импорт подписки:', configUrl);
+                
+                tryOpenApp('v2raytun://import/' + configUrl, 'auto-subscription');
+                
+                setTimeout(function() {
+                    alert('✅ Подписка добавлена в v2raytun!\n\nЕсли приложение не открылось, нажмите кнопку еще раз.');
+                }, 1000);
+            });
+            
+            // Функция копирования ссылки (отключена для Android, так как кнопка скрыта)
+            // document.getElementById('copy-link').addEventListener('click', function() { ... });
+            
+            // ===== ОСНОВНАЯ ЛОГИКА ИМПОРТА ПОДПИСОК ДЛЯ ANDROID =====
+            console.log('Используем улучшенную логику импорта подписок для Android');
+            
+            // Получаем данные подписки через API
+            fetch('https://im.shadowfade.ru:8443/api/subscription?url=' + encodeURIComponent(configUrl))
+                .then(response => response.text())
+                .then(data => {
+                    console.log('Получены данные подписки:', data);
+                    
+                    if (isBase64(data)) {
+                        try {
+                            const decodedUrl = atob(data);
+                            console.log('Декодированный URL:', decodedUrl);
+                            
+                            if (decodedUrl.startsWith('vless://') || decodedUrl.startsWith('vmess://') || decodedUrl.startsWith('trojan://') || decodedUrl.startsWith('ss://')) {
+                                const cleanUrl = decodeURIComponent(decodedUrl);
+                                console.log('Чистый URL для v2raytun:', cleanUrl);
+                                
+                                // Настраиваем основную кнопку для автоматического добавления (отключено для Android)
+                                // document.getElementById('manual-link').addEventListener('click', function(e) { ... });
+                                
+                                // ===== КНОПКА УЖЕ НАСТРОЕНА ДЛЯ ПОДПИСКИ =====
+                                // Кнопка "Автоматически добавить подписку" уже настроена выше для использования configUrl
+                                
+                                // Обновляем функцию копирования
+                                document.getElementById('copy-link').onclick = function() {
+                                    navigator.clipboard.writeText(cleanUrl).then(function() {
+                                        alert('✅ Ссылка скопирована!\n\nОткройте v2raytun → Добавить конфигурацию → Вставить ссылку');
+                                    }).catch(function() {
+                                        const textArea = document.createElement('textarea');
+                                        textArea.value = cleanUrl;
+                                        document.body.appendChild(textArea);
+                                        textArea.select();
+                                        document.execCommand('copy');
+                                        document.body.removeChild(textArea);
+                                        alert('✅ Ссылка скопирована!\n\nОткройте v2raytun → Добавить конфигурацию → Вставить ссылку');
+                                    });
+                                };
+                            } else {
+                                // Кнопка уже настроена для подписки выше
+                                console.log('Используем URL подписки для v2raytun:', configUrl);
+                            }
+                        } catch (e) {
+                            console.log('Ошибка декодирования для v2raytun:', e);
+                            // Кнопка уже настроена для подписки выше
+                        }
+                    } else {
+                        console.log('Используем URL подписки для v2raytun (не base64):', configUrl);
+                        // Кнопка уже настроена для подписки выше
+                    }
+                })
+                .catch(e => {
+                    console.log('Ошибка при получении данных подписки для v2raytun:', e);
+                    // Кнопка уже настроена для подписки выше
+                });
+            
+            // Показываем кнопки через 1 секунду
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('manual').style.display = 'block';
+            }, 1000);
+            
+        } else {
+            // ===== iOS И ДРУГИЕ ПЛАТФОРМЫ: ОРИГИНАЛЬНАЯ ЛОГИКА С АВТОИМПОРТОМ =====
+            console.log('Используем iOS логику с автоимпортом');
+            
+            const v2raytunUrl = 'v2raytun://import/' + encodeURIComponent(configUrl);
+            console.log('Сформирован v2raytun URL:', v2raytunUrl);
+            
+            // Устанавливаем ссылки
+            document.getElementById('manual-link').href = v2raytunUrl;
+            document.getElementById('manual-link').textContent = '📱 Открыть в v2raytun';
+            document.getElementById('copy-link').href = 'javascript:void(0)';
+            
+            // Скрываем Android-специфичные кнопки
+            document.getElementById('android-intent-link').style.display = 'none';
+            document.getElementById('android-single-button').style.display = 'none';
+            
+            // Функция копирования ссылки
+            document.getElementById('copy-link').addEventListener('click', function() {
+                navigator.clipboard.writeText(configUrl).then(function() {
+                    alert('✅ Ссылка скопирована!\n\nОткройте v2raytun → Добавить конфигурацию → Вставить ссылку');
+                }).catch(function() {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = configUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('✅ Ссылка скопирована!\n\nОткройте v2raytun → Добавить конфигурацию → Вставить ссылку');
+                });
+            });
+
+            // ===== АВТОИМПОРТ ДЛЯ iOS =====
+            // Пытаемся открыть приложение автоматически
+            let appOpened = false;
+            
+            // Первая попытка - немедленно
+            try {
+                console.log('Попытка 1: открытие', v2raytunUrl);
+                window.location.href = v2raytunUrl;
+                appOpened = true;
+            } catch (e) {
+                console.log('Первая попытка открытия приложения не удалась:', e);
+            }
+            
+            // Вторая попытка через 1 секунду
+            setTimeout(function() {
+                if (!appOpened) {
+                    try {
+                        console.log('Попытка 2: открытие', v2raytunUrl);
+                        window.location.href = v2raytunUrl;
+                        appOpened = true;
+                    } catch (e) {
+                        console.log('Вторая попытка открытия приложения не удалась:', e);
+                    }
+                }
+            }, 1000);
+            
+            // Третья попытка через 3 секунды (если предыдущие не сработали)
+            setTimeout(function() {
+                if (!appOpened) {
+                    try {
+                        console.log('Попытка 3: открытие', v2raytunUrl);
+                        window.location.href = v2raytunUrl;
+                        appOpened = true;
+                    } catch (e) {
+                        console.log('Третья попытка открытия приложения не удалась:', e);
+                    }
+                }
+            }, 3000);
+            
+            // Показываем ручные кнопки через 4 секунды
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('manual').style.display = 'block';
+            }, 4000);
+        }
+        
+    } else {
+        console.log('URL параметр не найден');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error-text').textContent = 'Не указана ссылка на конфигурацию v2raytun';
+    }
+</script>
+</body>
+</html>

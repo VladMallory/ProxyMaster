@@ -1,0 +1,904 @@
+
+=== USERS LOG STARTED: 2025-10-06 19:16:30 ===
+[2025-10-06 19:16:31] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-06 19:16:31] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-06 19:16:32] USER_MESSAGE: ID=2052953508, Username=@MrAavtor, Name=Саша👁️‍🗨️ , Text=/balance
+[2025-10-06 19:16:32] USER_ACTION: ID=2052953508, Username=MrAavtor, Name=Саша👁️‍🗨️ , Action=COMMAND, Details=balance
+[2025-10-06 19:16:33] USER_MESSAGE: ID=2052953508, Username=@MrAavtor, Name=Саша👁️‍🗨️ , Text=/balance
+[2025-10-06 19:16:33] USER_ACTION: ID=2052953508, Username=MrAavtor, Name=Саша👁️‍🗨️ , Action=COMMAND, Details=balance
+[2025-10-06 19:16:35] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-06 19:16:35] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-06 19:16:47] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/backup
+[2025-10-06 19:16:47] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=backup
+[2025-10-06 19:16:54] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/backup
+[2025-10-06 19:16:54] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=backup
+[2025-10-06 23:54:32] USER_MESSAGE: ID=5301473673, Username=@biravad, Name=Ирина , Text=/start
+[2025-10-06 23:54:38] USER_CALLBACK: ID=5301473673, Username=@biravad, Name=Ирина , Data=activate_trial
+[2025-10-06 23:54:41] USER_CALLBACK: ID=5301473673, Username=@biravad, Name=Ирина , Data=download_app
+[2025-10-06 23:54:44] USER_CALLBACK: ID=5301473673, Username=@biravad, Name=Ирина , Data=device_android
+[2025-10-07 10:02:00] USER_MESSAGE: ID=7338654649, Username=, Name=Юсуф Пирсаидов, Text=/start ref_1631142357357
+[2025-10-07 10:02:08] USER_CALLBACK: ID=7338654649, Username=, Name=Юсуф Пирсаидов, Data=ref
+[2025-10-07 10:02:14] USER_CALLBACK: ID=7338654649, Username=, Name=Юсуф Пирсаидов, Data=ref_history
+
+=== USERS LOG STARTED: 2025-10-07 13:04:17 ===
+
+=== USERS LOG STARTED: 2025-10-07 13:04:56 ===
+[2025-10-07 13:29:14] USER_MESSAGE: ID=8418305024, Username=, Name=Родион , Text=/start
+[2025-10-07 13:29:49] USER_CALLBACK: ID=8418305024, Username=, Name=Родион , Data=topup
+[2025-10-07 13:30:00] USER_CALLBACK: ID=8418305024, Username=, Name=Родион , Data=main
+[2025-10-07 13:30:04] USER_CALLBACK: ID=8418305024, Username=, Name=Родион , Data=download_app
+[2025-10-07 13:30:05] USER_CALLBACK: ID=8418305024, Username=, Name=Родион , Data=main
+[2025-10-07 13:30:31] USER_MESSAGE: ID=8418305024, Username=, Name=Родион , Text=/start
+
+=== USERS LOG STARTED: 2025-10-07 14:38:26 ===
+
+=== USERS LOG STARTED: 2025-10-07 14:38:34 ===
+[2025-10-07 15:11:50] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-07 15:11:50] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-07 18:16:15] USER_MESSAGE: ID=7571942095, Username=@Sesshhll, Name=Арсений , Text=/start ref_6094391600600
+[2025-10-07 18:16:29] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=download_app
+[2025-10-07 18:16:30] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=device_ios
+[2025-10-07 18:17:51] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=download_app
+[2025-10-07 18:17:53] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=main
+[2025-10-07 18:18:36] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=activate_trial
+[2025-10-07 18:20:10] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=topup
+[2025-10-07 18:20:16] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=topup:100
+[2025-10-07 18:21:05] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=check_payment:30774370-000f-5000-8000-1bdf5bdffa88
+[2025-10-07 18:21:07] USER_CALLBACK: ID=7571942095, Username=@Sesshhll, Name=Арсений , Data=main
+[2025-10-07 18:29:20] USER_MESSAGE: ID=1237517884, Username=@ivvivvav, Name=aml^ , Text=/start ref_1631142357357
+[2025-10-07 18:29:24] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=download_app
+[2025-10-07 18:29:26] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=device_ios
+[2025-10-07 18:41:13] USER_MESSAGE: ID=1237517884, Username=@ivvivvav, Name=aml^ , Text=/start ref_1631142357357
+[2025-10-07 18:41:25] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=vpn
+[2025-10-07 18:41:25] USER_ACTION: ID=1237517884, Username=ivvivvav, Name=aml^ , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-07 18:42:10] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=main
+[2025-10-07 18:42:28] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=vpn
+[2025-10-07 18:42:28] USER_ACTION: ID=1237517884, Username=ivvivvav, Name=aml^ , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-07 20:01:34] USER_MESSAGE: ID=871091373, Username=, Name=Евгений , Text=/start
+[2025-10-07 20:01:49] USER_CALLBACK: ID=871091373, Username=, Name=Евгений , Data=activate_trial
+[2025-10-07 20:02:06] USER_CALLBACK: ID=871091373, Username=, Name=Евгений , Data=download_app
+[2025-10-07 20:02:09] USER_CALLBACK: ID=871091373, Username=, Name=Евгений , Data=device_android
+[2025-10-07 20:07:33] USER_CALLBACK: ID=871091373, Username=, Name=Евгений , Data=main
+[2025-10-08 03:28:33] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-08 03:28:34] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-08 03:28:35] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-08 03:28:44] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-08 09:23:00] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/start
+[2025-10-08 09:23:12] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/start
+[2025-10-08 09:23:22] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/balance
+[2025-10-08 09:23:22] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=COMMAND, Details=balance
+[2025-10-08 09:24:08] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=activate_trial
+[2025-10-08 09:24:49] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=topup
+[2025-10-08 09:24:52] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=topup:200
+[2025-10-08 09:25:15] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 09:25:23] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=topup
+[2025-10-08 09:25:29] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=topup:200
+[2025-10-08 09:26:12] USER_MESSAGE: ID=1050967279, Username=@Pashtiga1979, Name=Павел , Text=аб плата после пробного периода?
+[2025-10-08 09:27:11] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 09:27:20] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=ref
+[2025-10-08 09:28:41] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=ref_refresh
+[2025-10-08 09:28:55] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=ref_history
+[2025-10-08 09:28:59] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=ref_menu
+[2025-10-08 09:29:01] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main_menu
+[2025-10-08 09:29:26] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=topup
+[2025-10-08 09:35:47] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 09:38:09] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=vpn
+[2025-10-08 09:38:09] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-08 09:38:38] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 09:46:44] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=vpn
+[2025-10-08 09:46:44] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-08 09:52:10] USER_CALLBACK: ID=8139276223, Username=, Name=G , Data=main
+[2025-10-08 09:52:15] USER_CALLBACK: ID=8139276223, Username=, Name=G , Data=vpn
+[2025-10-08 09:52:15] USER_ACTION: ID=8139276223, Username=, Name=G , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-08 10:37:58] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-08 10:37:58] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-08 12:33:31] USER_MESSAGE: ID=589750092, Username=@sunshine_angelia, Name=Angelina , Text=/start ref_6094391600600
+[2025-10-08 12:33:37] USER_CALLBACK: ID=589750092, Username=@sunshine_angelia, Name=Angelina , Data=download_app
+[2025-10-08 12:44:01] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 12:44:03] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=vpn
+[2025-10-08 12:44:03] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-08 13:27:03] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-08 13:29:02] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_refresh
+[2025-10-08 13:33:19] USER_MESSAGE: ID=1817506847, Username=@wqxxvuu, Name=. , Text=/start ref_2039996862862
+[2025-10-08 14:31:28] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 14:31:31] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=topup
+[2025-10-08 14:31:35] USER_CALLBACK: ID=721123829, Username=, Name=Artadocks , Data=main
+[2025-10-08 14:51:03] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-08 18:40:11] USER_MESSAGE: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Text=/start
+[2025-10-08 18:40:23] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=activate_trial
+[2025-10-08 18:43:45] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=download_app
+[2025-10-08 18:43:46] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=device_android
+[2025-10-08 18:59:31] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=download_app
+[2025-10-08 18:59:33] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=main
+[2025-10-08 19:02:53] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=vpn
+[2025-10-08 19:02:53] USER_ACTION: ID=729997809, Username=Pokrova56, Name=VLADIMIR , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-08 21:45:41] USER_CALLBACK: ID=8139276223, Username=, Name=G , Data=main
+[2025-10-09 06:15:11] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=activate_trial
+[2025-10-09 06:21:09] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=vpn
+[2025-10-09 06:21:09] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 06:21:26] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=main
+[2025-10-09 06:21:31] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=vpn
+[2025-10-09 06:21:31] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 06:21:49] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=main
+[2025-10-09 06:21:59] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=vpn
+[2025-10-09 06:21:59] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 06:22:45] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=main
+[2025-10-09 06:23:11] USER_MESSAGE: ID=816399085, Username=, Name=Evgeniy Nova, Text=Баланс
+[2025-10-09 06:23:29] USER_MESSAGE: ID=816399085, Username=, Name=Evgeniy Nova, Text=/balance
+[2025-10-09 06:23:29] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=COMMAND, Details=balance
+[2025-10-09 06:24:30] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref
+[2025-10-09 06:24:33] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref_share
+[2025-10-09 06:25:03] USER_MESSAGE: ID=816399085, Username=, Name=Evgeniy Nova, Text=/start
+[2025-10-09 06:25:03] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=COMMAND, Details=start
+[2025-10-09 06:25:08] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref
+[2025-10-09 06:25:11] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref_share
+[2025-10-09 06:25:52] USER_MESSAGE: ID=948197634, Username=, Name=Жанарбек Сагиев, Text=/start ref_816399085085
+[2025-10-09 06:26:22] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=balance
+[2025-10-09 06:26:22] USER_ACTION: ID=948197634, Username=, Name=Жанарбек Сагиев, Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-09 06:26:38] USER_MESSAGE: ID=948197634, Username=, Name=Жанарбек Сагиев, Text=/start
+[2025-10-09 06:26:38] USER_ACTION: ID=948197634, Username=, Name=Жанарбек Сагиев, Action=COMMAND, Details=start
+[2025-10-09 06:28:14] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=topup
+[2025-10-09 06:28:32] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=main
+[2025-10-09 06:59:20] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-09 06:59:20] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-09 06:59:27] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-09 06:59:29] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-09 08:31:24] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-09 08:31:24] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-09 09:31:42] USER_MESSAGE: ID=805232031, Username=, Name=Вера , Text=/start
+[2025-10-09 09:32:22] USER_CALLBACK: ID=805232031, Username=, Name=Вера , Data=activate_trial
+[2025-10-09 09:33:00] USER_CALLBACK: ID=805232031, Username=, Name=Вера , Data=download_app
+[2025-10-09 09:33:03] USER_CALLBACK: ID=805232031, Username=, Name=Вера , Data=device_android
+[2025-10-09 09:41:02] USER_CALLBACK: ID=805232031, Username=, Name=Вера , Data=main
+[2025-10-09 10:07:02] USER_CALLBACK: ID=805232031, Username=, Name=Вера , Data=topup
+[2025-10-09 10:07:14] USER_CALLBACK: ID=805232031, Username=, Name=Вера , Data=topup:200
+[2025-10-09 10:30:22] USER_MESSAGE: ID=816399085, Username=, Name=Evgeniy Nova, Text=/start
+[2025-10-09 10:30:22] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=COMMAND, Details=start
+[2025-10-09 10:30:25] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref
+[2025-10-09 10:30:28] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref_share
+[2025-10-09 10:32:30] USER_MESSAGE: ID=816399085, Username=, Name=Evgeniy Nova, Text=/start
+[2025-10-09 10:32:30] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=COMMAND, Details=start
+[2025-10-09 10:32:33] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref
+[2025-10-09 10:32:44] USER_MESSAGE: ID=468632794, Username=, Name=Sedinkin Valera, Text=/start ref_816399085085
+[2025-10-09 10:32:54] USER_CALLBACK: ID=468632794, Username=, Name=Sedinkin Valera, Data=vpn
+[2025-10-09 10:32:54] USER_ACTION: ID=468632794, Username=, Name=Sedinkin Valera, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 10:34:19] USER_CALLBACK: ID=468632794, Username=, Name=Sedinkin Valera, Data=main
+[2025-10-09 10:34:48] USER_CALLBACK: ID=468632794, Username=, Name=Sedinkin Valera, Data=topup
+[2025-10-09 10:35:01] USER_CALLBACK: ID=468632794, Username=, Name=Sedinkin Valera, Data=main
+[2025-10-09 11:02:53] USER_MESSAGE: ID=468632794, Username=, Name=Sedinkin Valera, Text=/start
+[2025-10-09 11:03:12] USER_CALLBACK: ID=468632794, Username=, Name=Sedinkin Valera, Data=activate_trial
+[2025-10-09 12:59:47] USER_MESSAGE: ID=1624243941, Username=@paatuii, Name=P , Text=/start ref_1183613976976
+[2025-10-09 13:03:09] USER_MESSAGE: ID=6523058216, Username=@kamxqqq, Name=. , Text=/start ref_1183613976976
+[2025-10-09 13:03:14] USER_CALLBACK: ID=6523058216, Username=@kamxqqq, Name=. , Data=vpn
+[2025-10-09 13:03:14] USER_ACTION: ID=6523058216, Username=kamxqqq, Name=. , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 13:03:25] USER_MESSAGE: ID=6523058216, Username=@kamxqqq, Name=. , Text=/start ref_1183613976976
+[2025-10-09 13:03:33] USER_CALLBACK: ID=6523058216, Username=@kamxqqq, Name=. , Data=download_app
+[2025-10-09 13:03:35] USER_CALLBACK: ID=6523058216, Username=@kamxqqq, Name=. , Data=device_ios
+[2025-10-09 13:11:44] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start ref_816399085085
+[2025-10-09 13:12:21] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=balance
+[2025-10-09 13:12:21] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-09 13:12:29] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start ref_816399085085
+[2025-10-09 13:12:37] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=ref
+[2025-10-09 13:13:34] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=ref
+[2025-10-09 13:13:38] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=ref_share
+[2025-10-09 13:14:26] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start ref_948197634634
+[2025-10-09 13:15:00] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start
+[2025-10-09 13:15:00] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=COMMAND, Details=start
+[2025-10-09 13:15:15] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start ref_948197634634
+[2025-10-09 13:15:21] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=balance
+[2025-10-09 13:15:21] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-09 13:15:27] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=vpn
+[2025-10-09 13:15:27] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 13:16:29] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start
+[2025-10-09 13:16:29] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=COMMAND, Details=start
+[2025-10-09 13:16:45] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=topup
+[2025-10-09 13:16:48] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=main
+[2025-10-09 13:16:50] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=topup
+[2025-10-09 13:17:13] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=main
+[2025-10-09 13:18:19] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=download_app
+[2025-10-09 13:18:53] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start
+[2025-10-09 13:18:53] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=COMMAND, Details=start
+[2025-10-09 13:19:01] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=download_app
+[2025-10-09 13:20:51] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start
+[2025-10-09 13:20:51] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=COMMAND, Details=start
+[2025-10-09 13:21:03] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=vpn
+[2025-10-09 13:21:03] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 13:23:05] USER_CALLBACK: ID=816399085, Username=, Name=Evgeniy Nova, Data=ref_history
+[2025-10-09 13:23:11] USER_MESSAGE: ID=816399085, Username=, Name=Evgeniy Nova, Text=/start
+[2025-10-09 13:23:11] USER_ACTION: ID=816399085, Username=, Name=Evgeniy Nova, Action=COMMAND, Details=start
+[2025-10-09 13:23:33] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=main
+[2025-10-09 13:23:39] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=vpn
+[2025-10-09 13:23:39] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 13:25:04] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start
+[2025-10-09 13:25:04] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=COMMAND, Details=start
+[2025-10-09 13:27:27] USER_MESSAGE: ID=5035512654, Username=@moment_was, Name=Слава , Text=/start
+[2025-10-09 13:27:27] USER_ACTION: ID=5035512654, Username=moment_was, Name=Слава , Action=COMMAND, Details=start
+[2025-10-09 13:29:33] USER_MESSAGE: ID=2093708356, Username=, Name=Vitaly , Text=/start
+[2025-10-09 13:29:33] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=COMMAND, Details=start
+[2025-10-09 13:30:27] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=ref
+[2025-10-09 13:30:31] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=main_menu
+[2025-10-09 13:30:33] USER_CALLBACK: ID=2093708356, Username=, Name=Vitaly , Data=vpn
+[2025-10-09 13:30:33] USER_ACTION: ID=2093708356, Username=, Name=Vitaly , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 13:33:36] USER_CALLBACK: ID=5035512654, Username=@moment_was, Name=Слава , Data=vpn
+[2025-10-09 13:33:36] USER_ACTION: ID=5035512654, Username=moment_was, Name=Слава , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-09 13:46:33] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=download_app
+[2025-10-09 13:46:46] USER_CALLBACK: ID=948197634, Username=, Name=Жанарбек Сагиев, Data=main
+[2025-10-09 19:54:40] USER_MESSAGE: ID=787866628, Username=, Name=Хозяин , Text=/start
+[2025-10-09 19:55:58] USER_MESSAGE: ID=1651279958, Username=, Name=Елена , Text=/start
+[2025-10-09 19:56:01] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=activate_trial
+[2025-10-09 19:56:05] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=download_app
+[2025-10-09 19:56:07] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=device_android
+[2025-10-09 19:56:34] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=download_app
+[2025-10-09 19:56:36] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=main
+[2025-10-09 19:56:58] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=topup
+[2025-10-09 19:57:01] USER_CALLBACK: ID=1651279958, Username=, Name=Елена , Data=topup:100
+[2025-10-09 19:58:00] USER_MESSAGE: ID=787866628, Username=, Name=Хозяин , Text=/start
+[2025-10-09 19:58:04] USER_CALLBACK: ID=787866628, Username=, Name=Хозяин , Data=activate_trial
+[2025-10-09 19:58:11] USER_CALLBACK: ID=787866628, Username=, Name=Хозяин , Data=download_app
+[2025-10-09 19:58:14] USER_CALLBACK: ID=787866628, Username=, Name=Хозяин , Data=device_ios
+[2025-10-09 20:01:12] USER_CALLBACK: ID=787866628, Username=, Name=Хозяин , Data=main
+[2025-10-09 20:02:35] USER_CALLBACK: ID=787866628, Username=, Name=Хозяин , Data=topup
+[2025-10-09 20:03:17] USER_CALLBACK: ID=787866628, Username=, Name=Хозяин , Data=topup:100
+[2025-10-10 08:15:22] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-10 08:15:22] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-10 08:15:24] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-10 08:15:25] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup:16
+[2025-10-10 08:28:14] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-10 08:28:14] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-10 08:30:55] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/backup
+[2025-10-10 08:30:55] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=backup
+[2025-10-10 08:30:57] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/backup
+[2025-10-10 08:30:57] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=backup
+
+=== USERS LOG STARTED: 2025-10-10 08:34:06 ===
+[2025-10-10 09:48:09] USER_MESSAGE: ID=7778040290, Username=, Name=наталья , Text=/start
+[2025-10-10 09:48:12] USER_CALLBACK: ID=7778040290, Username=, Name=наталья , Data=activate_trial
+[2025-10-10 09:48:15] USER_CALLBACK: ID=7778040290, Username=, Name=наталья , Data=download_app
+[2025-10-10 09:48:17] USER_CALLBACK: ID=7778040290, Username=, Name=наталья , Data=device_android
+[2025-10-10 09:49:24] USER_CALLBACK: ID=7778040290, Username=, Name=наталья , Data=main
+[2025-10-10 09:50:39] USER_CALLBACK: ID=7778040290, Username=, Name=наталья , Data=topup
+[2025-10-10 09:50:44] USER_CALLBACK: ID=7778040290, Username=, Name=наталья , Data=topup:100
+[2025-10-10 11:13:45] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=download_app
+[2025-10-10 11:13:47] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=device_android
+[2025-10-10 11:13:52] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main
+[2025-10-10 17:08:21] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=topup
+[2025-10-10 17:08:22] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main
+[2025-10-10 17:08:25] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=vpn
+[2025-10-10 17:08:25] USER_ACTION: ID=5083088553, Username=missMOS6581, Name=miss＾ω＾ , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-10 17:08:45] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main
+[2025-10-10 17:08:50] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=download_app
+[2025-10-10 17:08:51] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main
+[2025-10-10 17:08:52] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=topup
+[2025-10-10 17:08:54] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main
+[2025-10-10 17:08:55] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=vpn
+[2025-10-10 17:08:55] USER_ACTION: ID=5083088553, Username=missMOS6581, Name=miss＾ω＾ , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-10 17:08:57] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main
+[2025-10-10 17:08:58] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=ref
+[2025-10-10 17:09:09] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=ref_stats
+[2025-10-10 17:09:10] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=ref_menu
+[2025-10-10 17:09:11] USER_CALLBACK: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Data=main_menu
+[2025-10-10 19:27:08] USER_MESSAGE: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Text=/start
+[2025-10-10 19:27:37] USER_MESSAGE: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Text=/balance
+[2025-10-10 19:27:37] USER_ACTION: ID=1028456011, Username=Tessbrink, Name=Tess Brink, Action=COMMAND, Details=balance
+[2025-10-10 19:27:42] USER_MESSAGE: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Text=/start
+[2025-10-10 19:31:04] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=activate_trial
+[2025-10-10 19:31:13] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=download_app
+[2025-10-10 19:31:16] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=device_android
+[2025-10-10 19:33:43] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=main
+[2025-10-10 19:44:33] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-10 19:44:33] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-10 19:59:10] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=main
+[2025-10-10 19:59:27] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=topup
+[2025-10-10 19:59:35] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=topup:100
+[2025-10-11 03:35:21] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-11 03:35:21] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-11 03:35:26] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 03:35:28] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 03:35:33] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_stats
+[2025-10-11 03:35:35] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_menu
+[2025-10-11 03:35:37] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-11 03:36:12] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 03:36:13] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-11 03:36:15] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-11 03:36:15] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-11 03:36:16] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 03:36:20] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-11 03:36:21] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 03:36:22] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 03:36:23] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-11 03:36:24] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 03:36:27] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+
+=== USERS LOG STARTED: 2025-10-11 05:12:02 ===
+
+=== USERS LOG STARTED: 2025-10-11 05:16:02 ===
+[2025-10-11 06:30:20] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 06:30:21] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-11 06:30:22] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-11 06:30:22] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-11 06:30:23] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 06:30:26] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-11 06:30:27] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 06:30:28] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-11 06:30:29] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 06:30:30] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 06:30:33] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-11 09:24:57] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=download_app
+[2025-10-11 09:25:00] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=device_android
+[2025-10-11 09:27:39] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=main
+[2025-10-11 09:57:23] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-11 09:57:23] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-11 09:57:24] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-11 09:57:26] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-11 15:12:23] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=check_payment:307b4f37-000f-5001-8000-1cdf127e6bb7
+[2025-10-11 15:14:42] USER_MESSAGE: ID=6511342522, Username=@Anigro56, Name=анигро , Text=/start
+[2025-10-11 15:16:10] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-11 15:16:10] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-11 15:16:26] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-11 15:19:13] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-11 15:19:16] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-11 15:19:16] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-11 15:19:30] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=https://shadowfade.ru:6187/E4x7DnWKY8QnRdDoc3/nxhrp7wu1zyz5v36
+[2025-10-11 15:20:00] USER_MESSAGE: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Text=/start
+[2025-10-11 15:20:00] USER_ACTION: ID=729997809, Username=Pokrova56, Name=VLADIMIR , Action=COMMAND, Details=start
+[2025-10-11 15:20:02] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=ref
+[2025-10-11 15:20:05] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=ref_share
+[2025-10-11 15:22:35] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=activate_trial
+[2025-10-11 15:22:40] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=ref
+[2025-10-11 15:23:01] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=main_menu
+[2025-10-11 15:23:04] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=vpn
+[2025-10-11 15:23:04] USER_ACTION: ID=6511342522, Username=Anigro56, Name=анигро , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-11 15:24:21] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=main
+[2025-10-11 15:24:28] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=download_app
+[2025-10-11 15:24:31] USER_CALLBACK: ID=6511342522, Username=@Anigro56, Name=анигро , Data=device_android
+[2025-10-11 15:25:37] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=ref_menu
+[2025-10-11 15:25:41] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=main_menu
+[2025-10-11 15:25:43] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=vpn
+[2025-10-11 15:25:43] USER_ACTION: ID=729997809, Username=Pokrova56, Name=VLADIMIR , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-11 18:23:04] USER_MESSAGE: ID=1237517884, Username=@ivvivvav, Name=aml^ , Text=/start ref_1631142357357
+[2025-10-11 18:23:08] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=ref
+[2025-10-11 18:23:20] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=ref_refresh
+[2025-10-11 18:23:24] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=main_menu
+[2025-10-11 18:23:26] USER_CALLBACK: ID=1237517884, Username=@ivvivvav, Name=aml^ , Data=vpn
+[2025-10-11 18:23:26] USER_ACTION: ID=1237517884, Username=ivvivvav, Name=aml^ , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 02:14:13] USER_MESSAGE: ID=1003786364, Username=, Name=Дмитрий , Text=/start ref_773604014014
+[2025-10-12 02:14:27] USER_CALLBACK: ID=1003786364, Username=, Name=Дмитрий , Data=vpn
+[2025-10-12 02:14:27] USER_ACTION: ID=1003786364, Username=, Name=Дмитрий , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 03:43:46] USER_MESSAGE: ID=1003786364, Username=, Name=Дмитрий , Text=/start ref_773604014014
+[2025-10-12 03:43:52] USER_CALLBACK: ID=1003786364, Username=, Name=Дмитрий , Data=vpn
+[2025-10-12 03:43:52] USER_ACTION: ID=1003786364, Username=, Name=Дмитрий , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 03:45:24] USER_CALLBACK: ID=1003786364, Username=, Name=Дмитрий , Data=main
+[2025-10-12 09:43:01] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/balance
+[2025-10-12 09:43:01] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=COMMAND, Details=balance
+[2025-10-12 09:43:10] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/start
+[2025-10-12 09:43:10] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=COMMAND, Details=start
+[2025-10-12 09:43:36] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=Оплатить
+[2025-10-12 09:43:51] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/balance
+[2025-10-12 09:43:51] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=COMMAND, Details=balance
+[2025-10-12 09:43:53] USER_MESSAGE: ID=721123829, Username=, Name=Artadocks , Text=/start
+[2025-10-12 09:43:53] USER_ACTION: ID=721123829, Username=, Name=Artadocks , Action=COMMAND, Details=start
+[2025-10-12 10:32:39] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/balance
+[2025-10-12 10:32:39] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=balance
+[2025-10-12 10:32:44] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-12 10:32:53] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-12 10:33:04] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup:500
+[2025-10-12 10:33:24] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-12 10:33:29] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=download_app
+[2025-10-12 10:33:32] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=device_android
+[2025-10-12 10:36:13] USER_MESSAGE: ID=6933062292, Username=, Name=527052 , Text=/start
+[2025-10-12 10:36:16] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=activate_trial
+[2025-10-12 10:36:18] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=download_app
+[2025-10-12 10:36:20] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=device_android
+[2025-10-12 10:36:55] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=download_app
+[2025-10-12 10:36:57] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:37:00] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=vpn
+[2025-10-12 10:37:00] USER_ACTION: ID=6933062292, Username=, Name=527052 , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 10:41:28] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:41:50] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=vpn
+[2025-10-12 10:41:50] USER_ACTION: ID=6933062292, Username=, Name=527052 , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 10:42:02] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:42:03] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 10:42:19] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup:500
+[2025-10-12 10:42:37] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=check_payment:307d6f9c-000f-5001-9000-1d5eddc02b3f
+[2025-10-12 10:42:40] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=check_payment:307d6f9c-000f-5001-9000-1d5eddc02b3f
+[2025-10-12 10:42:43] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=check_payment:307d6f9c-000f-5001-9000-1d5eddc02b3f
+[2025-10-12 10:43:42] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:43:44] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 10:44:01] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:45:11] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 10:45:17] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:45:21] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 10:45:43] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:46:01] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 10:46:04] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup:500
+[2025-10-12 10:47:48] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=download_app
+[2025-10-12 10:47:50] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=device_ios
+[2025-10-12 10:48:22] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=download_app
+[2025-10-12 10:48:26] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-12 10:48:29] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=vpn
+[2025-10-12 10:48:29] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 10:48:43] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-12 10:48:45] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=vpn
+[2025-10-12 10:48:45] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 10:48:49] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-12 10:48:51] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup:500
+[2025-10-12 10:49:15] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-12 10:49:16] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-12 10:49:18] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup:200
+[2025-10-12 10:53:40] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=check_payment:307d707d-000f-5001-9000-16b5460c7aff
+[2025-10-12 10:53:59] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 10:54:25] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=check_payment:307d713f-000f-5000-b000-10374e5c5e2f
+[2025-10-12 10:54:29] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-12 10:54:56] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=vpn
+[2025-10-12 10:54:56] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 10:56:17] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 10:56:26] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup:1000
+[2025-10-12 10:59:09] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 11:00:31] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup
+[2025-10-12 11:00:33] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=topup:1000
+[2025-10-12 11:01:55] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=check_payment:307d73e1-000f-5001-9000-18b6b9afb70e
+[2025-10-12 11:02:02] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 11:02:19] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=vpn
+[2025-10-12 11:02:19] USER_ACTION: ID=6933062292, Username=, Name=527052 , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 11:06:03] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-12 11:06:03] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-12 11:06:21] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-12 11:06:24] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup:16
+[2025-10-12 11:22:56] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-12 13:18:18] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-12 13:18:30] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=https://t.me/shadowfadebot?start=ref_873925520520
+[2025-10-12 13:22:12] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=main
+[2025-10-12 13:25:03] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-12 13:25:09] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-12 13:25:18] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_share
+[2025-10-12 13:25:23] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_menu
+[2025-10-12 13:25:25] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_stats
+[2025-10-12 13:25:26] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_menu
+[2025-10-12 13:26:51] USER_MESSAGE: ID=8365253818, Username=, Name=mahamoud , Text=/start ref_1719171729729
+[2025-10-12 13:26:59] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=download_app
+[2025-10-12 13:27:02] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=device_ios
+[2025-10-12 13:27:59] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=download_app
+[2025-10-12 13:28:01] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=device_android
+[2025-10-12 13:33:39] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:34:11] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=vpn
+[2025-10-12 13:34:11] USER_ACTION: ID=8365253818, Username=, Name=mahamoud , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 13:34:18] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:35:02] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=vpn
+[2025-10-12 13:35:02] USER_ACTION: ID=8365253818, Username=, Name=mahamoud , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 13:35:44] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:35:47] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup
+[2025-10-12 13:36:07] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:38:12] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=vpn
+[2025-10-12 13:38:12] USER_ACTION: ID=8365253818, Username=, Name=mahamoud , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 13:38:15] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:42:22] USER_CALLBACK: ID=6933062292, Username=, Name=527052 , Data=ref
+[2025-10-12 13:44:54] USER_MESSAGE: ID=8365253818, Username=, Name=mahamoud , Text=/start ref_6933062292292
+[2025-10-12 13:44:58] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=download_app
+[2025-10-12 13:45:00] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=device_android
+[2025-10-12 13:45:08] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=download_app
+[2025-10-12 13:45:09] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:45:55] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=vpn
+[2025-10-12 13:45:55] USER_ACTION: ID=8365253818, Username=, Name=mahamoud , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-12 13:46:17] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:46:18] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup
+[2025-10-12 13:46:24] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup:100
+[2025-10-12 13:46:32] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=check_payment:307d9ac0-000f-5000-b000-1ad59312c6b0
+[2025-10-12 13:46:39] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=check_payment:307d9ac0-000f-5000-b000-1ad59312c6b0
+[2025-10-12 13:46:41] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=check_payment:307d9ac0-000f-5000-b000-1ad59312c6b0
+[2025-10-12 13:46:44] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:46:46] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup
+[2025-10-12 13:46:47] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup:100
+[2025-10-12 13:46:57] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+[2025-10-12 13:47:00] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup
+[2025-10-12 13:47:01] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=topup:1000
+[2025-10-12 13:49:49] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=check_payment:307d9ae5-000f-5000-8000-1cd3faac6482
+[2025-10-12 13:49:51] USER_CALLBACK: ID=8365253818, Username=, Name=mahamoud , Data=main
+
+=== USERS LOG STARTED: 2025-10-12 13:51:19 ===
+[2025-10-13 03:09:42] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-13 03:09:42] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-13 03:09:45] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-13 03:09:47] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup:16
+[2025-10-13 03:10:25] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-13 03:10:28] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-13 03:10:28] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-13 03:10:29] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-13 03:10:30] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup:16
+[2025-10-13 03:10:58] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-13 03:10:58] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-13 03:11:06] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-13 03:11:06] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-13 03:11:18] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-13 03:11:18] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-13 03:11:19] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-13 03:11:20] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-13 03:11:21] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-13 03:11:22] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-13 03:11:23] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-13 03:11:24] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-13 03:11:25] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-13 04:33:57] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-13 04:33:58] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-13 07:54:06] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-13 07:54:07] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+
+=== USERS LOG STARTED: 2025-10-13 07:56:47 ===
+
+=== USERS LOG STARTED: 2025-10-13 07:56:48 ===
+[2025-10-13 15:30:34] USER_MESSAGE: ID=735565815, Username=@cHw_8, Name=Захар , Text=/start
+[2025-10-13 15:30:40] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=activate_trial
+[2025-10-13 15:30:55] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=download_app
+[2025-10-13 15:30:57] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=device_android
+[2025-10-13 15:31:11] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=download_app
+[2025-10-13 15:31:12] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=main
+[2025-10-13 15:31:15] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=topup
+[2025-10-13 15:31:17] USER_CALLBACK: ID=735565815, Username=@cHw_8, Name=Захар , Data=topup:16
+[2025-10-13 17:10:09] USER_MESSAGE: ID=672766552, Username=@WEplay0002, Name=WEplay/инвест , Text=/balance
+[2025-10-13 17:10:09] USER_ACTION: ID=672766552, Username=WEplay0002, Name=WEplay/инвест , Action=COMMAND, Details=balance
+[2025-10-13 22:04:51] USER_MESSAGE: ID=8011677683, Username=@isma_ismaaa, Name=• , Text=/start ref_1183613976976
+[2025-10-13 22:04:55] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=vpn
+[2025-10-13 22:04:55] USER_ACTION: ID=8011677683, Username=isma_ismaaa, Name=• , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-13 22:05:03] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=topup
+[2025-10-13 22:05:06] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=topup:16
+[2025-10-13 22:05:11] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=main
+[2025-10-13 22:05:14] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=vpn
+[2025-10-13 22:05:14] USER_ACTION: ID=8011677683, Username=isma_ismaaa, Name=• , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-13 22:05:18] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=main
+[2025-10-13 22:05:22] USER_CALLBACK: ID=8011677683, Username=@isma_ismaaa, Name=• , Data=activate_trial
+[2025-10-13 22:07:14] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=topup
+[2025-10-13 22:07:19] USER_CALLBACK: ID=1028456011, Username=@Tessbrink, Name=Tess Brink, Data=topup:200
+
+=== USERS LOG STARTED: 2025-10-14 04:27:30 ===
+
+=== USERS LOG STARTED: 2025-10-14 04:27:32 ===
+[2025-10-14 04:28:11] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-14 04:28:11] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-14 04:42:00] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-14 04:42:00] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-14 05:17:26] USER_MESSAGE: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Text=/start
+[2025-10-14 06:22:37] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-14 06:22:38] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup:1000
+[2025-10-14 06:22:40] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-14 06:23:25] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-14 06:23:26] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-14 06:36:48] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-14 06:36:48] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-14 06:36:49] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-14 06:36:50] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-14 06:36:51] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-14 06:36:53] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-14 06:36:54] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-14 07:07:26] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=activate_trial
+[2025-10-14 07:07:53] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=vpn
+[2025-10-14 07:07:53] USER_ACTION: ID=98067573, Username=mikeilin, Name=Mike Ilin, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-14 08:36:32] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=main
+[2025-10-14 08:36:46] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=topup
+[2025-10-14 08:37:03] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=main
+[2025-10-14 08:37:23] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=ref
+[2025-10-14 08:37:47] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=main_menu
+[2025-10-14 08:40:27] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=ref
+[2025-10-14 11:32:31] USER_MESSAGE: ID=7722021832, Username=, Name=Poole Poole, Text=/start
+[2025-10-14 12:32:49] USER_MESSAGE: ID=504886626, Username=@Artem_Liz, Name=Артем , Text=/start ref_504886626626
+[2025-10-14 12:32:54] USER_CALLBACK: ID=504886626, Username=@Artem_Liz, Name=Артем , Data=balance
+[2025-10-14 12:32:54] USER_ACTION: ID=504886626, Username=Artem_Liz, Name=Артем , Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-14 14:24:33] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start ref_98067573573
+[2025-10-14 14:24:38] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=balance
+[2025-10-14 14:24:38] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-14 14:24:40] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-14 17:05:12] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-14 17:05:21] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_stats
+[2025-10-14 17:05:22] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_menu
+[2025-10-14 17:05:25] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_share
+[2025-10-14 17:05:31] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref_menu
+[2025-10-14 17:05:32] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-14 17:05:35] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-14 17:05:35] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-15 00:57:47] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=ref_stats
+[2025-10-15 00:58:02] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=ref_menu
+[2025-10-15 05:47:56] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-15 05:47:56] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-15 05:47:58] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-15 05:47:59] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-15 05:48:03] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/users
+[2025-10-15 05:48:03] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=users
+[2025-10-15 13:48:33] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=show_users_list
+[2025-10-15 13:48:38] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=filter_trial_available
+[2025-10-15 13:48:52] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=back_to_stats
+[2025-10-15 13:48:55] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=show_users_list
+[2025-10-15 13:49:04] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-15 13:49:06] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-15 16:17:15] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start ref_1797885299299
+[2025-10-15 16:17:18] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=vpn
+[2025-10-15 16:17:18] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-15 16:18:17] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=topup
+[2025-10-15 16:18:18] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=main
+[2025-10-15 16:18:25] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=download_app
+[2025-10-15 16:18:27] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=device_ios
+[2025-10-15 16:18:44] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start ref_1797885299299
+[2025-10-15 16:18:46] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=ref
+[2025-10-15 16:19:00] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start ref_1797885299299
+[2025-10-15 16:19:02] USER_MESSAGE: ID=1934868610, Username=@duravs, Name=васюта , Text=/start ref_1797885299299
+[2025-10-15 16:19:03] USER_MESSAGE: ID=1934868610, Username=@duravs, Name=васюта , Text=/start
+[2025-10-15 16:19:07] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=balance
+[2025-10-15 16:19:07] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-15 16:19:10] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=topup
+[2025-10-15 16:19:11] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=main
+[2025-10-15 16:19:16] USER_MESSAGE: ID=1934868610, Username=@duravs, Name=васюта , Text=/start ref_1797885299299
+[2025-10-15 16:19:21] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start
+[2025-10-15 16:19:21] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=COMMAND, Details=start
+[2025-10-15 16:19:25] USER_CALLBACK: ID=1934868610, Username=@duravs, Name=васюта , Data=download_app
+[2025-10-15 16:19:30] USER_MESSAGE: ID=1934868610, Username=@duravs, Name=васюта , Text=/start ref_1797885299299
+[2025-10-15 16:19:32] USER_CALLBACK: ID=1934868610, Username=@duravs, Name=васюта , Data=device_ios
+[2025-10-15 16:19:42] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start ref_1797885299299
+[2025-10-15 16:20:56] USER_CALLBACK: ID=1934868610, Username=@duravs, Name=васюта , Data=vpn
+[2025-10-15 16:20:56] USER_ACTION: ID=1934868610, Username=duravs, Name=васюта , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-15 16:21:35] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start ref_1797885299299
+[2025-10-15 16:21:41] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=vpn
+[2025-10-15 16:21:41] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-15 16:23:42] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start
+[2025-10-15 16:23:42] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=COMMAND, Details=start
+[2025-10-15 16:25:16] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=ref
+[2025-10-15 16:25:24] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=main_menu
+[2025-10-15 16:25:27] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=vpn
+[2025-10-15 16:25:27] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-15 16:25:34] USER_MESSAGE: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Text=/start
+[2025-10-15 16:25:34] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=COMMAND, Details=start
+[2025-10-15 16:26:00] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=vpn
+[2025-10-15 16:26:00] USER_ACTION: ID=1797885299, Username=EBASHU_HEROIN, Name=Маррррррррк , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-15 19:11:14] USER_MESSAGE: ID=7801545772, Username=@godmytribunal, Name=ble , Text=/balance
+[2025-10-15 19:11:14] USER_ACTION: ID=7801545772, Username=godmytribunal, Name=ble , Action=COMMAND, Details=balance
+[2025-10-16 04:57:55] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-16 04:57:55] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 04:57:56] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 04:58:01] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-16 04:58:01] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-16 04:58:02] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 04:58:03] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 04:58:05] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 04:58:06] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=device_ios
+[2025-10-16 04:58:10] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 04:58:11] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=device_android
+[2025-10-16 04:58:12] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 04:58:13] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 04:58:15] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-16 04:58:16] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-16 04:58:17] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-16 04:58:18] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 04:58:19] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-16 04:58:19] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 04:58:20] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 05:23:30] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-16 05:23:31] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 05:23:32] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-16 05:23:34] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-16 08:16:46] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-16 08:16:46] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 08:16:47] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 08:16:53] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 08:16:54] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 08:16:56] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-16 08:16:58] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 10:17:33] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-16 10:17:34] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 10:17:35] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+[2025-10-16 10:17:36] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main_menu
+[2025-10-16 10:17:38] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 10:17:39] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 10:25:27] USER_MESSAGE: ID=6933062292, Username=, Name=527052 , Text=/start ref_6933062292292
+[2025-10-16 13:56:21] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-16 13:56:21] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-16 13:56:25] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-16 13:56:40] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=🎯 Реферальная система
+
+💰 Ваш бонус за приглашение: 450₽
+🎁 Бонус для друга: 90₽
+
+📊 Ваша статистика:
+👥 Приглашено друзей: 0
+🔗 Ваша реферальная ссылка:
+https://t.me/shadowfadebot?start=ref_1719171729729
+
+📱 Как пригласить друга:
+1️⃣ Отправьте ссылку другу
+2️⃣ Друг переходит по ссылке и регистрируется
+3️⃣ Вы оба получаете бонусы!
+[2025-10-16 13:57:06] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start ref_1719171729729
+[2025-10-16 13:57:23] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=vpn
+[2025-10-16 13:57:23] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 13:57:32] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-16 14:00:51] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-16 14:00:58] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup:100
+[2025-10-16 14:43:56] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-16 14:43:56] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 15:58:42] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/backup
+[2025-10-16 15:58:42] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=backup
+
+=== USERS LOG STARTED: 2025-10-16 16:00:51 ===
+
+=== USERS LOG STARTED: 2025-10-16 16:00:53 ===
+[2025-10-16 17:02:03] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start ref_1719171729729
+[2025-10-16 17:02:08] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start
+[2025-10-16 17:02:13] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=vpn
+[2025-10-16 17:02:13] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 17:02:19] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main
+[2025-10-16 17:02:22] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=download_app
+[2025-10-16 17:02:25] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=device_ios
+[2025-10-16 17:08:00] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start
+[2025-10-16 17:08:01] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=activate_trial
+[2025-10-16 17:08:04] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=vpn
+[2025-10-16 17:08:04] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 17:09:57] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main
+[2025-10-16 17:10:37] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-16 17:10:37] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-16 17:10:42] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-16 17:11:46] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-16 17:11:46] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-16 17:11:49] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-16 17:12:00] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-16 17:12:00] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-16 17:12:05] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-16 17:12:30] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start ref_1719171729729
+[2025-10-16 17:12:38] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=balance
+[2025-10-16 17:12:38] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-16 17:12:45] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup
+[2025-10-16 17:12:54] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup:100
+[2025-10-16 17:15:21] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=💳 Пополнение баланса
+
+💰 Сумма: 100.00₽
+🏦 Платежная система: ЮKassa API
+🆔 ID платежа: 30831126-000f-5000-8000-19751bb0d4f1
+
+Нажмите кнопку ниже для перехода к оплате:
+[2025-10-16 17:15:56] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start ref_1719171729729
+[2025-10-16 17:16:00] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=balance
+[2025-10-16 17:16:00] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=BUTTON_CLICK, Details=Button=Balance, Data=balance
+[2025-10-16 17:16:02] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-16 17:16:04] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup:100
+[2025-10-16 17:17:12] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start
+[2025-10-16 17:17:12] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=COMMAND, Details=start
+[2025-10-16 17:17:14] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref
+[2025-10-16 17:17:16] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref_stats
+[2025-10-16 17:17:17] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref_menu
+[2025-10-16 17:17:19] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref_stats
+[2025-10-16 17:17:22] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref_menu
+[2025-10-16 17:17:25] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main_menu
+[2025-10-16 17:17:27] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref
+[2025-10-16 17:24:06] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start
+[2025-10-16 17:24:06] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=COMMAND, Details=start
+[2025-10-16 17:24:08] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup
+[2025-10-16 17:24:11] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main
+[2025-10-16 17:24:13] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=vpn
+[2025-10-16 17:24:13] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 17:24:29] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main
+[2025-10-16 17:24:36] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup
+[2025-10-16 17:24:39] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup:100
+[2025-10-16 17:24:45] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=check_payment:308313e8-000f-5000-b000-1e3d0d312660
+[2025-10-16 17:24:51] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=check_payment:308313e8-000f-5000-b000-1e3d0d312660
+[2025-10-16 17:24:54] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=check_payment:308313e8-000f-5000-b000-1e3d0d312660
+[2025-10-16 17:24:55] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main
+[2025-10-16 17:24:58] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup
+[2025-10-16 17:24:59] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=topup:100
+[2025-10-16 17:27:40] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-16 17:27:41] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-16 17:27:42] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-16 17:27:44] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-16 17:27:46] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-16 17:27:49] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_stats
+[2025-10-16 17:27:50] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_menu
+[2025-10-16 17:27:52] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_stats
+[2025-10-16 17:28:01] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_menu
+[2025-10-16 17:28:04] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_share
+[2025-10-16 17:30:08] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start ref_1719171729729
+[2025-10-16 17:30:10] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref
+[2025-10-16 17:30:19] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref_stats
+[2025-10-16 17:30:23] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=ref_menu
+[2025-10-16 17:43:32] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start ref_1719171729729
+[2025-10-16 17:44:03] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-16 17:44:05] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_stats
+[2025-10-16 17:44:07] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref_menu
+[2025-10-16 17:44:10] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main_menu
+[2025-10-16 17:44:11] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=topup
+[2025-10-16 17:44:13] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=main
+[2025-10-16 17:44:18] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=check_payment:308311e4-000f-5001-9000-1470a17fde35
+[2025-10-16 17:45:16] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=check_payment:30831126-000f-5000-8000-19751bb0d4f1
+[2025-10-16 17:45:22] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=main_menu
+[2025-10-16 17:45:23] USER_CALLBACK: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Data=vpn
+[2025-10-16 17:45:23] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-16 17:50:52] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-16 17:50:52] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-16 17:50:53] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 17:50:54] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=device_android
+[2025-10-16 17:50:55] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=download_app
+[2025-10-16 17:50:56] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=device_ios
+[2025-10-16 17:54:36] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-16 17:55:49] USER_MESSAGE: ID=6481415963, Username=@wiz_hambo, Name=Nassuor Youssuf , Text=/start
+[2025-10-16 17:55:49] USER_ACTION: ID=6481415963, Username=wiz_hambo, Name=Nassuor Youssuf , Action=COMMAND, Details=start
+
+=== USERS LOG STARTED: 2025-10-16 18:03:13 ===
+[2025-10-16 18:19:20] USER_MESSAGE: ID=867401187, Username=@Alx_happy, Name=Александр , Text=/balance
+[2025-10-16 18:19:20] USER_ACTION: ID=867401187, Username=Alx_happy, Name=Александр , Action=COMMAND, Details=balance
+[2025-10-16 18:19:25] USER_MESSAGE: ID=867401187, Username=@Alx_happy, Name=Александр , Text=/start
+[2025-10-16 18:19:28] USER_CALLBACK: ID=867401187, Username=@Alx_happy, Name=Александр , Data=topup
+[2025-10-16 18:19:33] USER_CALLBACK: ID=867401187, Username=@Alx_happy, Name=Александр , Data=topup:200
+[2025-10-16 20:01:11] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=download_app
+[2025-10-16 20:01:13] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=device_android
+[2025-10-17 01:33:50] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=main
+[2025-10-17 01:33:56] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=topup
+[2025-10-17 01:34:01] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=main
+[2025-10-17 01:37:13] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=topup
+[2025-10-17 01:37:27] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=topup:200
+[2025-10-17 01:39:14] USER_CALLBACK: ID=248897919, Username=@Galinavylchu, Name=Галина Вылчу, Data=main
+[2025-10-17 14:54:57] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=main
+[2025-10-17 14:54:59] USER_CALLBACK: ID=729997809, Username=@Pokrova56, Name=VLADIMIR , Data=vpn
+[2025-10-17 14:54:59] USER_ACTION: ID=729997809, Username=Pokrova56, Name=VLADIMIR , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-17 22:15:06] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=main_menu
+[2025-10-17 22:15:20] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=topup
+[2025-10-17 22:15:36] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=topup:16
+[2025-10-17 22:15:55] USER_CALLBACK: ID=98067573, Username=@mikeilin, Name=Mike Ilin, Data=main
+[2025-10-18 08:53:20] USER_MESSAGE: ID=5083088553, Username=@missMOS6581, Name=miss＾ω＾ , Text=/start
+[2025-10-18 08:53:20] USER_ACTION: ID=5083088553, Username=missMOS6581, Name=miss＾ω＾ , Action=COMMAND, Details=start
+[2025-10-18 15:28:49] USER_CALLBACK: ID=1797885299, Username=@EBASHU_HEROIN, Name=Маррррррррк , Data=main
+[2025-10-18 15:59:56] USER_MESSAGE: ID=6342881708, Username=@Eliza_Reina, Name=Eliza , Text=/balance
+[2025-10-18 15:59:56] USER_ACTION: ID=6342881708, Username=Eliza_Reina, Name=Eliza , Action=COMMAND, Details=balance
+[2025-10-18 18:48:13] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/start ref_1183613976976
+[2025-10-18 18:48:25] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=vpn
+[2025-10-18 18:48:25] USER_ACTION: ID=5365312002, Username=, Name=Зефирка Si, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-18 18:48:32] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=main
+[2025-10-18 18:48:36] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=download_app
+[2025-10-18 18:48:40] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=device_android
+[2025-10-18 18:54:38] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/start ref_1183613976976
+[2025-10-18 18:54:38] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/start ref_1183613976976
+[2025-10-18 18:54:57] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=download_app
+[2025-10-18 18:55:00] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=device_android
+[2025-10-18 18:55:40] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=main
+[2025-10-18 18:55:55] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=vpn
+[2025-10-18 18:55:55] USER_ACTION: ID=5365312002, Username=, Name=Зефирка Si, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-18 19:00:50] USER_MESSAGE: ID=1624243941, Username=@paatuii, Name=P , Text=/start ref_1183613976976
+[2025-10-18 19:05:38] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/start ref_1183613976976
+[2025-10-18 19:05:58] USER_MESSAGE: ID=8411544442, Username=, Name=. ., Text=/start ref_1183613976976
+[2025-10-18 19:06:16] USER_CALLBACK: ID=8411544442, Username=, Name=. ., Data=download_app
+[2025-10-18 19:06:27] USER_CALLBACK: ID=8411544442, Username=, Name=. ., Data=device_android
+[2025-10-18 19:08:17] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/start ref_1183613976976
+[2025-10-18 19:08:51] USER_CALLBACK: ID=8411544442, Username=, Name=. ., Data=main
+[2025-10-18 19:08:57] USER_CALLBACK: ID=8411544442, Username=, Name=. ., Data=vpn
+[2025-10-18 19:08:57] USER_ACTION: ID=8411544442, Username=, Name=. ., Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-18 19:12:15] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=🔐 Ваш конфиг активен!
+
+📅 Активен до: 2025 17 ноября в 17:48
+🔗 Ссылка на подписку:
+https://shadowfade.ru:6187/E4x7DnWKY8QnRdDoc3/89ix71uihysd0mei
+
+• Если вам требуется подключение на компьютер, то обратитесь в поддержку, поможем
+
+📱 Приложения для самостоятельного импорта:
+• Android: v2rayng, Hiddify, v2box
+• iOS: v2raytun, v2Box, Streisand, Hiddify
+• Windows, Linux: Nekoray, Hiddify, Happ
+• macOS: v2raytun, v2Box, Streisand, Hiddify
+• Роутеры: xkeen (Keenetic), OpenWrt
+• ТВ: v2raytun, Happ
+
+Если у вас возникли вопросы, вы можете обратиться за помощью к нашей поддержке.
+[2025-10-18 19:12:18] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=download_app
+[2025-10-18 19:12:21] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=device_android
+[2025-10-18 19:15:51] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=main
+[2025-10-18 19:16:03] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/start
+[2025-10-18 19:16:10] USER_MESSAGE: ID=5365312002, Username=, Name=Зефирка Si, Text=/balance
+[2025-10-18 19:16:10] USER_ACTION: ID=5365312002, Username=, Name=Зефирка Si, Action=COMMAND, Details=balance
+[2025-10-18 19:16:14] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=activate_trial
+[2025-10-18 19:16:16] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=download_app
+[2025-10-18 19:16:18] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=device_android
+[2025-10-18 19:16:48] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=download_app
+[2025-10-18 19:16:50] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=main
+[2025-10-18 19:16:54] USER_CALLBACK: ID=5365312002, Username=, Name=Зефирка Si, Data=vpn
+[2025-10-18 19:16:54] USER_ACTION: ID=5365312002, Username=, Name=Зефирка Si, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 05:34:49] USER_CALLBACK: ID=2052953508, Username=@MrAavtor, Name=Саша👁️‍🗨️ , Data=download_app
+[2025-10-19 05:34:52] USER_CALLBACK: ID=2052953508, Username=@MrAavtor, Name=Саша👁️‍🗨️ , Data=device_android
+[2025-10-19 15:14:37] USER_MESSAGE: ID=2052953508, Username=@MrAavtor, Name=Саша👁️‍🗨️ , Text=/balance
+[2025-10-19 15:14:37] USER_ACTION: ID=2052953508, Username=MrAavtor, Name=Саша👁️‍🗨️ , Action=COMMAND, Details=balance
+[2025-10-19 15:14:57] USER_MESSAGE: ID=2052953508, Username=@MrAavtor, Name=Саша👁️‍🗨️ , Text=/start
+[2025-10-19 15:14:57] USER_ACTION: ID=2052953508, Username=MrAavtor, Name=Саша👁️‍🗨️ , Action=COMMAND, Details=start
+
+=== USERS LOG STARTED: 2025-10-19 17:06:42 ===
+
+=== USERS LOG STARTED: 2025-10-19 17:06:44 ===
