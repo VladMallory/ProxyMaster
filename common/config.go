@@ -153,7 +153,7 @@ func init() {
 	// ========== ОСНОВНЫЕ НАСТРОЙКИ БОТА ==========
 	BOT_TOKEN = "8250593221:AAGbCd_CfxvYCzbHgnG5iVWpz0ujsOMnOkY" // Токен от @BotFather
 	ADMIN_ID = 873925520                                         // Telegram ID администратора
-	SUPPORT_LINK = "https://t.me/moment_was"                     // Ссылка на поддержку
+	SUPPORT_LINK = "https://t.me/BloknotaNet"                    // Ссылка на поддержку
 
 	// ========== НАСТРОЙКИ ПАНЕЛИ УПРАВЛЕНИЯ ==========
 	PANEL_URL = "https://shadowfade.ru:24413/YMNUhU6HfF9PVVol2s/"      // URL панели X-UI

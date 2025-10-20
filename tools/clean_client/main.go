@@ -60,17 +60,17 @@ type Inbound struct {
 }
 
 type Client struct {
-	ID         string `json:"id"`
-	Email      string `json:"email"`
-	SubID      string `json:"subId"`
-	Enable     bool   `json:"enable"`
-	ExpiryTime int64  `json:"expiryTime"`
-	Flow       string `json:"flow"`
-	TotalGB    int    `json:"totalGB"`
-	Reset      int    `json:"reset"`
-	TgID       int64  `json:"tgId"`
-	CreatedAt  int64  `json:"created_at"`
-	UpdatedAt  int64  `json:"updated_at"`
+	ID         string      `json:"id"`
+	Email      string      `json:"email"`
+	SubID      string      `json:"subId"`
+	Enable     bool        `json:"enable"`
+	ExpiryTime int64       `json:"expiryTime"`
+	Flow       string      `json:"flow"`
+	TotalGB    int         `json:"totalGB"`
+	Reset      int         `json:"reset"`
+	TgID       interface{} `json:"tgId"`
+	CreatedAt  int64       `json:"created_at"`
+	UpdatedAt  int64       `json:"updated_at"`
 }
 
 type Settings struct {
@@ -385,12 +385,12 @@ func showPanelClients() error {
 	// Сортируем клиентов по первой цифре TgID (TelegramID) (1-9)
 	sort.Slice(settings.Clients, func(i, j int) bool {
 		// Получаем первую цифру каждого TgID
-		firstDigitI := getFirstDigit(settings.Clients[i].TgID)
-		firstDigitJ := getFirstDigit(settings.Clients[j].TgID)
+		firstDigitI := getFirstDigit(toInt64(settings.Clients[i].TgID))
+		firstDigitJ := getFirstDigit(toInt64(settings.Clients[j].TgID))
 
 		// Если первые цифры одинаковые, сортируем по полному ID
 		if firstDigitI == firstDigitJ {
-			return settings.Clients[i].TgID < settings.Clients[j].TgID
+			return toInt64(settings.Clients[i].TgID) < toInt64(settings.Clients[j].TgID)
 		}
 
 		// Сортируем по первой цифре (1-9)
@@ -417,7 +417,7 @@ func showPanelClients() error {
 			expiryTime = time.UnixMilli(client.ExpiryTime).Format("2006-01-02 15:04")
 		}
 
-		fmt.Printf("%-20s %-15s %-20s %-20s %-15s %-15d\n",
+		fmt.Printf("%-20s %-15s %-20s %-20s %-15s %-15v\n",
 			client.Email, enable, expiryTime, client.ID, client.SubID, client.TgID)
 	}
 
@@ -544,6 +544,33 @@ func deleteUserFromDatabase(telegramID int64) error {
 	return nil
 }
 
+// deleteClientCompletely полностью удаляет клиента из панели и из базы данных бота
+func deleteClientCompletely(telegramID int64) error {
+	fmt.Printf("--- Шаг 1/2: Удаление клиента %d из панели 3x-ui ---\n", telegramID)
+	if err := removeClientFromPanel(telegramID); err != nil {
+		// Если клиент не найден в панели, это не критическая ошибка, просто выводим сообщение
+		if strings.Contains(err.Error(), "не найден в панели") {
+			fmt.Printf("ℹ️  Клиент %d не найден в панели, пропуск удаления из панели.\n", telegramID)
+		} else {
+			// Для других ошибок, мы все равно продолжим, но выведем предупреждение
+			fmt.Printf("⚠️  Ошибка при удалении клиента из панели: %v. Продолжаем удаление из базы данных...\n", err)
+		}
+	}
+
+	fmt.Printf("--- Шаг 2/2: Удаление пользователя %d из базы данных бота ---\n", telegramID)
+	if err := deleteUserFromDatabase(telegramID); err != nil {
+		// Если пользователь не найден в БД, это тоже не критично
+		if strings.Contains(err.Error(), "не найден в базе данных") {
+			fmt.Printf("ℹ️  Пользователь %d не найден в базе данных, пропуск удаления из БД.\n", telegramID)
+		} else {
+			return fmt.Errorf("ошибка удаления из базы данных: %v", err)
+		}
+	}
+
+	fmt.Printf("✅ Задача полного удаления клиента %d завершена.\n", telegramID)
+	return nil
+}
+
 // Вспомогательные функции
 
 // getEnvOrDefault получает значение переменной окружения или возвращает значение по умолчанию
@@ -560,6 +587,25 @@ func readUserInput(prompt string) string {
 	reader := bufio.NewReader(os.Stdin)
 	input, _ := reader.ReadString('\n')
 	return strings.TrimSpace(input)
+}
+
+func toInt64(v interface{}) int64 {
+	if v == nil {
+		return 0
+	}
+	switch val := v.(type) {
+	case float64:
+		return int64(val)
+	case int:
+		return int64(val)
+	case int64:
+		return val
+	case string:
+		i, _ := strconv.ParseInt(val, 10, 64)
+		return i
+	default:
+		return 0
+	}
 }
 
 // getFirstDigit возвращает первую цифру числа для сортировки (1-9, затем 0)
