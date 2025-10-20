@@ -78,6 +78,18 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 				referralLink.GlobalReferralManager.HandleStartCommand(message.Chat.ID, user, message.Text)
 				log.Printf("HANDLE_MESSAGE: Реферальный переход обработан, HasUsedTrial=%v", user.HasUsedTrial)
 
+				// ВАЖНО: После обработки реферала, пользователь мог получить бонус и флаг HasUsedTrial.
+				// Необходимо перезагрузить данные пользователя, чтобы избежать работы с устаревшими данными.
+				log.Printf("HANDLE_MESSAGE: Перезагрузка данных пользователя %d после обработки реферала", user.TelegramID)
+				reloadedUser, err := common.GetUserByTelegramID(user.TelegramID)
+				if err != nil {
+					log.Printf("HANDLE_MESSAGE: ❌ Ошибка перезагрузки пользователя %d: %v", user.TelegramID, err)
+					// Продолжаем со старыми данными, хотя это может привести к неправильной логике
+				} else {
+					log.Printf("HANDLE_MESSAGE: ✅ Пользователь %d перезагружен, HasUsedTrial: %v, Balance: %.2f", reloadedUser.TelegramID, reloadedUser.HasUsedTrial, reloadedUser.Balance)
+					user = reloadedUser // Заменяем старый объект пользователя на свежий
+				}
+
 			} else {
 				log.Printf("HANDLE_MESSAGE: Реферальный код пустой, пропускаем обработку")
 			}
