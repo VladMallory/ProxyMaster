@@ -215,22 +215,22 @@ func TestGetRedirectURL(t *testing.T) {
 	}{
 		{
 			domain:      "example.com",
-			expectedURL: "http://example.com/redirect_happ.html?url=",
+			expectedURL: "https://example.com/redirect_happ_test.html?url=",
 			description: "Обычный домен",
 		},
 		{
 			domain:      "test.example.com",
-			expectedURL: "http://test.example.com/redirect_happ.html?url=",
+			expectedURL: "https://test.example.com/redirect_happ_test.html?url=",
 			description: "Поддомен",
 		},
 		{
 			domain:      "my-vpn-service.com",
-			expectedURL: "http://my-vpn-service.com/redirect_happ.html?url=",
+			expectedURL: "https://my-vpn-service.com/redirect_happ_test.html?url=",
 			description: "Домен с дефисами",
 		},
 		{
 			domain:      "localhost",
-			expectedURL: "http://localhost/redirect_happ.html?url=",
+			expectedURL: "https://localhost/redirect_happ_test.html?url=",
 			description: "Локальный домен",
 		},
 	}
@@ -298,7 +298,7 @@ func TestTrialPeriodManager_GetTrialPeriodInfo(t *testing.T) {
 		"Информация о пробных периодах",
 		"15₽",
 		"TRIAL_BALANCE_AMOUNT = 15",
-		"добавляется указанная сумма на баланс",
+		"Пользователю добавляется 15₽ на баланс",
 	}
 
 	for _, expected := range expectedContains {
@@ -619,7 +619,7 @@ func TestConfigVariablesWithDifferentDomains(t *testing.T) {
 
 			// Проверяем генерацию redirect URL
 			redirectURL := GetRedirectURL()
-			expectedRedirect := "http://" + tt.redirectDomain + "/redirect_happ.html?url="
+			expectedRedirect := "https://" + tt.redirectDomain + "/redirect_happ_test.html?url="
 			if redirectURL != expectedRedirect {
 				t.Errorf("GetRedirectURL() = %s, expected %s", redirectURL, expectedRedirect)
 			}
@@ -709,7 +709,7 @@ func TestEnvironmentConfiguration(t *testing.T) {
 
 			// Проверяем генерацию URL
 			redirectURL := GetRedirectURL()
-			expectedRedirect := "http://" + tt.redirectDomain + "/redirect_happ.html?url="
+			expectedRedirect := "https://" + tt.redirectDomain + "/redirect_happ_test.html?url="
 			if redirectURL != expectedRedirect {
 				t.Errorf("GetRedirectURL() = %s, expected %s", redirectURL, expectedRedirect)
 			}

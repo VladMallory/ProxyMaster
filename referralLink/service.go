@@ -224,6 +224,18 @@ func (rs *ReferralService) awardBonus(userID int64, bonusType string, amount flo
 	}
 	log.Printf("REFERRAL_SERVICE: ✅ Баланс успешно начислен")
 
+	// Если это приветственный бонус, помечаем, что пользователь использовал триал
+	if bonusType == "referred" {
+		log.Printf("REFERRAL_SERVICE: Установка флага 'использовал триал' для нового реферала %d", userID)
+		err := common.UpdateTrialFlag(userID)
+		if err != nil {
+			log.Printf("REFERRAL_SERVICE: ❌ Ошибка установки флага 'использовал триал' для пользователя %d: %v", userID, err)
+			// Не возвращаем ошибку, так как бонус уже начислен
+		} else {
+			log.Printf("REFERRAL_SERVICE: ✅ Флаг 'использовал триал' успешно установлен для пользователя %d", userID)
+		}
+	}
+
 	// Записываем в историю бонусов
 	log.Printf("REFERRAL_SERVICE: Запись в историю бонусов")
 	query := `

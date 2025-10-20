@@ -1015,3 +1015,8 @@ https://shadowfade.ru:6187/E4x7DnWKY8QnRdDoc3/89ix71uihysd0mei
 [2025-10-19 19:49:24] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=download_app
 [2025-10-19 19:49:28] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=device_ios
 [2025-10-19 19:49:51] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=main
+[2025-10-20 05:14:09] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-20 05:14:09] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-20 05:14:10] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=ref
+
+=== USERS LOG STARTED: 2025-10-20 05:25:57 ===

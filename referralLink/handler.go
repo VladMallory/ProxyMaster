@@ -273,16 +273,6 @@ func (rh *ReferralHandler) ProcessReferralStart(chatID int64, user *common.User,
 	// после начисления бонуса через AddBalance
 	log.Printf("REFERRAL_HANDLER: Бонусы начислены, ForceBalanceRecalculation автоматически создаст конфиг для пользователя %d", user.TelegramID)
 
-	// Отправляем уведомление приглашенному
-	text := "🎉 <b>Добро пожаловать!</b>\n\n"
-	text += fmt.Sprintf("Вы зарегистрировались по реферальной ссылке от %s!\n", referrer.FirstName)
-	text += fmt.Sprintf("🎁 На ваш баланс начислен приветственный бонус: <b>%.0f₽</b>\n\n", common.REFERRAL_WELCOME_BONUS)
-	text += "Спасибо, что присоединились к нашему сервису!"
-
-	msg := tgbotapi.NewMessage(chatID, text)
-	msg.ParseMode = "HTML"
-	rh.bot.Send(msg)
-
 	// Отправляем уведомление пригласившему
 	referrerText := "🎉 <b>Новый реферал!</b>\n\n"
 	referrerText += fmt.Sprintf("Пользователь %s зарегистрировался по вашей ссылке!\n", user.FirstName)

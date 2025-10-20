@@ -73,43 +73,11 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 				isReferralUser = true
 				log.Printf("HANDLE_MESSAGE: Сохранен реферальный код %s (очищенный от %s) для пользователя %d", cleanCode, referralCode, user.TelegramID)
 
-				// Обрабатываем реферальный переход
+				// Обрабатываем реферальный переход (начисление бонусов и установка флага триала)
 				log.Printf("HANDLE_MESSAGE: Вызов HandleStartCommand для обработки реферального кода")
 				referralLink.GlobalReferralManager.HandleStartCommand(message.Chat.ID, user, message.Text)
+				log.Printf("HANDLE_MESSAGE: Реферальный переход обработан, HasUsedTrial=%v", user.HasUsedTrial)
 
-				// Всегда отправляем реферальное сообщение для реферальных пользователей
-				referralMessage := "🎉 <b>Реферальная ссылка активирована!</b>\n\n"
-				referralMessage += "💰 <b>Вам зачислены деньги на баланс!</b>\n"
-				referralMessage += "🎁 <b>Приветственный бонус:</b> " + fmt.Sprintf("%.0f", common.REFERRAL_WELCOME_BONUS) + "₽\n"
-				referralMessage += "🔧 <b>VPN конфиг создан!</b>\n\n"
-				referralMessage += "Спасибо, что присоединились к нашему сервису!\n"
-				referralMessage += "Используйте кнопки ниже для управления аккаунтом."
-
-				// Создаем клавиатуру для реферального пользователя
-				keyboard := tgbotapi.NewInlineKeyboardMarkup(
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("💰 Баланс", "balance"),
-						tgbotapi.NewInlineKeyboardButtonData("🔧 VPN", "vpn"),
-					),
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("💳 Пополнить", "topup"),
-						tgbotapi.NewInlineKeyboardButtonData("🎯 Рефералы", "ref"),
-					),
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("📱 Скачать приложение", "download_app"),
-					),
-				)
-
-				msg := tgbotapi.NewMessage(message.Chat.ID, referralMessage)
-				msg.ParseMode = "HTML"
-				msg.ReplyMarkup = &keyboard
-
-				if _, err := bot.Send(msg); err != nil {
-					log.Printf("HANDLE_MESSAGE: Ошибка отправки реферального сообщения: %v", err)
-				} else {
-					log.Printf("HANDLE_MESSAGE: ✅ Реферальное сообщение отправлено пользователю %d", user.TelegramID)
-				}
-				return
 			} else {
 				log.Printf("HANDLE_MESSAGE: Реферальный код пустой, пропускаем обработку")
 			}
