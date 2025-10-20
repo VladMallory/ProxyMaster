@@ -24,7 +24,7 @@
    - 📄 **Импорт JSON** - для разовых конфигураций
 
 ### Технические детали
-- **API endpoint**: `https://im.shadowfade.ru:8443/api/subscription?url=SUBSCRIPTION_URL`
+- **API endpoint**: `https://your-domain.com:8443/api/subscription?url=SUBSCRIPTION_URL`
 - **Base64 декодирование**: Проверка и декодирование ответа сервера
 - **Протоколы**: Поддержка VLESS, VMESS, Trojan, Shadowsocks
 - **Fallback**: При ошибках используется оригинальный URL подписки
@@ -170,68 +170,48 @@ const (
 **Готово!** Теперь редирект работает по HTTPS: `https://your-domain.com:8443/redirect_v2raytun.html`
 
 ---
-### 3. Подготовка к запуску
+### 3. Настройка бота (`common/config.go`)
 
-1. Сделать config.go
+Все основные параметры бота настраиваются напрямую в файле `common/config.go` в функции `init()`. Откройте этот файл и установите ваши значения.
 
-```bash
-cp common/config.go.example common/config.go
-```
-
-
-2. **Отредактируйте `common/config.go`** и заполните все необходимые параметры:
+**Основные параметры для изменения:**
 
 ```go
-// Токен бота Telegram (получите у @BotFather)
-BOT_TOKEN = "ваш_токен_бота"
+// ========== ОСНОВНЫЕ НАСТРОЙКИ БОТА ==========
+BOT_TOKEN = "ваш_токен_бота" // Токен от @BotFather
+ADMIN_ID = 123456789                                         // Telegram ID администратора
+SUPPORT_LINK = "https://t.me/your_support_contact"                     // Ссылка на поддержку
 
-// ID администратора (ваш Telegram ID)
-ADMIN_ID = 123456789
+// ========== НАСТРОЙКИ ПАНЕЛИ УПРАВЛЕНИЯ ==========
+PANEL_URL = "https://your-panel.com:123/your-path/"      // URL панели X-UI
+PANEL_USER = "username"                                  // Логин панели
+PANEL_PASS = "password"                                  // Пароль панели
+INBOUND_ID = 1                                           // ID инбаунда в панели
+CONFIG_BASE_URL = "https://your-domain.com:2096/sub/"    // URL для скачивания конфигов
+CONFIG_JSON_URL = "https://your-domain.com:2096/json/"   // URL для JSON конфигов
+REDIRECT_DOMAIN = "im.your-domain.com:8443"              // Домен для редиректа
+REDIRECT_IMPORT = "happ"                                 // Тип импорта (happ/v2raytun)
 
-// Настройки панели 3x-ui
-PANEL_URL = "https://your-panel.com:123/your-path/"
-PANEL_USER = "username"
-PANEL_PASS = "password"
-INBOUND_ID = 3 // в панели 3x-ui можно посмотреть id инбаунда
+// ========== НАСТРОЙКИ ТРАФИКА И ПОДПИСОК ==========
+PRICE_PER_DAY = 5              // Цена за день (₽)
+TRIAL_BALANCE_AMOUNT = 8      // Бонус новым пользователям (₽)
+TRAFFIC_LIMIT_GB = 100         // Лимит трафика (0=безлимит)
+TRAFFIC_RESET_ENABLED = true   // Автосброс трафика включен
+TRAFFIC_RESET_INTERVAL = 43200 // Интервал сброса (мин, 43200=30 дней)
+SHOW_DATES_IN_CONFIGS = false  // Даты в именах конфигов (false=только ID)
 
-// URL для конфигураций
-CONFIG_BASE_URL = "https://your-domain.com:2096/sub/"
-CONFIG_JSON_URL = "https://your-domain.com:2096/json/"
+// ========== СИСТЕМА АВТОСПИСАНИЯ ==========
+AUTO_BILLING_ENABLED = true    // Автосписание включено
+TARIFF_MODE_ENABLED = false    // Режим тарифов отключен (используется автосписание)
 
-// URL для редиректа (HTTPS)
-REDIRECT_DOMAIN = "your-domain.com:8443"
-// Тип импорта: "happ" или "v2raytun"
-REDIRECT_IMPORT = "happ"
-
-// Стоимость подписки за день (в рублях)
-PRICE_PER_DAY = 5
+// ========== ПЛАТЕЖНЫЕ СИСТЕМЫ ==========
+// Прямая интеграция с ЮКассой
+YUKASSA_SHOP_ID = "ваш_id_магазина"                                      // ID магазина в ЮКассе
+YUKASSA_SECRET_KEY = "ваш_секретный_ключ"                                // Секретный ключ ЮКассы
+YUKASSA_API_PAYMENTS_ENABLED = true                                     // API платежи ЮКассы включены
+YUKASSA_WEBHOOK_URL = "https://your-domain.com:8081/yukassa/webhook"      // URL для webhook
 ```
 
----
-### 5. Настройки трафика
-
-```go
-// Лимит трафика в ГБ (0 = безлимит)
-TRAFFIC_LIMIT_GB = 2
-
-// Включен ли автоматический сброс трафика
-TRAFFIC_RESET_ENABLED = true
-
-// Интервал сброса трафика (в минутах)
-TRAFFIC_RESET_INTERVAL = 240 // 4 часа
-
-// Интервал проверки трафика (в минутах)
-TRAFFIC_CHECK_INTERVAL = 30
-```
----
-### 6. Формат имен конфигов
-```go
-// Показывать ли даты в именах конфигов
-SHOW_DATES_IN_CONFIGS = true
-
-// Ссылка на поддержку
-SUPPORT_LINK = "https://t.me/your_support"
-```
 **Форматы имен конфигов:**
 - **С датами** (`SHOW_DATES_IN_CONFIGS = true`):
   - `123456789 до 2025 03 09` (год день месяц)
@@ -308,6 +288,7 @@ _ДЕЛАТЬ ПОЛНЫЙ ПЕРЕЗАПУСК БОТА!!!_
 - Данных пользователей
 - Настроек трафика
 - Статистики IP подключений
+- Данных реферальной системы
 
 ### Структура таблиц
 
@@ -315,48 +296,9 @@ _ДЕЛАТЬ ПОЛНЫЙ ПЕРЕЗАПУСК БОТА!!!_
 - `traffic_configs` - настройки трафика
 - `ip_connections` - IP подключения пользователей
 - `ip_violations` - нарушения IP лимитов
+- `referral_transitions` - переходы по реферальным ссылкам
+- `referral_bonuses` - история начисления реферальных бонусов
 
----
-## 🧹 Утилита очистки базы данных
-
-В папке `tools/` находится утилита для управления базой данных:
-
-### Настройка утилиты
-
-1. **Скопируйте example файл:**
-   ```bash
-   cd tools
-   cp .env.example .env
-   ```
-
-2. **Отредактируйте `.env`** с теми же данными, что и в `common/postgres.go`:
-   ```bash
-   PG_HOST=localhost
-   PG_PORT=5432
-   PG_USER=vpn_bot_user          # Тот же, что в common/postgres.go
-   PG_PASSWORD=your_real_password # Тот же, что в common/postgres.go
-   PG_DBNAME=vpn_bot             # Тот же, что в common/postgres.go
-   PG_SSLMODE=disable
-   ```
-
-### Использование утилиты
-
-```bash
-cd tools
-./cleanup_tool
-```
-
-**Возможности утилиты:**
-- 📋 **Показать всех пользователей** - список всех пользователей с балансами и статусами
-- 🔄 **Сбросить пробные периоды** - сброс флагов `has_used_trial` у всех или конкретного пользователя
-- 🗑️ **Удалить пользователей** - удаление конкретного пользователя или всех пользователей
-- 💣 **Очистить всю БД** - полная очистка всех таблиц с восстановлением настроек по умолчанию
-
-**❗ ВНИМАНИЕ**: 
-- Утилита работает с той же базой данных, что и основной бот
-- Все операции необратимы
-- Рекомендуется делать бэкап перед использованием
-- Файл `.env` не сохраняется в git (безопасность)
 
 ## 🚀 Запуск
 
@@ -366,18 +308,16 @@ cd tools
    cd bot
    ```
 
-2. **Настройте конфигурацию:**
-   ```bash
-   cp common/config.go.example common/config.go
-   # Отредактируйте common/config.go с вашими настройками
-   ```
+2. **Настройте PostgreSQL** - отредактируйте `common/postgres.go` с реальными данными вашей БД (см. шаг 1 в разделе "Настройка").
 
-3. **Установите зависимости:**
+3. **Настройте бота** - отредактируйте `common/config.go` с вашими параметрами (см. шаг 3 в разделе "Настройка").
+
+4. **Установите зависимости:**
    ```bash
    go mod tidy
    ```
 
-5. **Установка PostgreSQL**
+5. **Установка и запуск PostgreSQL**
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
@@ -385,9 +325,7 @@ sudo systemctl start postgresql
 sudo systemctl enable postgresql
 ```
 
-4. **Настройте PostgreSQL** - отредактируйте `common/postgres.go` с реальными данными БД
-
-5. **Запустите бота:**
+6. **Запустите бота:**
    ```bash
    go run main.go
    ```

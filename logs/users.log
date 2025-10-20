@@ -902,3 +902,116 @@ https://shadowfade.ru:6187/E4x7DnWKY8QnRdDoc3/89ix71uihysd0mei
 === USERS LOG STARTED: 2025-10-19 17:06:42 ===
 
 === USERS LOG STARTED: 2025-10-19 17:06:44 ===
+
+=== USERS LOG STARTED: 2025-10-19 19:04:42 ===
+[2025-10-19 19:04:42] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-19 19:04:42] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-19 19:04:42] USER_MESSAGE: ID=281704868, Username=@ostrix_team_VFX, Name=Алексей Азаров, Text=/start
+[2025-10-19 19:04:42] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-19 19:04:42] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-19 19:04:42] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-19 19:04:42] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-19 19:04:42] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/balance
+[2025-10-19 19:04:42] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=balance
+[2025-10-19 19:04:42] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-19 19:04:42] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-19 19:04:42] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-19 19:04:42] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-19 19:04:42] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:04:43] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:04:43] USER_MESSAGE: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Text=/start
+[2025-10-19 19:04:43] USER_ACTION: ID=1719171729, Username=Badour_ali, Name=Badour Ali, Action=COMMAND, Details=start
+[2025-10-19 19:04:43] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/ta
+[2025-10-19 19:04:43] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=ta
+[2025-10-19 19:04:43] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-19 19:04:43] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-19 19:04:43] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-19 19:04:43] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-19 19:04:43] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-19 19:04:43] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-19 19:04:50] USER_CALLBACK: ID=1719171729, Username=@Badour_ali, Name=Badour Ali, Data=ref
+[2025-10-19 19:05:58] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start ref_1719171729729
+[2025-10-19 19:06:02] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=download_app
+[2025-10-19 19:06:04] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=device_ios
+[2025-10-19 19:06:38] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:06:41] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:06:41] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:07:34] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:07:47] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=topup
+[2025-10-19 19:07:52] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=topup:200
+[2025-10-19 19:08:33] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=check_payment:30872099-000f-5001-8000-113cc8f5f859
+[2025-10-19 19:08:42] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:08:42] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=COMMAND, Details=start
+[2025-10-19 19:08:43] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:08:43] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:08:47] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:08:49] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:08:49] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:11:47] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:11:49] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:11:49] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:12:04] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:12:09] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:12:09] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=COMMAND, Details=start
+[2025-10-19 19:12:13] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:12:13] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:17:28] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:17:30] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=download_app
+[2025-10-19 19:17:31] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=device_ios
+[2025-10-19 19:17:56] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-19 19:17:56] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-19 19:18:02] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=topup
+[2025-10-19 19:18:04] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-19 19:18:05] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-19 19:18:05] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:18:07] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=main
+[2025-10-19 19:18:27] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=download_app
+[2025-10-19 19:18:28] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:18:32] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:18:32] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:20:14] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:20:20] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:20:20] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:22:53] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:22:53] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=COMMAND, Details=start
+[2025-10-19 19:23:01] USER_MESSAGE: ID=873925520, Username=@BloknotaNet, Name=Vlad , Text=/start
+[2025-10-19 19:23:01] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=COMMAND, Details=start
+[2025-10-19 19:23:02] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:23:02] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:23:32] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:23:34] USER_MESSAGE: ID=836470509, Username=@Eduarddji, Name=Eduard , Text=/start
+[2025-10-19 19:23:41] USER_CALLBACK: ID=836470509, Username=@Eduarddji, Name=Eduard , Data=activate_trial
+[2025-10-19 19:24:53] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:24:53] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=COMMAND, Details=start
+[2025-10-19 19:25:12] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:25:12] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:25:36] USER_CALLBACK: ID=873925520, Username=@BloknotaNet, Name=Vlad , Data=vpn
+[2025-10-19 19:25:36] USER_ACTION: ID=873925520, Username=BloknotaNet, Name=Vlad , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:25:51] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:25:53] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:25:53] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:29:39] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:29:39] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=COMMAND, Details=start
+[2025-10-19 19:29:42] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=vpn
+[2025-10-19 19:29:42] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:30:15] USER_MESSAGE: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Text=/start
+[2025-10-19 19:30:15] USER_ACTION: ID=5304683805, Username=sorayamahamat, Name=Сурая Махамт, Action=COMMAND, Details=start
+[2025-10-19 19:30:17] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:30:23] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=topup
+[2025-10-19 19:30:28] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=topup:100
+[2025-10-19 19:30:34] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:30:38] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=topup
+[2025-10-19 19:30:40] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=main
+[2025-10-19 19:31:07] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=ref
+[2025-10-19 19:31:12] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=ref_stats
+[2025-10-19 19:31:16] USER_CALLBACK: ID=5304683805, Username=@sorayamahamat, Name=Сурая Махамт, Data=ref_menu
+[2025-10-19 19:43:05] USER_MESSAGE: ID=937610655, Username=, Name=Игорь , Text=/start
+[2025-10-19 19:44:41] USER_CALLBACK: ID=836470509, Username=@Eduarddji, Name=Eduard , Data=vpn
+[2025-10-19 19:44:41] USER_ACTION: ID=836470509, Username=Eduarddji, Name=Eduard , Action=BUTTON_CLICK, Details=Button=VPN, Data=vpn
+[2025-10-19 19:46:26] USER_CALLBACK: ID=937610655, Username=, Name=Игорь , Data=activate_trial
+[2025-10-19 19:46:26] USER_CALLBACK: ID=937610655, Username=, Name=Игорь , Data=activate_trial
+[2025-10-19 19:49:10] USER_MESSAGE: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Text=/start
+[2025-10-19 19:49:15] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=activate_trial
+[2025-10-19 19:49:24] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=download_app
+[2025-10-19 19:49:28] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=device_ios
+[2025-10-19 19:49:51] USER_CALLBACK: ID=471966877, Username=@Farta_136, Name=Farta_136😎 , Data=main

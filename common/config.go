@@ -197,7 +197,7 @@ func init() {
 	DISABLED_CONFIG_CHECK_INTERVAL = 1440      // Интервал проверки (мин, 1440=24ч)
 
 	// ========== СИСТЕМА IP БАНА ==========
-	IP_BAN_ENABLED = true                               // IP бан включен
+	// IP_BAN_ENABLED = true                               // IP бан включен
 	MAX_IPS_PER_CONFIG = 20                             // Максимум IP на конфиг
 	ACCESS_LOG_PATH = "/usr/local/x-ui/access.log"      // Путь к логам X-UI
 	IP_ACCUMULATED_PATH = "/var/log/ip_accumulated.log" // Путь к агрегированным логам

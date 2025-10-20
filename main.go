@@ -82,9 +82,9 @@ func main() {
 	defer common.StopReferralChecker()
 
 	// Запускаем IP Ban сервис если включен (в отдельной горутине)
-	if common.IP_BAN_ENABLED {
-		go startIPBanService()
-	}
+	// if common.IP_BAN_ENABLED {
+	// 	go startIPBanService()
+	// }
 
 	// Запускаем автосписание если включено (в отдельной горутине)
 	if common.AUTO_BILLING_ENABLED {
