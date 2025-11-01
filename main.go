@@ -1,16 +1,18 @@
 package main
 
 import (
-	"log"
-	"math/rand"
-	"time"
+    "log"
+    "math/rand"
+    "time"
+    "strings"
 
-	"bot/app"
-	"bot/common"
-	"bot/payments"
-	"bot/services"
+    "bot/app"
+    "bot/common"
+    "bot/common/env"
+    "bot/payments"
+    "bot/services"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+    tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 // Глобальные переменные для сервисов
@@ -22,10 +24,33 @@ var globalDisabledConfigService *services.DisabledConfigService
 var globalDepletedStatusChecker *services.DepletedStatusChecker
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+    rand.Seed(time.Now().UnixNano())
 
-	// Инициализируем глобальные переменные
-	common.InitGlobals()
+    // Конфигурация: читаем .env и применяем к глобальным переменным common.
+    // Это происходит до любых инициализаций, чтобы сервисы видели актуальные значения.
+    cfg := env.MustLoad()
+    cfg.ApplyToCommon()
+
+    // Инициализируем глобальные переменные
+    common.InitGlobals()
+
+    // Фатальная проверка обязательных переменных панели
+    var missing []string
+    if common.PANEL_URL == "" {
+        missing = append(missing, "PANEL_URL")
+    }
+    if common.PANEL_USER == "" {
+        missing = append(missing, "PANEL_USER")
+    }
+    if common.PANEL_PASS == "" {
+        missing = append(missing, "PANEL_PASS")
+    }
+    if common.INBOUND_ID <= 0 {
+        missing = append(missing, "INBOUND_ID")
+    }
+    if len(missing) > 0 {
+        log.Fatalf("Отсутствуют обязательные переменные: %s. Укажите их в .env", strings.Join(missing, ", "))
+    }
 
 	// Инициализируем глобальный логгер платежей
 	payments.InitGlobalPaymentLogger()

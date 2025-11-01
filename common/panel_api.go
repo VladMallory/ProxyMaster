@@ -160,22 +160,20 @@ func AddClient(sessionCookie string, user *User, days int) error {
 	var expiryTime int64
 	now := time.Now()
 
-	// Ищем существующего клиента в АКТУАЛЬНОМ списке из панели
-	existingClient := FindClientByTelegramID(settings.Clients, user.TelegramID)
-
-	if existingClient != nil && existingClient.ExpiryTime > now.UnixMilli() {
-		// Если у клиента есть активная подписка, добавляем дни к существующему времени
-		expiryTime = existingClient.ExpiryTime + int64(days)*24*60*60*1000
-		log.Printf("ADD_CLIENT: Продление активной подписки: TelegramID=%d, старое время=%d, новое время=%d",
-			user.TelegramID, existingClient.ExpiryTime, expiryTime)
+	// ИСПОЛЬЗУЕМ БАЗУ ДАННЫХ БОТА КАК ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ
+	if user.HasActiveConfig && user.ExpiryTime > now.UnixMilli() {
+		// Если у клиента есть активная подписка в БАЗЕ ДАННЫХ, добавляем дни к существующему времени
+		expiryTime = user.ExpiryTime + int64(days)*24*60*60*1000
+		log.Printf("ADD_CLIENT: Продление активной подписки (из БД): TelegramID=%d, старое время=%d, новое время=%d",
+			user.TelegramID, user.ExpiryTime, expiryTime)
 	} else {
-		// Если подписка истекла или клиента НЕТ В ПАНЕЛИ (3x-ui удалила его), считаем от текущего времени
+		// Если подписка истекла или неактивна в БАЗЕ ДАННЫХ, считаем от текущего времени
 		expiryTime = now.Add(time.Duration(days) * 24 * time.Hour).UnixMilli()
-		if existingClient != nil {
-			log.Printf("ADD_CLIENT: Клиент найден в панели, но истёк. Продление истёкшего: TelegramID=%d, время=%d",
+		if user.HasActiveConfig {
+			log.Printf("ADD_CLIENT: Продление истёкшей подписки (из БД): TelegramID=%d, новое время=%d",
 				user.TelegramID, expiryTime)
 		} else {
-			log.Printf("ADD_CLIENT: Клиент НЕ найден в панели (вероятно удален 3x-ui). Создание нового: TelegramID=%d, время=%d",
+			log.Printf("ADD_CLIENT: Создание новой подписки (из БД): TelegramID=%d, новое время=%d",
 				user.TelegramID, expiryTime)
 		}
 	}
@@ -197,7 +195,7 @@ func AddClient(sessionCookie string, user *User, days int) error {
 
 	if actualExistingClient != nil {
 		now := time.Now()
-		isExpired := actualExistingClient.ExpiryTime <= now.UnixMilli()
+		isExpired := !user.HasActiveConfig || user.ExpiryTime <= now.UnixMilli()
 
 		if isExpired {
 			log.Printf("ADD_CLIENT: Конфиг истёк (состояние 'исчерпано'), пробуем СБРОСИТЬ флаг depleted для TelegramID=%d", user.TelegramID)

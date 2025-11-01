@@ -38,6 +38,11 @@ func (dsc *DepletedStatusChecker) Start() {
 	dsc.ticker = time.NewTicker(interval)
 
 	go func() {
+		// Первая проверка сразу при запуске
+		log.Printf("DEPLETED_STATUS_CHECKER: Первоначальная проверка ложных состояний 'исчерпано' при запуске...")
+		dsc.CheckAndFixDepletedStatus()
+
+		// Затем проверяем по расписанию
 		for {
 			select {
 			case <-dsc.ticker.C:

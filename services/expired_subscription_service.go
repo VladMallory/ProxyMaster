@@ -193,7 +193,7 @@ func (ess *ExpiredSubscriptionService) disableExpiredSubscription(user *common.U
 func (ess *ExpiredSubscriptionService) sendExpiredSubscriptionNotification(user *common.User) {
 	message := "⚠️ <b>Ваша подписка истекла!</b>\n\n" +
 		"Время действия вашей подписки закончилось, и доступ к подписке был приостановлен.\n\n" +
-		"Для возобновления доступа пополните баланс и продлите подписку.\n\n" +
+		"Для возобновления доступа пополните баланс.\n\n" +
 		"💰 Ваш текущий баланс: %.2f₽\n" +
 		"💸 Стоимость дня: %d₽\n\n" +
 		"Нажмите /start для пополнения баланса и продления подписки."
