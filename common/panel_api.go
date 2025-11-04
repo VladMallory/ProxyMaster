@@ -149,7 +149,7 @@ func AddClient(sessionCookie string, user *User, days int) error {
 	}
 
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		log.Printf("ADD_CLIENT: Ошибка десериализации settings: %v", err)
 		return fmt.Errorf("ошибка десериализации settings: %v", err)
 	}
@@ -218,15 +218,15 @@ func AddClient(sessionCookie string, user *User, days int) error {
 					settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
 
 					// Сериализуем и обновляем inbound (ФАЗА A)
-					settingsJSON, err := json.Marshal(settings)
-					if err != nil {
-						log.Printf("ADD_CLIENT: Ошибка сериализации settings (ФАЗА A): %v", err)
+					settingsJSON, errMarshal := json.Marshal(settings)
+					if errMarshal != nil {
+						log.Printf("ADD_CLIENT: Ошибка сериализации settings (ФАЗА A): %v", errMarshal)
 						continue
 					}
 					inbound.Settings = string(settingsJSON)
 
 					log.Printf("ADD_CLIENT: ФАЗА A - устанавливаем depleted=true, exhausted=true для TelegramID=%d", user.TelegramID)
-					if err := updateInbound(sessionCookie, *inbound); err != nil {
+					if err = updateInbound(sessionCookie, *inbound); err != nil {
 						log.Printf("ADD_CLIENT: Ошибка обновления inbound (ФАЗА A): %v", err)
 						continue
 					}
@@ -461,7 +461,7 @@ func AddClient(sessionCookie string, user *User, days int) error {
 			user.ExpiryTime = expiryTime
 
 			// Сериализуем обновлённые settings
-			settingsJSON, err := json.Marshal(settings)
+			settingsJSON, err = json.Marshal(settings)
 			if err != nil {
 				log.Printf("ADD_CLIENT: Ошибка сериализации settings с альтернативным клиентом: %v", err)
 				return fmt.Errorf("ошибка сериализации settings: %v", err)
@@ -615,7 +615,7 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 	}
 
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		log.Printf("ADD_TRIAL_CLIENT: Ошибка десериализации settings: %v", err)
 		return fmt.Errorf("ошибка десериализации settings: %v", err)
 	}
@@ -807,7 +807,7 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 			user.ExpiryTime = expiryTime
 
 			// Сериализуем обновлённые settings
-			settingsJSON, err := json.Marshal(settings)
+			settingsJSON, err = json.Marshal(settings)
 			if err != nil {
 				log.Printf("ADD_TRIAL_CLIENT: Ошибка сериализации settings: %v", err)
 				return fmt.Errorf("ошибка сериализации settings: %v", err)
@@ -856,7 +856,7 @@ func RemoveDuplicateClients() error {
 
 	// Парсим settings
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		log.Printf("REMOVE_DUPLICATES: Ошибка парсинга settings: %v", err)
 		return fmt.Errorf("ошибка парсинга settings: %v", err)
 	}
@@ -940,7 +940,7 @@ func findClientInPanelByEmailTrial(sessionCookie, email string) (*Client, error)
 	log.Printf("FIND_CLIENT_IN_PANEL: Поиск клиента с email %s во всех inbound'ах", email)
 
 	// Получаем список всех inbound'ов
-	inbounds, err := getAllInbounds(sessionCookie)
+	inbounds, err := GetAllInbounds(sessionCookie)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка получения списка inbound'ов: %v", err)
 	}
@@ -966,7 +966,7 @@ func findClientInPanelByEmailTrial(sessionCookie, email string) (*Client, error)
 }
 
 // getAllInbounds получает список всех inbound'ов
-func getAllInbounds(sessionCookie string) ([]Inbound, error) {
+func GetAllInbounds(sessionCookie string) ([]Inbound, error) {
 	log.Printf("GET_ALL_INBOUNDS: Получение списка всех inbound'ов")
 
 	req, err := http.NewRequest("GET", PANEL_URL+"panel/api/inbounds", nil)
@@ -1028,7 +1028,7 @@ func CleanupPhantomClients() error {
 
 	// Парсим settings
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		log.Printf("CLEANUP_PHANTOM: Ошибка парсинга settings: %v", err)
 		return fmt.Errorf("ошибка парсинга settings: %v", err)
 	}
@@ -1193,7 +1193,7 @@ func AddSecondaryClient(sessionCookie string, user *User, days int) error {
 
 	// Парсим settings
 	var settings Settings
-	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
 		log.Printf("ADD_SECONDARY_CLIENT: Ошибка парсинга settings дополнительного inbound: %v", err)
 		return fmt.Errorf("ошибка парсинга settings: %v", err)
 	}
@@ -1284,7 +1284,7 @@ func SyncUserWithSecondaryPanel(user *User) error {
 
 	// Парсим settings
 	var settings Settings
-	if err := json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(targetInbound.Settings), &settings); err != nil {
 		log.Printf("SYNC_SECONDARY_PANEL: Ошибка парсинга settings для пользователя %d: %v", user.TelegramID, err)
 		return fmt.Errorf("ошибка парсинга settings: %v", err)
 	}
@@ -1307,14 +1307,14 @@ func SyncUserWithSecondaryPanel(user *User) error {
 			log.Printf("SYNC_SECONDARY_PANEL: Обновление inbound с переименованным клиентом для пользователя %d", user.TelegramID)
 
 			// Обновляем settings в targetInbound
-			settingsBytes, err := json.Marshal(settings)
-			if err != nil {
-				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка маршалинга settings для пользователя %d: %v", user.TelegramID, err)
-				return fmt.Errorf("ошибка маршалинга settings: %v", err)
+			settingsBytes, errMarshal := json.Marshal(settings)
+			if errMarshal != nil {
+				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка маршалинга settings для пользователя %d: %v", user.TelegramID, errMarshal)
+				return fmt.Errorf("ошибка маршалинга settings: %v", errMarshal)
 			}
 			targetInbound.Settings = string(settingsBytes)
 
-			if err := UpdateInbound(sessionCookie, *targetInbound); err != nil {
+			if err = UpdateInbound(sessionCookie, *targetInbound); err != nil {
 				log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка обновления inbound с переименованным клиентом для пользователя %d: %v", user.TelegramID, err)
 				return fmt.Errorf("ошибка обновления inbound с переименованным клиентом: %v", err)
 			}
@@ -1343,7 +1343,7 @@ func SyncUserWithSecondaryPanel(user *User) error {
 
 		// Сохраняем в базу
 		log.Printf("SYNC_SECONDARY_PANEL: Сохранение обновленного пользователя %d в базу", user.TelegramID)
-		if err := UpdateUser(user); err != nil {
+		if err = UpdateUser(user); err != nil {
 			log.Printf("SYNC_SECONDARY_PANEL: ❌ Ошибка обновления пользователя %d: %v", user.TelegramID, err)
 			return fmt.Errorf("ошибка обновления пользователя: %v", err)
 		} else {

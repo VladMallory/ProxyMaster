@@ -72,7 +72,7 @@ func CheckTrafficNow(bot *tgbotapi.BotAPI, chatID int64, messageID int) {
 		)
 
 		text := fmt.Sprintf("❌ Ошибка проверки трафика:\n%v", err)
-		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
+		editMsg = tgbotapi.NewEditMessageText(chatID, messageID, text)
 		editMsg.ReplyMarkup = &keyboard
 		if _, err := bot.Send(editMsg); err != nil {
 			log.Printf("CHECK_TRAFFIC_NOW: Ошибка отправки сообщения об ошибке: %v", err)

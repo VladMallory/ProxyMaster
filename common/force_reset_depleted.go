@@ -22,7 +22,7 @@ func ForceResetDepletedStatus(sessionCookie string, telegramID int64) error {
 	}
 
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		log.Printf("FORCE_RESET: Ошибка десериализации settings: %v", err)
 		return fmt.Errorf("ошибка десериализации settings: %v", err)
 	}
@@ -74,7 +74,7 @@ func ForceResetDepletedStatus(sessionCookie string, telegramID int64) error {
 	}
 	inbound.Settings = string(settingsJSON)
 
-	if err := updateInbound(sessionCookie, *inbound); err != nil {
+	if err = updateInbound(sessionCookie, *inbound); err != nil {
 		log.Printf("FORCE_RESET: Ошибка обновления inbound (ФАЗА A): %v", err)
 		return fmt.Errorf("ошибка обновления inbound (ФАЗА A): %v", err)
 	}
