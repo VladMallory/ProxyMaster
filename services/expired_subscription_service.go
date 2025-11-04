@@ -191,15 +191,9 @@ func (ess *ExpiredSubscriptionService) disableExpiredSubscription(user *common.U
 
 // sendExpiredSubscriptionNotification отправляет уведомление пользователю об истечении подписки
 func (ess *ExpiredSubscriptionService) sendExpiredSubscriptionNotification(user *common.User) {
-    message := "⚠️ <b>Ваша подписка истекла!</b>\n\n" +
-        "Время действия вашей подписки закончилось, и доступ к подписке был приостановлен.\n\n" +
-        "Для возобновления доступа пополните баланс.\n\n" +
-        "💰 Ваш текущий баланс: %.2f₽\n" +
-        "💸 Стоимость дня: %d₽\n\n" +
-        "Нажмите /start для пополнения баланса и продления подписки."
+    message := "Ваша подписка закончилась, нажмите снизу на нужную сумму для пополнения баланса"
 
-    msg := tgbotapi.NewMessage(user.TelegramID,
-        fmt.Sprintf(message, user.Balance, common.PRICE_PER_DAY))
+    msg := tgbotapi.NewMessage(user.TelegramID, message)
     msg.ParseMode = tgbotapi.ModeHTML
 
     // Добавляем клавиатуру выбора суммы пополнения прямо под уведомлением

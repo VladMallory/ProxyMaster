@@ -2,6 +2,7 @@ package main
 
 import (
 	"bot/common"
+	"bot/common/env"
 	"bytes"
 	"crypto/tls"
 	"database/sql"
@@ -82,6 +83,29 @@ type User struct {
 }
 
 func main() {
+	// Загружаем конфигурацию из .env и применяем к глобальным переменным
+	cfg := env.MustLoad()
+	cfg.ApplyToCommon()
+	common.InitGlobals()
+
+	// Фатальная проверка обязательных переменных панели
+	var missing []string
+	if common.PANEL_URL == "" {
+		missing = append(missing, "PANEL_URL")
+	}
+	if common.PANEL_USER == "" {
+		missing = append(missing, "PANEL_USER")
+	}
+	if common.PANEL_PASS == "" {
+		missing = append(missing, "PANEL_PASS")
+	}
+	if common.INBOUND_ID <= 0 {
+		missing = append(missing, "INBOUND_ID")
+	}
+	if len(missing) > 0 {
+		log.Fatalf("Отсутствуют обязательные переменные: %s. Укажите их в .env", strings.Join(missing, ", "))
+	}
+
 	log.Println("🧹 Запуск очистки призрачных пользователей из базы данных...")
 
 	// Подключаемся к PostgreSQL

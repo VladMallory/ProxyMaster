@@ -180,16 +180,30 @@ func (abs *AutoBillingService) disableUserConfig(user *common.User) error {
 
 	// Отправляем уведомление пользователю
 	if abs.bot != nil {
-		message := "⚠️ <b>Ваша подписка приостановлена!</b>\n\n" +
-			"На вашем балансе недостаточно средств для автоматического продления.\n" +
-			"Пополните баланс для возобновления доступа к VPN.\n\n" +
-			"💰 Ваш текущий баланс: %.2f₽\n" +
-			"💸 Стоимость дня: %d₽\n\n" +
-			"Нажмите /start для пополнения баланса."
+		message := "Ваша подписка закончилась, нажмите снизу на нужную сумму для пополнения баланса"
 
-		msg := tgbotapi.NewMessage(user.TelegramID,
-			fmt.Sprintf(message, user.Balance, common.PRICE_PER_DAY))
+		msg := tgbotapi.NewMessage(user.TelegramID, message)
 		msg.ParseMode = tgbotapi.ModeHTML
+
+		// Клавиатура быстрых сумм пополнения
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("💰 16₽", "topup:16"),
+				tgbotapi.NewInlineKeyboardButtonData("💰 50₽", "topup:50"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("💰 100₽", "topup:100"),
+				tgbotapi.NewInlineKeyboardButtonData("💰 200₽", "topup:200"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("💰 500₽", "topup:500"),
+				tgbotapi.NewInlineKeyboardButtonData("💰 1000₽", "topup:1000"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+			),
+		)
+		msg.ReplyMarkup = &keyboard
 
 		_, err := abs.bot.Send(msg)
 		if err != nil {
