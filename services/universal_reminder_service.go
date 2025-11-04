@@ -172,11 +172,31 @@ func (urs *UniversalReminderService) buildReminderMessage(daysLeft, hoursLeft in
 
 // sendReminder отправляет напоминание пользователю
 func (urs *UniversalReminderService) sendReminder(telegramID int64, message string) error {
-	msg := tgbotapi.NewMessage(telegramID, message)
-	msg.ParseMode = tgbotapi.ModeHTML
+    msg := tgbotapi.NewMessage(telegramID, message)
+    msg.ParseMode = tgbotapi.ModeHTML
 
-	_, err := urs.bot.Send(msg)
-	return err
+    // Дублируем меню выбора суммы пополнения под текстом напоминания
+    keyboard := tgbotapi.NewInlineKeyboardMarkup(
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("💰 16₽", "topup:16"),
+            tgbotapi.NewInlineKeyboardButtonData("💰 50₽", "topup:50"),
+        ),
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("💰 100₽", "topup:100"),
+            tgbotapi.NewInlineKeyboardButtonData("💰 200₽", "topup:200"),
+        ),
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("💰 500₽", "topup:500"),
+            tgbotapi.NewInlineKeyboardButtonData("💰 1000₽", "topup:1000"),
+        ),
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+        ),
+    )
+    msg.ReplyMarkup = &keyboard
+
+    _, err := urs.bot.Send(msg)
+    return err
 }
 
 // SendReminder публичный метод для отправки напоминания (для тестирования)

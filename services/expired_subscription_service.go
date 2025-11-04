@@ -191,21 +191,41 @@ func (ess *ExpiredSubscriptionService) disableExpiredSubscription(user *common.U
 
 // sendExpiredSubscriptionNotification отправляет уведомление пользователю об истечении подписки
 func (ess *ExpiredSubscriptionService) sendExpiredSubscriptionNotification(user *common.User) {
-	message := "⚠️ <b>Ваша подписка истекла!</b>\n\n" +
-		"Время действия вашей подписки закончилось, и доступ к подписке был приостановлен.\n\n" +
-		"Для возобновления доступа пополните баланс.\n\n" +
-		"💰 Ваш текущий баланс: %.2f₽\n" +
-		"💸 Стоимость дня: %d₽\n\n" +
-		"Нажмите /start для пополнения баланса и продления подписки."
+    message := "⚠️ <b>Ваша подписка истекла!</b>\n\n" +
+        "Время действия вашей подписки закончилось, и доступ к подписке был приостановлен.\n\n" +
+        "Для возобновления доступа пополните баланс.\n\n" +
+        "💰 Ваш текущий баланс: %.2f₽\n" +
+        "💸 Стоимость дня: %d₽\n\n" +
+        "Нажмите /start для пополнения баланса и продления подписки."
 
-	msg := tgbotapi.NewMessage(user.TelegramID,
-		fmt.Sprintf(message, user.Balance, common.PRICE_PER_DAY))
-	msg.ParseMode = tgbotapi.ModeHTML
+    msg := tgbotapi.NewMessage(user.TelegramID,
+        fmt.Sprintf(message, user.Balance, common.PRICE_PER_DAY))
+    msg.ParseMode = tgbotapi.ModeHTML
 
-	_, err := ess.bot.Send(msg)
-	if err != nil {
-		log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отправки уведомления пользователю %d: %v",
-			user.TelegramID, err)
+    // Добавляем клавиатуру выбора суммы пополнения прямо под уведомлением
+    keyboard := tgbotapi.NewInlineKeyboardMarkup(
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("💰 16₽", "topup:16"),
+            tgbotapi.NewInlineKeyboardButtonData("💰 50₽", "topup:50"),
+        ),
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("💰 100₽", "topup:100"),
+            tgbotapi.NewInlineKeyboardButtonData("💰 200₽", "topup:200"),
+        ),
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("💰 500₽", "topup:500"),
+            tgbotapi.NewInlineKeyboardButtonData("💰 1000₽", "topup:1000"),
+        ),
+        tgbotapi.NewInlineKeyboardRow(
+            tgbotapi.NewInlineKeyboardButtonData("🏠 Главная", "main"),
+        ),
+    )
+    msg.ReplyMarkup = &keyboard
+
+    _, err := ess.bot.Send(msg)
+    if err != nil {
+        log.Printf("EXPIRED_SUBSCRIPTION: Ошибка отправки уведомления пользователю %d: %v",
+            user.TelegramID, err)
 	} else {
 		log.Printf("EXPIRED_SUBSCRIPTION: Уведомление об истечении подписки отправлено пользователю %d",
 			user.TelegramID)
