@@ -165,11 +165,19 @@ func (dsc *DepletedStatusChecker) fixDepletedStatus(user *common.User) error {
 	}
 
 	// Используем существующую функцию принудительного сброса состояния "исчерпано"
+	// ЛОГИРОВАНИЕ exhausted: фиксатор явно пишет в exhausted.log кто инициировал сброс.
+	// Это важно для аудита, чтобы видеть какая функция присваивает/сбрасывает статус.
+	common.LogExhausted("DEPLETED_STATUS_CHECKER", "fixDepletedStatus инициировал однофазный сброс exhausted/depleted: TelegramID=%d", user.TelegramID)
+
 	if err := common.ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
+		// В случае ошибки также пишем в exhausted.log для полноты картины.
+		common.LogExhausted("DEPLETED_STATUS_CHECKER", "Ошибка сброса exhausted/depleted в fixDepletedStatus: TelegramID=%d, причина=%v", user.TelegramID, err)
 		return fmt.Errorf("ошибка сброса состояния 'исчерпано': %v", err)
 	}
 
 	log.Printf("DEPLETED_STATUS_CHECKER: Состояние 'исчерпано' успешно сброшено для пользователя %d", user.TelegramID)
+	// Успешное завершение: фиксируем запись в exhausted.log.
+	common.LogExhausted("DEPLETED_STATUS_CHECKER", "Состояние exhausted/depleted успешно сброшено: TelegramID=%d", user.TelegramID)
 	return nil
 }
 
@@ -216,6 +224,7 @@ func (dsc *DepletedStatusChecker) fixMultipleDepletedStatus(sessionCookie string
 
 				log.Printf("DEPLETED_STATUS_CHECKER: Сброшены флаги depleted/exhausted для пользователя %d", foundUser.TelegramID)
 				common.LogClientOperation("DEPLETED_STATUS_CHECKER", foundUser.TelegramID, client.Email, "Групповой сброс флагов depleted/exhausted")
+				common.LogExhausted("DEPLETED_STATUS_CHECKER", "Сброс exhausted=false для клиента: Email=%s, TelegramID=%d", client.Email, foundUser.TelegramID)
 
 				modified = true
 				fixedCount++

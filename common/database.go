@@ -158,14 +158,20 @@ func ProcessPayment(user *User, days int) (string, error) {
 		}
 	}
 
-	// Принудительно сбрасываем состояние "исчерпано" после создания/продления
-	log.Printf("PROCESS_PAYMENT: Принудительный сброс состояния 'исчерпано' для TelegramID=%d", user.TelegramID)
-	if err := ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
-		log.Printf("PROCESS_PAYMENT: Предупреждение - не удалось сбросить состояние 'исчерпано' для TelegramID=%d: %v", user.TelegramID, err)
-		// Не возвращаем ошибку, так как основная операция уже выполнена
-	} else {
-		log.Printf("PROCESS_PAYMENT: Состояние 'исчерпано' успешно сброшено для TelegramID=%d", user.TelegramID)
-	}
+    // Принудительно сбрасываем состояние "исчерпано" после создания/продления
+    log.Printf("PROCESS_PAYMENT: Принудительный сброс состояния 'исчерпано' для TelegramID=%d", user.TelegramID)
+    // ЛОГИРОВАНИЕ exhausted: явно фиксируем попытку сброса в контексте обработки платежа.
+    LogExhausted("PROCESS_PAYMENT", "Попытка сброса exhausted/depleted после оплаты: TelegramID=%d, days=%d", user.TelegramID, days)
+    if err := ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
+        log.Printf("PROCESS_PAYMENT: Предупреждение - не удалось сбросить состояние 'исчерпано' для TelegramID=%d: %v", user.TelegramID, err)
+        // Пишем причину в exhausted.log.
+        LogExhausted("PROCESS_PAYMENT", "Ошибка сброса exhausted/depleted после оплаты: TelegramID=%d, причина=%v", user.TelegramID, err)
+        // Не возвращаем ошибку, так как основная операция уже выполнена
+    } else {
+        log.Printf("PROCESS_PAYMENT: Состояние 'исчерпано' успешно сброшено для TelegramID=%d", user.TelegramID)
+        // Успех сброса: фиксируем в exhausted.log.
+        LogExhausted("PROCESS_PAYMENT", "Успешный сброс exhausted/depleted после оплаты: TelegramID=%d, days=%d", user.TelegramID, days)
+    }
 
 	// Списываем деньги с баланса
 	user.Balance -= cost

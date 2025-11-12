@@ -157,6 +157,10 @@ var (
 	PAYMENT_LOG_ENABLED bool   // Включено ли логирование платежей (детальные логи всех платежей)
 	PAYMENT_LOG_PATH    string // Путь к файлу логов платежей (история платежных операций)
 
+	// Exhausted-лог: отдельный управляемый лог для изменений статуса "исчерпано"
+	EXHAUSTED_LOG_ENABLED bool   // Включено ли логирование exhausted/depleted событий
+	EXHAUSTED_LOG_PATH    string // Путь к файлу exhausted.log
+
 	// ========== ГЛОБАЛЬНЫЕ ОБЪЕКТЫ ==========
 	GlobalBot             *tgbotapi.BotAPI         // Глобальный экземпляр бота (используется сервисами для отправки сообщений)
 	GlobalReferralManager ReferralManagerInterface // Глобальный реферальный менеджер (управление реферальной системой)
@@ -222,10 +226,9 @@ func init() {
 	REFERRAL_SYSTEM_ENABLED = true                           // Реферальная система включена
 	REFERRAL_BONUS_AMOUNT = float64(PRICE_PER_DAY) * 30 * 5  // Бонус пригласившему (₽90 = 1 месяц)
 	REFERRAL_WELCOME_BONUS = float64(PRICE_PER_DAY) * 30 * 1 // Бонус новому пользователю (₽90)
-	// Базовый URL реферальных ссылок задаётся в .env
-	REFERRAL_MIN_BALANCE_FOR_REF = 0.0 // Минимальный баланс для получения ссылки (0=любой)
-	REFERRAL_CHECK_ENABLED = true      // Проверка реферальных ссылок включена
-	REFERRAL_CHECK_INTERVAL = 1440     // Интервал проверки (мин, 1440=24ч)
+	REFERRAL_MIN_BALANCE_FOR_REF = 0.0                       // Минимальный баланс для получения ссылки (0=любой)
+	REFERRAL_CHECK_ENABLED = true                            // Проверка реферальных ссылок включена
+	REFERRAL_CHECK_INTERVAL = 1440                           // Интервал проверки (мин, 1440=24ч)
 
 	// ========== УВЕДОМЛЕНИЯ И НАПОМИНАНИЯ ==========
 
@@ -295,10 +298,12 @@ func init() {
 	POWEROFF_NOTIFICATION_ENABLED = true // Уведомления о выключении включены
 
 	// ========== ЛОГИРОВАНИЕ ==========
-	CONSOLE_LOG_ENABLED = false                     // Логирование консоли отключено
-	CONSOLE_LOG_PATH = "/root/bot/logs/console.log" // Путь к консольным логам
-	USERS_LOG_ENABLED = true                        // Логирование пользователей включено
-	USERS_LOG_PATH = "/root/bot/logs/users.log"     // Путь к логам пользователей
-	PAYMENT_LOG_ENABLED = true                      // Логирование платежей включено
-	PAYMENT_LOG_PATH = "/root/bot/logs/pay.log"     // Путь к логам платежей
+	CONSOLE_LOG_ENABLED = false                         // Логирование консоли отключено
+	CONSOLE_LOG_PATH = "/root/bot/logs/console.log"     // Путь к консольным логам
+	USERS_LOG_ENABLED = true                            // Логирование пользователей включено
+	USERS_LOG_PATH = "/root/bot/logs/users.log"         // Путь к логам пользователей
+	PAYMENT_LOG_ENABLED = true                          // Логирование платежей включено
+	PAYMENT_LOG_PATH = "/root/bot/logs/pay.log"         // Путь к логам платежей
+	EXHAUSTED_LOG_ENABLED = true                        // Логирование статуса исчерпано включено по умолчанию
+	EXHAUSTED_LOG_PATH = "/root/bot/logs/exhausted.log" // Путь к exhausted.log
 }

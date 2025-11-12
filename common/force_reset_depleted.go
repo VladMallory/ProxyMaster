@@ -1,18 +1,20 @@
 package common
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"strings"
-	"time"
+    "encoding/json"
+    "fmt"
+    "log"
+    "strings"
+    "time"
 )
 
 // ForceResetDepletedStatus принудительно сбрасывает состояние "исчерпано" для клиента
-// Использует тот же двухфазовый подход, что и в тестовом скрипте
+// Безопасный однофазный сброс: просто выставляет depleted/exhausted=false без промежуточного включения true
 func ForceResetDepletedStatus(sessionCookie string, telegramID int64) error {
-	log.Printf("FORCE_RESET: Начало принудительного сброса состояния 'исчерпано' для TelegramID=%d", telegramID)
-	LogClientOperation("FORCE_RESET_DEPLETED", telegramID, "", "Начало принудительного сброса состояния 'исчерпано'")
+    log.Printf("FORCE_RESET: Начало принудительного однофазного сброса состояния 'исчерпано' для TelegramID=%d", telegramID)
+    // ЛОГИРОВАНИЕ exhausted: фиксируем кто инициировал сброс и для кого.
+    LogExhausted("FORCE_RESET_DEPLETED", "Старт однофазного сброса exhausted/depleted: TelegramID=%d", telegramID)
+    LogClientOperation("FORCE_RESET_DEPLETED", telegramID, "", "Начало однофазного сброса состояния 'исчерпано'")
 
 	// Получаем текущий inbound
 	inbound, err := GetInbound(sessionCookie)
@@ -47,70 +49,38 @@ func ForceResetDepletedStatus(sessionCookie string, telegramID int64) error {
 		return fmt.Errorf("клиент с TelegramID=%d не найден", telegramID)
 	}
 
-	log.Printf("FORCE_RESET: Найден клиент: Email=%s, UUID=%s, Enable=%t",
-		targetClient.Email, targetClient.ID, targetClient.Enable)
+    log.Printf("FORCE_RESET: Найден клиент: Email=%s, UUID=%s, Enable=%t",
+        targetClient.Email, targetClient.ID, targetClient.Enable)
 
-	originalEmail := targetClient.Email
-	originalExpiry := targetClient.ExpiryTime
-	originalEnable := targetClient.Enable
+    // Однофазный: просто ставим флаги в false и обновляем UpdatedAt
+    falseValue := false
+    // ЛОГИРОВАНИЕ exhausted: явные записи в момент присвоения статуса false.
+    // Это ключевой момент, когда статус "исчерпано" меняется на false.
+    settings.Clients[clientIndex].Depleted = &falseValue
+    LogExhausted("FORCE_RESET_DEPLETED", "Присвоение depleted=false для Email=%s, TelegramID=%d", targetClient.Email, telegramID)
+    settings.Clients[clientIndex].Exhausted = &falseValue
+    LogExhausted("FORCE_RESET_DEPLETED", "Присвоение exhausted=false для Email=%s, TelegramID=%d", targetClient.Email, telegramID)
+    settings.Clients[clientIndex].UpdatedAt = time.Now().UnixMilli()
 
-	// ==================== ФАЗА A ====================
-	log.Printf("FORCE_RESET: 🅰️  ФАЗА A - Установка depleted/exhausted=TRUE и выключение")
+    // Обновляем inbound
+    settingsJSON, err := json.Marshal(settings)
+    if err != nil {
+        log.Printf("FORCE_RESET: Ошибка сериализации settings: %v", err)
+        return fmt.Errorf("ошибка сериализации settings: %v", err)
+    }
+    inbound.Settings = string(settingsJSON)
 
-	trueValue := true
-	toggleEmail := originalEmail + "-reset"
+    if err := updateInbound(sessionCookie, *inbound); err != nil {
+        log.Printf("FORCE_RESET: Ошибка обновления inbound: %v", err)
+        return fmt.Errorf("ошибка обновления inbound: %v", err)
+    }
 
-	settings.Clients[clientIndex].Depleted = &trueValue
-	settings.Clients[clientIndex].Exhausted = &trueValue
-	settings.Clients[clientIndex].Enable = false
-	settings.Clients[clientIndex].Email = toggleEmail
-	settings.Clients[clientIndex].UpdatedAt = time.Now().UnixMilli()
+    log.Printf("FORCE_RESET: ✅ Однофазный сброс состояния 'исчерпано' завершён для TelegramID=%d", telegramID)
+    log.Printf("FORCE_RESET: Финальное состояние: Email=%s, Enable=%t, Depleted=false, Exhausted=false",
+        targetClient.Email, targetClient.Enable)
+    // Успешное завершение операции сброса.
+    LogExhausted("FORCE_RESET_DEPLETED", "Завершён сброс exhausted/depleted: Email=%s, Enable=%t", targetClient.Email, targetClient.Enable)
 
-	// Обновляем inbound (ФАЗА A)
-	settingsJSON, err := json.Marshal(settings)
-	if err != nil {
-		log.Printf("FORCE_RESET: Ошибка сериализации settings (ФАЗА A): %v", err)
-		return fmt.Errorf("ошибка сериализации settings (ФАЗА A): %v", err)
-	}
-	inbound.Settings = string(settingsJSON)
-
-	if err = updateInbound(sessionCookie, *inbound); err != nil {
-		log.Printf("FORCE_RESET: Ошибка обновления inbound (ФАЗА A): %v", err)
-		return fmt.Errorf("ошибка обновления inbound (ФАЗА A): %v", err)
-	}
-
-	log.Printf("FORCE_RESET: ФАЗА A завершена, пауза 1000мс...")
-	time.Sleep(1000 * time.Millisecond)
-
-	// ==================== ФАЗА B ====================
-	log.Printf("FORCE_RESET: 🅱️  ФАЗА B - Установка depleted/exhausted=FALSE и включение")
-
-	falseValue := false
-
-	settings.Clients[clientIndex].Depleted = &falseValue
-	settings.Clients[clientIndex].Exhausted = &falseValue
-	settings.Clients[clientIndex].Enable = originalEnable
-	settings.Clients[clientIndex].Email = originalEmail
-	settings.Clients[clientIndex].ExpiryTime = originalExpiry
-	settings.Clients[clientIndex].UpdatedAt = time.Now().UnixMilli()
-
-	// Обновляем inbound (ФАЗА B)
-	settingsJSON, err = json.Marshal(settings)
-	if err != nil {
-		log.Printf("FORCE_RESET: Ошибка сериализации settings (ФАЗА B): %v", err)
-		return fmt.Errorf("ошибка сериализации settings (ФАЗА B): %v", err)
-	}
-	inbound.Settings = string(settingsJSON)
-
-	if err := updateInbound(sessionCookie, *inbound); err != nil {
-		log.Printf("FORCE_RESET: Ошибка обновления inbound (ФАЗА B): %v", err)
-		return fmt.Errorf("ошибка обновления inbound (ФАЗА B): %v", err)
-	}
-
-	log.Printf("FORCE_RESET: ✅ Принудительный сброс состояния 'исчерпано' завершён для TelegramID=%d", telegramID)
-	log.Printf("FORCE_RESET: Финальное состояние: Email=%s, Enable=%t, Depleted=false, Exhausted=false",
-		originalEmail, originalEnable)
-
-	LogClientOperation("FORCE_RESET_DEPLETED", telegramID, originalEmail, "Принудительный сброс состояния завершён успешно")
-	return nil
+    LogClientOperation("FORCE_RESET_DEPLETED", telegramID, targetClient.Email, "Однофазный сброс состояния завершён успешно")
+    return nil
 }

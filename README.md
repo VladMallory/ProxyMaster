@@ -24,6 +24,11 @@ REFERRAL_LINK_BASE_URL=https://t.me/bot?start=ref_
 
 YUKASSA_SHOP_ID=123
 YUKASSA_SECRET_KEY=123123
+
+# Логи
+# Включение/выключение и путь для exhausted-лога
+EXHAUSTED_LOG_ENABLED=true
+EXHAUSTED_LOG_PATH=/root/bot/logs/exhausted.log
 ```
 
 ```bash

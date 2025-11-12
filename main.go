@@ -68,12 +68,19 @@ func main() {
 		log.Printf("Ошибка инициализации IP ban логгера: %v", err)
 	}
 
-	// Инициализируем логгер трафика
-	if err := common.InitTrafficLogger(); err != nil {
-		log.Printf("Ошибка инициализации логгера трафика: %v", err)
-	} else {
-		log.Printf("Логгер трафика успешно инициализирован")
-	}
+    // Инициализируем логгер трафика
+    if err := common.InitTrafficLogger(); err != nil {
+        log.Printf("Ошибка инициализации логгера трафика: %v", err)
+    } else {
+        log.Printf("Логгер трафика успешно инициализирован")
+    }
+
+    // Инициализируем exhausted-логгер
+    if err := common.InitExhaustedLogger(); err != nil {
+        log.Printf("Ошибка инициализации exhausted-логгера: %v", err)
+    } else {
+        log.Printf("Exhausted-логгер успешно инициализирован")
+    }
 
 	// Инициализируем логгер действий пользователей
 	if err := common.InitUsersLogger(); err != nil {
@@ -86,8 +93,11 @@ func main() {
 	// Корректно отключаем MongoDB при завершении программы
 	defer common.DisconnectMongoDB()
 
-	// Закрываем логгер трафика при завершении программы
-	defer common.CloseTrafficLogger()
+    // Закрываем логгер трафика при завершении программы
+    defer common.CloseTrafficLogger()
+
+    // Закрываем exhausted-логгер при завершении программы
+    defer common.CloseExhaustedLogger()
 
 	// Закрываем логгер консоли при завершении программы
 	defer func() {

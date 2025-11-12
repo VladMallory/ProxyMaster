@@ -31,10 +31,10 @@ import (
 
 // Config представляет набор настроек, читаемых из .env
 type Config struct {
-	// Бот
-	BotToken    string
-	AdminID     int64
-	SupportLink string
+    // Бот
+    BotToken    string
+    AdminID     int64
+    SupportLink string
 
 	// Панель X-UI
 	PanelURL  string
@@ -51,10 +51,14 @@ type Config struct {
 	// Реферальная система
 	ReferralLinkBaseURL string
 
-	// ЮКасса
-	YukassaShopID     string
-	YukassaSecretKey  string
-	YukassaWebhookURL string
+    // ЮКасса
+    YukassaShopID     string
+    YukassaSecretKey  string
+    YukassaWebhookURL string
+
+    // Лог exhausted
+    ExhaustedLogEnabled string // строковый флаг из .env ("true"/"false")
+    ExhaustedLogPath    string
 }
 
 // Load загружает конфигурацию из указанного .env файла
@@ -102,6 +106,8 @@ func Load(path string) (Config, error) {
 		YukassaShopID:       kv["YUKASSA_SHOP_ID"],
 		YukassaSecretKey:    kv["YUKASSA_SECRET_KEY"],
 		YukassaWebhookURL:   kv["YUKASSA_WEBHOOK_URL"],
+		ExhaustedLogEnabled: kv["EXHAUSTED_LOG_ENABLED"],
+		ExhaustedLogPath:    kv["EXHAUSTED_LOG_PATH"],
 	}
 
     // Безопасно парсим целочисленные поля
@@ -190,5 +196,18 @@ func (c Config) ApplyToCommon() {
 	}
 	if c.YukassaWebhookURL != "" {
 		common.YUKASSA_WEBHOOK_URL = c.YukassaWebhookURL
+	}
+
+	// Exhausted лог
+	if strings.TrimSpace(c.ExhaustedLogEnabled) != "" {
+		val := strings.ToLower(strings.TrimSpace(c.ExhaustedLogEnabled))
+		if val == "1" || val == "true" || val == "yes" || val == "on" {
+			common.EXHAUSTED_LOG_ENABLED = true
+		} else if val == "0" || val == "false" || val == "no" || val == "off" {
+			common.EXHAUSTED_LOG_ENABLED = false
+		}
+	}
+	if strings.TrimSpace(c.ExhaustedLogPath) != "" {
+		common.EXHAUSTED_LOG_PATH = c.ExhaustedLogPath
 	}
 }

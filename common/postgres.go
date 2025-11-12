@@ -423,13 +423,21 @@ func AddBalancePG(telegramID int64, amount float64) error {
 		sessionCookie, err := Login()
 		if err != nil {
 			log.Printf("POSTGRES: Ошибка авторизации для сброса статуса 'исчерпано' для пользователя %d: %v", telegramID, err)
+			// Фиксируем в exhausted.log, что сброс не выполнен из-за ошибки авторизации.
+			LogExhausted("POSTGRES_BALANCE_TOPUP", "Ошибка авторизации при сбросе exhausted/depleted: TelegramID=%d, причина=%v", telegramID, err)
 		} else {
 			log.Printf("POSTGRES: Попытка сброса статуса 'исчерпано' для пользователя %d после пополнения баланса", telegramID)
+			// Фиксируем факт попытки сброса после пополнения.
+			LogExhausted("POSTGRES_BALANCE_TOPUP", "Попытка сброса exhausted/depleted после пополнения: TelegramID=%d, amount=%.2f", telegramID, amount)
 			if err := ForceResetDepletedStatus(sessionCookie, telegramID); err != nil {
 				// Это нормально - значит у пользователя нет статуса "исчерпано" или конфига
 				log.Printf("POSTGRES: Статус 'исчерпано' не найден для пользователя %d (это нормально): %v", telegramID, err)
+				// Логируем в exhausted.log, что сброс не требуется/не найден.
+				LogExhausted("POSTGRES_BALANCE_TOPUP", "Сброс exhausted/depleted не требуется или не найден: TelegramID=%d, причина=%v", telegramID, err)
 			} else {
 				log.Printf("POSTGRES: ✅ Статус 'исчерпано' успешно сброшен для пользователя %d после пополнения баланса", telegramID)
+				// Успех сброса после пополнения баланса.
+				LogExhausted("POSTGRES_BALANCE_TOPUP", "Успешный сброс exhausted/depleted после пополнения: TelegramID=%d, amount=%.2f", telegramID, amount)
 			}
 		}
 

@@ -106,30 +106,38 @@ func (dcs *DisabledConfigService) shouldEnableConfig(user *common.User) (bool, s
 
 // enableUserConfig включает конфиг пользователя
 func (dcs *DisabledConfigService) enableUserConfig(user *common.User) error {
-	log.Printf("DISABLED_CONFIG: Включение конфига для пользователя %d", user.TelegramID)
+    log.Printf("DISABLED_CONFIG: Включение конфига для пользователя %d", user.TelegramID)
 
-	// Включаем конфиг в панели управления
-	err := dcs.configManager.EnableConfig(user.Email)
-	if err != nil {
-		return fmt.Errorf("ошибка включения конфига в панели: %v", err)
-	}
+    // Включаем конфиг в панели управления
+    err := dcs.configManager.EnableConfig(user.Email)
+    if err != nil {
+        return fmt.Errorf("ошибка включения конфига в панели: %v", err)
+    }
 
-	// Сбрасываем статус "исчерпано" в панели управления
-	log.Printf("DISABLED_CONFIG: Сброс статуса 'исчерпано' для пользователя %d", user.TelegramID)
-	sessionCookie, err := common.Login()
-	if err != nil {
-		log.Printf("DISABLED_CONFIG: Ошибка авторизации для сброса статуса 'исчерпано' для пользователя %d: %v",
-			user.TelegramID, err)
-		// Не возвращаем ошибку, так как конфиг уже включен
-	} else {
-		if err := common.ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
-			log.Printf("DISABLED_CONFIG: Ошибка сброса статуса 'исчерпано' для пользователя %d: %v",
-				user.TelegramID, err)
-			// Не возвращаем ошибку, так как конфиг уже включен
-		} else {
-			log.Printf("DISABLED_CONFIG: Статус 'исчерпано' успешно сброшен для пользователя %d", user.TelegramID)
-		}
-	}
+    // Сбрасываем статус "исчерпано" в панели управления
+    log.Printf("DISABLED_CONFIG: Сброс статуса 'исчерпано' для пользователя %d", user.TelegramID)
+    // ЛОГИРОВАНИЕ exhausted: фиксируем факт инициирования сброса в контексте включения конфига.
+    common.LogExhausted("DISABLED_CONFIG", "enableUserConfig инициировал сброс exhausted/depleted: TelegramID=%d", user.TelegramID)
+    sessionCookie, err := common.Login()
+    if err != nil {
+        log.Printf("DISABLED_CONFIG: Ошибка авторизации для сброса статуса 'исчерпано' для пользователя %d: %v",
+            user.TelegramID, err)
+        // Дополнительно пишем в exhausted.log, чтобы видеть, почему сброс не произошёл.
+        common.LogExhausted("DISABLED_CONFIG", "Ошибка авторизации при сбросе exhausted/depleted: TelegramID=%d, причина=%v", user.TelegramID, err)
+        // Не возвращаем ошибку, так как конфиг уже включен
+    } else {
+        if err := common.ForceResetDepletedStatus(sessionCookie, user.TelegramID); err != nil {
+            log.Printf("DISABLED_CONFIG: Ошибка сброса статуса 'исчерпано' для пользователя %d: %v",
+                user.TelegramID, err)
+            // Логируем ошибку сброса в exhausted.log для аудита.
+            common.LogExhausted("DISABLED_CONFIG", "Ошибка сброса exhausted/depleted: TelegramID=%d, причина=%v", user.TelegramID, err)
+            // Не возвращаем ошибку, так как конфиг уже включен
+        } else {
+            log.Printf("DISABLED_CONFIG: Статус 'исчерпано' успешно сброшен для пользователя %d", user.TelegramID)
+            // Успех сброса: фиксируем в exhausted.log.
+            common.LogExhausted("DISABLED_CONFIG", "Статус exhausted/depleted успешно сброшен: TelegramID=%d", user.TelegramID)
+        }
+    }
 
 	// Обновляем статус пользователя в базе данных
 	user.HasActiveConfig = true
@@ -410,6 +418,7 @@ func (dcs *DisabledConfigService) processUserInMemory(user *common.User, setting
 			}
 			if settings.Clients[i].Exhausted != nil {
 				*settings.Clients[i].Exhausted = false
+				common.LogExhausted("DISABLED_CONFIG", "Сброс exhausted=false при включении конфига: Email=%s", settings.Clients[i].Email)
 			}
 
 			log.Printf("DISABLED_CONFIG: Конфиг включен для пользователя %d (email: %s)", user.TelegramID, user.Email)

@@ -200,63 +200,38 @@ func AddClient(sessionCookie string, user *User, days int) error {
 		if isExpired {
 			log.Printf("ADD_CLIENT: Конфиг истёк (состояние 'исчерпано'), пробуем СБРОСИТЬ флаг depleted для TelegramID=%d", user.TelegramID)
 
-			// АГРЕССИВНЫЙ ПОДХОД: Двухфазовый сброс состояния "исчерпано" как в тестовом скрипте
-			telegramIDStr := fmt.Sprintf("%d", user.TelegramID)
-			resetSuccess := false
+            // Безопасный подход: однофазовый сброс состояния "исчерпано" без установки true
+            telegramIDStr := fmt.Sprintf("%d", user.TelegramID)
+            resetSuccess := false
 
-			for i, client := range settings.Clients {
-				if strings.HasPrefix(client.Email, telegramIDStr+"_") || strings.HasPrefix(client.Email, telegramIDStr+" ") || client.Email == telegramIDStr {
-					log.Printf("ADD_CLIENT: Агрессивный двухфазовый сброс состояния 'исчерпано' для клиента: Email=%s", client.Email)
+            for i, client := range settings.Clients {
+                if strings.HasPrefix(client.Email, telegramIDStr+"_") || strings.HasPrefix(client.Email, telegramIDStr+" ") || client.Email == telegramIDStr {
+                    log.Printf("ADD_CLIENT: Однофазовый безопасный сброс состояния 'исчерпано' для клиента: Email=%s", client.Email)
 
-					// ФАЗА A: Сначала устанавливаем depleted=true, exhausted=true, enable=false
-					trueValue := true
-					toggleEmail := fmt.Sprintf("%s-reset", client.Email)
-					settings.Clients[i].Depleted = &trueValue
-					settings.Clients[i].Exhausted = &trueValue
-					settings.Clients[i].Enable = false
-					settings.Clients[i].Email = toggleEmail
-					settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
-
-					// Сериализуем и обновляем inbound (ФАЗА A)
-					settingsJSON, errMarshal := json.Marshal(settings)
-					if errMarshal != nil {
-						log.Printf("ADD_CLIENT: Ошибка сериализации settings (ФАЗА A): %v", errMarshal)
-						continue
-					}
-					inbound.Settings = string(settingsJSON)
-
-					log.Printf("ADD_CLIENT: ФАЗА A - устанавливаем depleted=true, exhausted=true для TelegramID=%d", user.TelegramID)
-					if err = updateInbound(sessionCookie, *inbound); err != nil {
-						log.Printf("ADD_CLIENT: Ошибка обновления inbound (ФАЗА A): %v", err)
-						continue
-					}
-
-					// Пауза между фазами
-					time.Sleep(500 * time.Millisecond)
-
-					// ФАЗА B: Теперь сбрасываем в false и восстанавливаем нормальное состояние
-					falseValue := false
-					settings.Clients[i].Depleted = &falseValue
-					settings.Clients[i].Exhausted = &falseValue
-					settings.Clients[i].Enable = true
-					settings.Clients[i].Email = email
-					settings.Clients[i].ExpiryTime = expiryTime
-					settings.Clients[i].Flow = "xtls-rprx-vision"
-					settings.Clients[i].TotalGB = 0
-					settings.Clients[i].Reset = 0
-					settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
+                    // Однофазово: устанавливаем depleted=false, exhausted=false и актуализируем поля
+                    falseValue := false
+                    settings.Clients[i].Depleted = &falseValue
+                    settings.Clients[i].Exhausted = &falseValue
+                    settings.Clients[i].Enable = true
+                    settings.Clients[i].Email = email
+                    settings.Clients[i].ExpiryTime = expiryTime
+                    settings.Clients[i].Flow = "xtls-rprx-vision"
+                    settings.Clients[i].TotalGB = 0
+                    settings.Clients[i].Reset = 0
+                    settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
 
 					user.ClientID = client.ID
 					user.SubID = client.SubID
 					user.ExpiryTime = expiryTime
 					user.HasActiveConfig = true
 
-					log.Printf("ADD_CLIENT: ФАЗА B - устанавливаем depleted=false, exhausted=false для TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
-						user.TelegramID, email, client.SubID, expiryTime)
-					resetSuccess = true
-					break
-				}
-			}
+                    log.Printf("ADD_CLIENT: Однофазовый сброс выполнен: depleted=false, exhausted=false для TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
+                        user.TelegramID, email, client.SubID, expiryTime)
+                    LogExhausted("ADD_CLIENT", "Сброс exhausted=false для клиента: Email=%s (истёк)", email)
+                    resetSuccess = true
+                    break
+                }
+            }
 
 			// Если не удалось сбросить состояние, откатываемся к старому методу
 			if !resetSuccess {
@@ -328,13 +303,14 @@ func AddClient(sessionCookie string, user *User, days int) error {
 					user.SubID = client.SubID // Используем SubID из панели
 					user.ExpiryTime = expiryTime
 					user.HasActiveConfig = true
-					log.Printf("ADD_CLIENT: Активный клиент продлён: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
-						user.TelegramID, email, client.SubID, expiryTime)
-					break
-				}
-			}
-		}
-	} else {
+                    log.Printf("ADD_CLIENT: Активный клиент продлён: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
+                        user.TelegramID, email, client.SubID, expiryTime)
+                    LogExhausted("ADD_CLIENT", "Сброс exhausted=false при продлении: Email=%s", email)
+                    break
+                }
+            }
+        }
+    } else {
 		// Клиент НЕ найден в панели - значит 3x-ui уже удалила его или он никогда не существовал
 		log.Printf("ADD_CLIENT: Клиент НЕ найден в актуальном списке панели. Создание НОВОГО клиента для TelegramID=%d", user.TelegramID)
 		subID := GenerateSubID()
@@ -356,8 +332,9 @@ func AddClient(sessionCookie string, user *User, days int) error {
 			UpdatedAt:  time.Now().UnixMilli(),
 		}
 
-		// Добавляем нового клиента
-		settings.Clients = append(settings.Clients, newClient)
+        // Добавляем нового клиента
+        settings.Clients = append(settings.Clients, newClient)
+        LogExhausted("ADD_CLIENT", "Установка exhausted=false при создании: Email=%s", email)
 
 		// Обновляем данные пользователя
 		user.HasActiveConfig = true
@@ -449,8 +426,9 @@ func AddClient(sessionCookie string, user *User, days int) error {
 				UpdatedAt:  time.Now().UnixMilli(),
 			}
 
-			// Добавляем нового клиента
-			settings.Clients = append(settings.Clients, newClient)
+            // Добавляем нового клиента
+            settings.Clients = append(settings.Clients, newClient)
+            LogExhausted("ADD_CLIENT", "Установка exhausted=false при создании с альтернативным email: Email=%s", alternativeEmail)
 
 			// Обновляем данные пользователя
 			user.HasActiveConfig = true
@@ -648,31 +626,32 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 		log.Printf("ADD_TRIAL_CLIENT: Найден клиент по TelegramID, обновляем для пробного периода TelegramID=%d", user.TelegramID)
 	}
 
-	if clientToUse != nil {
-		log.Printf("ADD_TRIAL_CLIENT: Клиент уже существует, обновляем для пробного периода TelegramID=%d", user.TelegramID)
+		if clientToUse != nil {
+			log.Printf("ADD_TRIAL_CLIENT: Клиент уже существует, обновляем для пробного периода TelegramID=%d", user.TelegramID)
 
-		// Обновляем существующего клиента
-		for i, client := range settings.Clients {
-			if client.Email == clientToUse.Email {
-				// Обновляем данные клиента
-				settings.Clients[i].ExpiryTime = expiryTime
-				settings.Clients[i].Enable = true
-				settings.Clients[i].TotalGB = 0 // Убираем лимит трафика
-				settings.Clients[i].Reset = 0   // Убираем автопродление
-				settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
+			// Обновляем существующего клиента
+			for i, client := range settings.Clients {
+				if client.Email == clientToUse.Email {
+					// Обновляем данные клиента
+					settings.Clients[i].ExpiryTime = expiryTime
+					settings.Clients[i].Enable = true
+					settings.Clients[i].TotalGB = 0 // Убираем лимит трафика
+					settings.Clients[i].Reset = 0   // Убираем автопродление
+					settings.Clients[i].UpdatedAt = time.Now().UnixMilli()
 
-				// Сбрасываем статус "исчерпано"
-				falseValue := false
-				settings.Clients[i].Depleted = &falseValue
-				settings.Clients[i].Exhausted = &falseValue
+					// Сбрасываем статус "исчерпано"
+					falseValue := false
+					settings.Clients[i].Depleted = &falseValue
+					settings.Clients[i].Exhausted = &falseValue
+					LogExhausted("ADD_TRIAL_CLIENT", "Сброс exhausted=false для пробного периода: Email=%s", client.Email)
 
-				// Обновляем данные пользователя
-				user.HasActiveConfig = true
-				user.ClientID = client.ID
-				user.Email = client.Email // Используем email из панели, а не генерируем новый
-				user.SubID = client.SubID
-				user.ConfigCreatedAt = time.Now()
-				user.ExpiryTime = expiryTime
+					// Обновляем данные пользователя
+					user.HasActiveConfig = true
+					user.ClientID = client.ID
+					user.Email = client.Email // Используем email из панели, а не генерируем новый
+					user.SubID = client.SubID
+					user.ConfigCreatedAt = time.Now()
+					user.ExpiryTime = expiryTime
 
 				log.Printf("ADD_TRIAL_CLIENT: Существующий клиент обновлен для пробного периода: TelegramID=%d, Email=%s, SubID=%s, ExpiryTime=%d",
 					user.TelegramID, client.Email, client.SubID, expiryTime)
@@ -704,6 +683,7 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 
 		// Добавляем нового клиента
 		settings.Clients = append(settings.Clients, newClient)
+		LogExhausted("ADD_TRIAL_CLIENT", "Установка exhausted=false при создании пробного клиента: Email=%s", email)
 
 		// Обновляем данные пользователя
 		user.HasActiveConfig = true
@@ -797,6 +777,7 @@ func AddTrialClient(sessionCookie string, user *User, days int) error {
 
 			// Добавляем нового клиента
 			settings.Clients = append(settings.Clients, newClient)
+			LogExhausted("ADD_TRIAL_CLIENT", "Установка exhausted=false при создании пробного клиента с альтернативным email: Email=%s", alternativeEmail)
 
 			// Обновляем данные пользователя
 			user.HasActiveConfig = true
@@ -1223,6 +1204,8 @@ func AddSecondaryClient(sessionCookie string, user *User, days int) error {
 
 	// Добавляем нового клиента
 	settings.Clients = append(settings.Clients, newClient)
+	LogExhausted("ADD_SECONDARY_CLIENT", "Установка exhausted=false при создании secondary клиента: Email=%s", email)
+	LogExhausted("ADD_SECONDARY_CLIENT", "Установка exhausted=false при создании secondary клиента: Email=%s", email)
 
 	// Обновляем данные пользователя для дополнительного инбаунда
 	user.HasActiveSecondaryConfig = true
