@@ -133,7 +133,7 @@ func (la *LogAccumulator) AccumulateNewLines() {
 		}
 
 		// Записываем строку в файл накопления
-		_, err := accumulatedFile.WriteString(line + "\n")
+		_, err = accumulatedFile.WriteString(line + "\n")
 		if err != nil {
 			log.Printf("LOG_ACCUMULATOR: Ошибка записи строки в файл накопления: %v", err)
 			continue

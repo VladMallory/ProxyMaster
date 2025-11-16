@@ -195,8 +195,11 @@ func (rsc *ResetStatusChecker) checkResetIssues(client *common.Client, user *com
 
 	// Проверяем, что клиент отключен (это может быть ошибка)
 	if !client.Enable {
-		log.Printf("RESET_STATUS_CHECKER: Пользователь %d: Enable = false", user.TelegramID)
-		hasIssues = true
+		// Только если безопасно включать, считаем это проблемой
+		if shouldEnable, _ := rsc.shouldEnableClient(user, client); shouldEnable {
+			log.Printf("RESET_STATUS_CHECKER: Пользователь %d: Enable = false и безопасно включать", user.TelegramID)
+			hasIssues = true
+		}
 	}
 
 	// Проверяем несоответствие времени истечения
@@ -223,9 +226,16 @@ func (rsc *ResetStatusChecker) fixResetIssues(client *common.Client, user *commo
 	// Эти флаги должны сбрасываться только при периодическом сбросе трафика (раз в 7 дней).
 	// Здесь мы только включаем клиента, если он был отключен по ошибке.
 	if !client.Enable {
-		log.Printf("RESET_STATUS_CHECKER: Включаем клиента: %s", client.Email)
-		common.LogClientOperation("RESET_STATUS_CHECKER", user.TelegramID, client.Email, "Включение отключенного клиента")
-		client.Enable = true
+		// Защитные проверки, чтобы избежать циклов включения/отключения
+		shouldEnable, reason := rsc.shouldEnableClient(user, client)
+		if !shouldEnable {
+			log.Printf("RESET_STATUS_CHECKER: Пропускаем включение клиента %s: %s", client.Email, reason)
+			common.LogClientOperation("RESET_STATUS_CHECKER", user.TelegramID, client.Email, "Пропуск включения: "+reason)
+		} else {
+			log.Printf("RESET_STATUS_CHECKER: Включаем клиента: %s", client.Email)
+			common.LogClientOperation("RESET_STATUS_CHECKER", user.TelegramID, client.Email, "Включение отключенного клиента")
+			client.Enable = true
+		}
 	}
 
 	// Восстанавливаем время истечения из базы данных
@@ -242,4 +252,33 @@ func (rsc *ResetStatusChecker) fixResetIssues(client *common.Client, user *commo
 
 	log.Printf("RESET_STATUS_CHECKER: Проблемы исправлены для пользователя %d (БЕЗ сброса флагов трафика)", user.TelegramID)
 	common.LogClientOperation("RESET_STATUS_CHECKER", user.TelegramID, client.Email, "Проблемы исправлены БЕЗ сброса флагов трафика")
+}
+
+// shouldEnableClient определяет, безопасно ли включать отключённого клиента
+func (rsc *ResetStatusChecker) shouldEnableClient(user *common.User, client *common.Client) (bool, string) {
+	// Если в БД конфиг помечен как неактивный, не включаем
+	if !user.HasActiveConfig {
+		return false, "в БД HasActiveConfig=false"
+	}
+
+	// Проверяем достаточность баланса (минимум на 1 день)
+	if user.Balance < float64(common.PRICE_PER_DAY) {
+		return false, fmt.Sprintf("недостаточный баланс %.2f₽ < %d₽", user.Balance, common.PRICE_PER_DAY)
+	}
+
+	// Не включаем истёкшие подписки
+	nowMs := time.Now().UnixMilli()
+	if user.ExpiryTime > 0 && user.ExpiryTime <= nowMs {
+		return false, "подписка истекла"
+	}
+
+	// Если клиент в состоянии исчерпан/выжат — не считаем это проблемой ResetStatusChecker
+	if client.Depleted != nil && *client.Depleted {
+		return false, "клиент в состоянии 'depleted'"
+	}
+	if client.Exhausted != nil && *client.Exhausted {
+		return false, "клиент в состоянии 'exhausted'"
+	}
+
+	return true, ""
 }

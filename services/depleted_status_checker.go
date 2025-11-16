@@ -343,12 +343,7 @@ func (dsc *DepletedStatusChecker) shouldFixDepletedStatusOptimized(user *common.
 					isDepleted := client.Depleted != nil && *client.Depleted
 					isExhausted := client.Exhausted != nil && *client.Exhausted
 
-					// ВАЖНО: Если конфиг отключен в панели, НЕ сбрасываем статус "исчерпано"
-					if !client.Enable {
-						return false
-					}
-
-					// Возвращаем true если конфиг в состоянии "исчерпано" И включен в панели
+					// Возвращаем true если конфиг в состоянии "исчерпано"
 					return isDepleted || isExhausted
 				}
 			}

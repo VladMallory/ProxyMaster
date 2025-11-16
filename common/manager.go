@@ -244,7 +244,7 @@ func (cm *ConfigManager) updateConfigStatus(email string, enabled bool) error {
 
 	// Парсим настройки
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		return fmt.Errorf("ошибка десериализации settings: %v", err)
 	}
 
@@ -330,7 +330,7 @@ func (cm *ConfigManager) DisableAndRotateConfig(email string) (string, error) {
 
 	// Парсим настройки
 	var settings Settings
-	if err := json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
+	if err = json.Unmarshal([]byte(inbound.Settings), &settings); err != nil {
 		return "", fmt.Errorf("ошибка десериализации settings: %v", err)
 	}
 
