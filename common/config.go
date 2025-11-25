@@ -268,13 +268,13 @@ func init() {
 	ADMIN_REMINDER_ENABLED = true        // Уведомления о напоминаниях
 
 	// ========== СИСТЕМЫ ОЧИСТКИ И ПРОВЕРКИ ==========
-	DUPLICATE_CLEANUP_ENABLED = true     // Очистка дубликатов включена
-	DUPLICATE_CLEANUP_INTERVAL = 1440    // Интервал очистки (мин, 1400≈23ч)
-	RESET_STATUS_CHECK_ENABLED = true    // Проверка статуса reset включена
-	RESET_STATUS_CHECK_INTERVAL = 720    // Интервал проверки (мин, 1400≈23ч)
-	DEPLETED_STATUS_CHECK_ENABLED = true // Проверка ложных блокировок включена
-	DEPLETED_STATUS_CHECK_INTERVAL = 120 // Интервал проверки (мин)
-	DEPLETED_ACTIVE_THRESHOLD = 2        // Минимальная активность для сброса (ч)
+	DUPLICATE_CLEANUP_ENABLED = true      // Очистка дубликатов включена
+	DUPLICATE_CLEANUP_INTERVAL = 1440     // Интервал очистки (мин, 1400≈23ч)
+	RESET_STATUS_CHECK_ENABLED = true     // Проверка статуса reset включена
+	RESET_STATUS_CHECK_INTERVAL = 720     // Интервал проверки (мин, 1400≈23ч)
+	DEPLETED_STATUS_CHECK_ENABLED = false // Проверка ложных блокировок включена
+	DEPLETED_STATUS_CHECK_INTERVAL = 120  // Интервал проверки (мин)
+	DEPLETED_ACTIVE_THRESHOLD = 2         // Минимальная активность для сброса (ч)
 
 	// ========== НАСТРОЙКИ ПЛАТЕЖЕЙ ==========
 	// Telegram Bot API платежи
